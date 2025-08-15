@@ -17,7 +17,32 @@ export const supabaseAdmin = createClient(
   }
 )
 
-// 타입 정의
+// Enhanced type definitions based on database schema
+export type UserRole = 'freelancer' | 'client' | 'admin'
+export type QuoteStatus = 'draft' | 'sent' | 'approved' | 'rejected' | 'expired'
+export type ContractStatus = 'draft' | 'sent' | 'signed' | 'completed' | 'cancelled'
+export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded'
+
+export interface QuoteItem {
+  id: string
+  description: string
+  quantity: number
+  unit_price: number
+  total: number
+}
+
+export interface DigitalSignature {
+  signature_data: string
+  signed_by: string
+  signed_at: string
+  ip_address?: string
+}
+
+export interface NotificationChannel {
+  type: 'in_app' | 'email' | 'kakao_talk'
+  enabled: boolean
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -27,25 +52,39 @@ export type Database = {
           email: string
           name: string
           phone?: string
+          role: UserRole
+          business_name?: string
           business_number?: string
+          business_address?: string
+          avatar_url?: string
+          timezone: string
           created_at: string
           updated_at: string
         }
         Insert: {
-          id?: string
+          id: string
           email: string
           name: string
           phone?: string
+          role?: UserRole
+          business_name?: string
           business_number?: string
+          business_address?: string
+          avatar_url?: string
+          timezone?: string
           created_at?: string
           updated_at?: string
         }
         Update: {
-          id?: string
           email?: string
           name?: string
           phone?: string
+          role?: UserRole
+          business_name?: string
           business_number?: string
+          business_address?: string
+          avatar_url?: string
+          timezone?: string
           updated_at?: string
         }
       }
@@ -56,10 +95,17 @@ export type Database = {
           client_name: string
           client_email: string
           client_phone?: string
+          client_company?: string
           title: string
-          items: unknown
+          description?: string
+          items: QuoteItem[]
+          subtotal: number
+          tax_rate: number
+          tax_amount: number
           total_amount: number
-          status: 'draft' | 'sent' | 'approved' | 'rejected'
+          status: QuoteStatus
+          expires_at?: string
+          approved_at?: string
           created_at: string
           updated_at: string
         }
@@ -69,23 +115,30 @@ export type Database = {
           client_name: string
           client_email: string
           client_phone?: string
+          client_company?: string
           title: string
-          items: unknown
-          total_amount: number
-          status?: 'draft' | 'sent' | 'approved' | 'rejected'
+          description?: string
+          items: QuoteItem[]
+          subtotal: number
+          tax_rate?: number
+          status?: QuoteStatus
+          expires_at?: string
           created_at?: string
           updated_at?: string
         }
         Update: {
-          id?: string
-          user_id?: string
           client_name?: string
           client_email?: string
           client_phone?: string
+          client_company?: string
           title?: string
-          items?: unknown
-          total_amount?: number
-          status?: 'draft' | 'sent' | 'approved' | 'rejected'
+          description?: string
+          items?: QuoteItem[]
+          subtotal?: number
+          tax_rate?: number
+          status?: QuoteStatus
+          expires_at?: string
+          approved_at?: string
           updated_at?: string
         }
       }
@@ -94,11 +147,14 @@ export type Database = {
           id: string
           quote_id: string
           user_id: string
+          title: string
           content: string
-          attachments?: unknown
-          client_signature?: string
+          terms_and_conditions?: string
+          attachments: unknown[]
+          client_signature?: DigitalSignature
+          freelancer_signature?: DigitalSignature
           signed_at?: string
-          status: 'draft' | 'sent' | 'signed' | 'completed'
+          status: ContractStatus
           created_at: string
           updated_at: string
         }
@@ -106,23 +162,26 @@ export type Database = {
           id?: string
           quote_id: string
           user_id: string
+          title: string
           content: string
-          attachments?: unknown
-          client_signature?: string
+          terms_and_conditions?: string
+          attachments?: unknown[]
+          client_signature?: DigitalSignature
+          freelancer_signature?: DigitalSignature
           signed_at?: string
-          status?: 'draft' | 'sent' | 'signed' | 'completed'
+          status?: ContractStatus
           created_at?: string
           updated_at?: string
         }
         Update: {
-          id?: string
-          quote_id?: string
-          user_id?: string
+          title?: string
           content?: string
-          attachments?: unknown
-          client_signature?: string
+          terms_and_conditions?: string
+          attachments?: unknown[]
+          client_signature?: DigitalSignature
+          freelancer_signature?: DigitalSignature
           signed_at?: string
-          status?: 'draft' | 'sent' | 'signed' | 'completed'
+          status?: ContractStatus
           updated_at?: string
         }
       }
@@ -132,10 +191,15 @@ export type Database = {
           contract_id: string
           user_id: string
           amount: number
-          status: 'pending' | 'completed' | 'failed' | 'refunded'
+          currency: string
           payment_method?: string
+          pg_provider?: string
           transaction_id?: string
+          pg_transaction_id?: string
+          status: PaymentStatus
           paid_at?: string
+          receipt_url?: string
+          tax_invoice_url?: string
           created_at: string
           updated_at: string
         }
@@ -144,23 +208,132 @@ export type Database = {
           contract_id: string
           user_id: string
           amount: number
-          status?: 'pending' | 'completed' | 'failed' | 'refunded'
+          currency?: string
           payment_method?: string
+          pg_provider?: string
           transaction_id?: string
+          pg_transaction_id?: string
+          status?: PaymentStatus
           paid_at?: string
+          receipt_url?: string
+          tax_invoice_url?: string
           created_at?: string
           updated_at?: string
         }
         Update: {
-          id?: string
-          contract_id?: string
-          user_id?: string
-          amount?: number
-          status?: 'pending' | 'completed' | 'failed' | 'refunded'
           payment_method?: string
+          pg_provider?: string
           transaction_id?: string
+          pg_transaction_id?: string
+          status?: PaymentStatus
           paid_at?: string
+          receipt_url?: string
+          tax_invoice_url?: string
           updated_at?: string
+        }
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          title: string
+          message: string
+          quote_id?: string
+          contract_id?: string
+          payment_id?: string
+          channels: NotificationChannel[]
+          sent_at?: string
+          read_at?: string
+          kakao_template_id?: string
+          kakao_message_id?: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          title: string
+          message: string
+          quote_id?: string
+          contract_id?: string
+          payment_id?: string
+          channels?: NotificationChannel[]
+          sent_at?: string
+          kakao_template_id?: string
+          kakao_message_id?: string
+          created_at?: string
+        }
+        Update: {
+          sent_at?: string
+          read_at?: string
+          kakao_message_id?: string
+        }
+      }
+      recurring_payments: {
+        Row: {
+          id: string
+          user_id: string
+          contract_id?: string
+          amount: number
+          currency: string
+          interval_type: string
+          interval_count: number
+          start_date: string
+          end_date?: string
+          next_payment_date?: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          contract_id?: string
+          amount: number
+          currency?: string
+          interval_type: string
+          interval_count?: number
+          start_date: string
+          end_date?: string
+          next_payment_date?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          currency?: string
+          interval_type?: string
+          interval_count?: number
+          start_date?: string
+          end_date?: string
+          next_payment_date?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+      }
+      access_tokens: {
+        Row: {
+          id: string
+          token: string
+          entity_type: string
+          entity_id: string
+          expires_at: string
+          used_at?: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          token: string
+          entity_type: string
+          entity_id: string
+          expires_at: string
+          used_at?: string
+          created_at?: string
+        }
+        Update: {
+          used_at?: string
         }
       }
     }
