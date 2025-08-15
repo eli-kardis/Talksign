@@ -57,7 +57,7 @@ export type Database = {
           client_email: string
           client_phone?: string
           title: string
-          items: any
+          items: unknown
           total_amount: number
           status: 'draft' | 'sent' | 'approved' | 'rejected'
           created_at: string
@@ -70,7 +70,7 @@ export type Database = {
           client_email: string
           client_phone?: string
           title: string
-          items: any
+          items: unknown
           total_amount: number
           status?: 'draft' | 'sent' | 'approved' | 'rejected'
           created_at?: string
@@ -83,7 +83,7 @@ export type Database = {
           client_email?: string
           client_phone?: string
           title?: string
-          items?: any
+          items?: unknown
           total_amount?: number
           status?: 'draft' | 'sent' | 'approved' | 'rejected'
           updated_at?: string
@@ -95,7 +95,7 @@ export type Database = {
           quote_id: string
           user_id: string
           content: string
-          attachments?: any
+          attachments?: unknown
           client_signature?: string
           signed_at?: string
           status: 'draft' | 'sent' | 'signed' | 'completed'
@@ -107,7 +107,7 @@ export type Database = {
           quote_id: string
           user_id: string
           content: string
-          attachments?: any
+          attachments?: unknown
           client_signature?: string
           signed_at?: string
           status?: 'draft' | 'sent' | 'signed' | 'completed'
@@ -119,7 +119,7 @@ export type Database = {
           quote_id?: string
           user_id?: string
           content?: string
-          attachments?: any
+          attachments?: unknown
           client_signature?: string
           signed_at?: string
           status?: 'draft' | 'sent' | 'signed' | 'completed'
