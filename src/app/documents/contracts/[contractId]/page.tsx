@@ -1,8 +1,8 @@
 // src/app/documents/contracts/[contractId]/page.tsx
 import { notFound } from "next/navigation";
 
-export default function ContractDetailPage({ params }: { params: { contractId: string } }) {
-  const { contractId } = params;
+export default async function ContractDetailPage({ params }: { params: Promise<{ contractId: string }> }) {
+  const { contractId } = await params;
   if (!contractId) return notFound();
 
   return (

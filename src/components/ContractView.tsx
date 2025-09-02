@@ -3,9 +3,8 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { PenTool, FileText, Clock, CheckCircle, AlertCircle, Search, Filter, MessageSquare, Eye, Edit, Calendar, User, Plus } from 'lucide-react';
+import { PenTool, FileText, Clock, CheckCircle, AlertCircle, Search, MessageSquare, Eye, Edit, Calendar, User, Plus } from 'lucide-react';
 
 interface Contract {
   id: number;
@@ -70,7 +69,7 @@ interface ContractViewProps {
 
 export function ContractView({ onNewContract }: ContractViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStatus] = useState('all');
   const [activeTab, setActiveTab] = useState('all');
 
   const getStatusBadge = (status: Contract['status']) => {

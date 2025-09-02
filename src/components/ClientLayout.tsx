@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import HeaderClient from "@/components/HeaderClient"
 import { NavTabs } from "@/components/NavTabs"
+import { PageLoadingSpinner } from "@/components/ui/loading-spinner"
 
 interface ClientLayoutProps {
   children: React.ReactNode
@@ -25,26 +26,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   
   // 로딩 중일 때 - 모든 경우에 UI 리턴
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">로딩 중...</p>
-        </div>
-      </div>
-    )
+    return <PageLoadingSpinner message="애플리케이션 초기화 중..." />
   }
   
   // 보호된 라우트에서 비로그인 사용자 - 각 페이지에서 리다이렉트 처리하므로 로딩 화면만 표시
   if (isProtectedRoute && !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">인증 확인 중...</p>
-        </div>
-      </div>
-    )
+    return <PageLoadingSpinner message="인증 확인 중..." />
   }
   
   // 비보호 라우트 또는 로그인된 사용자
@@ -76,11 +63,5 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   }
   
   // 모든 경우를 다루었지만 fallback으로 기본 레이아웃 제공
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <p className="text-muted-foreground">페이지를 불러오는 중...</p>
-      </div>
-    </div>
-  )
+  return <PageLoadingSpinner message="페이지를 불러오는 중..." />
 }

@@ -108,7 +108,7 @@ export function EmailVerification({ email, onResendEmail, onBackToSignup }: Emai
                 <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
                   <p className="font-medium text-foreground mb-1">2. 인증 링크 클릭</p>
-                  <p className="text-muted-foreground">이메일 내의 &ldquo;이메일 인증하기&rdquo; 버튼을 클릭해주세요</p>
+                  <p className="text-muted-foreground">이메일 내의 "이메일 인증하기" 버튼을 클릭해주세요</p>
                 </div>
               </div>
 

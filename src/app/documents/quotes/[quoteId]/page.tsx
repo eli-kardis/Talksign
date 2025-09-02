@@ -1,8 +1,8 @@
 // src/app/documents/quotes/[quoteId]/page.tsx
 import { notFound } from "next/navigation";
 
-export default function QuoteDetailPage({ params }: { params: { quoteId: string } }) {
-  const { quoteId } = params;
+export default async function QuoteDetailPage({ params }: { params: Promise<{ quoteId: string }> }) {
+  const { quoteId } = await params;
   if (!quoteId) return notFound();
 
   return (

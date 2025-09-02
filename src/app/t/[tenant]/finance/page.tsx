@@ -2,11 +2,12 @@
 import { redirect } from 'next/navigation';
 
 interface TenantFinancePageProps {
-  params: {
+  params: Promise<{
     tenant: string;
-  };
+  }>;
 }
 
-export default function TenantFinancePage({ params }: TenantFinancePageProps) {
-  redirect(`/t/${params.tenant}/finance/payments`);
+export default async function TenantFinancePage({ params }: TenantFinancePageProps) {
+  const { tenant } = await params;
+  redirect(`/t/${tenant}/finance/payments`);
 }

@@ -25,6 +25,30 @@ interface DashboardStats {
   monthlyRevenue: number;
 }
 
+interface ApiResponse<T> {
+  data: T[];
+  status?: number;
+  error?: string;
+}
+
+interface Quote {
+  id: string;
+  status: string;
+  amount?: number;
+}
+
+interface Contract {
+  id: string;
+  status: string;
+}
+
+interface Payment {
+  id: string;
+  amount: number;
+  status: string;
+  created_at?: string;
+}
+
 interface WorkflowStep {
   step: string;
   count: number;
@@ -144,9 +168,9 @@ export function Dashboard({ onNavigate, schedules }: DashboardProps) {
       );
 
       // 결과 처리
-      const quotes = quotesResult.status === 'fulfilled' ? (quotesResult.value as any)?.data || [] : [];
-      const contracts = contractsResult.status === 'fulfilled' ? (contractsResult.value as any)?.data || [] : [];
-      const payments = paymentsResult.status === 'fulfilled' ? (paymentsResult.value as any)?.data || [] : [];
+      const quotes = quotesResult.status === 'fulfilled' ? (quotesResult.value as ApiResponse<Quote>)?.data || [] : [];
+      const contracts = contractsResult.status === 'fulfilled' ? (contractsResult.value as ApiResponse<Contract>)?.data || [] : [];
+      const payments = paymentsResult.status === 'fulfilled' ? (paymentsResult.value as ApiResponse<Payment>)?.data || [] : [];
 
       // 에러 로깅 (하지만 계속 진행)
       if (quotesResult.status === 'rejected') {
@@ -161,17 +185,18 @@ export function Dashboard({ onNavigate, schedules }: DashboardProps) {
 
       // 통계 계산
       const totalQuotes = quotes.length;
-      const activeContracts = contracts.filter((c: any) => c.status === 'sent' || c.status === 'signed').length;
-      const completedPayments = payments.filter((p: any) => p.status === 'completed').length;
+      const activeContracts = contracts.filter((c: Contract) => c.status === 'sent' || c.status === 'signed').length;
+      const completedPayments = payments.filter((p: Payment) => p.status === 'completed').length;
       
       // 이번 달 매출 계산
       const monthlyRevenue = payments
-        .filter((p: any) => 
+        .filter((p: Payment) => 
+          p.created_at &&
           p.status === 'completed' && 
           new Date(p.created_at) >= startOfMonth && 
           new Date(p.created_at) <= endOfMonth
         )
-        .reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+        .reduce((sum: number, p: Payment) => sum + (p.amount || 0), 0);
 
       setStats({
         totalQuotes,

@@ -3,7 +3,7 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { Badge } from './ui/badge';
-import { CheckCircle, PenTool, FileText, User, Calendar, Building, CreditCard, AlertCircle } from 'lucide-react';
+import { CheckCircle, PenTool, FileText, User, Building, CreditCard, AlertCircle } from 'lucide-react';
 
 interface ClientSignatureProps {
   onComplete: () => void;

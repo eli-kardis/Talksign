@@ -54,16 +54,7 @@ export function withTenantPath(path: string, tenant?: string | null): string {
     return tenant ? `/t/${tenant}${path}` : path;
   }
 
-  // 컨텍스트에서 테넌트 정보 가져오기 (React 컴포넌트 내에서만 사용 가능)
-  try {
-    const context = useContext(TenantContext);
-    if (context) {
-      return context.tenant ? `/t/${context.tenant}${path}` : path;
-    }
-  } catch {
-    // 컨텍스트 외부에서 호출된 경우 기본 경로 반환
-  }
-
+  // 컨텍스트 없이 호출된 경우 기본 경로 반환
   return path;
 }
 

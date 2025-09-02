@@ -13,7 +13,7 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
   const { src, alt, style, className, ...rest } = props
 
   // src가 빈 문자열이거나 null/undefined인 경우 폴백 이미지 표시
-  const shouldShowFallback = didError || !src || src.trim() === ''
+  const shouldShowFallback = didError || !src || (typeof src === 'string' && src.trim() === '')
 
   return shouldShowFallback ? (
     <div

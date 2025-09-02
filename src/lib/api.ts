@@ -41,7 +41,7 @@ export async function getUserProfile() {
 }
 
 // 사용자 데이터 저장 (견적서, 계약서, 일정 등)
-export async function saveUserData(type: string, data: any) {
+export async function saveUserData(type: string, data: Record<string, unknown>) {
   return apiCall(`/user/data/${type}`, {
     method: 'POST',
     body: JSON.stringify(data),
@@ -56,7 +56,7 @@ export async function getUserData(type: string) {
 // 특정 타입의 데이터 저장/조회를 위한 편의 함수들
 
 // 견적서 저장
-export async function saveQuotes(quotes: any[]) {
+export async function saveQuotes(quotes: unknown[]) {
   return saveUserData('quotes', { quotes })
 }
 
@@ -67,7 +67,7 @@ export async function getQuotes() {
 }
 
 // 계약서 저장
-export async function saveContracts(contracts: any[]) {
+export async function saveContracts(contracts: unknown[]) {
   return saveUserData('contracts', { contracts })
 }
 
@@ -78,7 +78,7 @@ export async function getContracts() {
 }
 
 // 일정 저장
-export async function saveSchedules(schedules: any[]) {
+export async function saveSchedules(schedules: unknown[]) {
   return saveUserData('schedules', { schedules })
 }
 
@@ -89,7 +89,7 @@ export async function getSchedules() {
 }
 
 // 재무 데이터 저장
-export async function saveFinancialData(financialData: any) {
+export async function saveFinancialData(financialData: Record<string, unknown>) {
   return saveUserData('finance', financialData)
 }
 
@@ -100,7 +100,7 @@ export async function getFinancialData() {
 }
 
 // 설정 저장
-export async function saveSettings(settings: any) {
+export async function saveSettings(settings: Record<string, unknown>) {
   return saveUserData('settings', settings)
 }
 

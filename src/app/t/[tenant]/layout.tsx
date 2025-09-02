@@ -3,14 +3,15 @@ import { TenantProvider } from "@/contexts/TenantContext";
 
 interface TenantLayoutProps {
   children: React.ReactNode;
-  params: {
+  params: Promise<{
     tenant: string;
-  };
+  }>;
 }
 
-export default function TenantLayout({ children, params }: TenantLayoutProps) {
+export default async function TenantLayout({ children, params }: TenantLayoutProps) {
+  const { tenant } = await params;
   return (
-    <TenantProvider tenant={params.tenant}>
+    <TenantProvider tenant={tenant}>
       {children}
     </TenantProvider>
   );

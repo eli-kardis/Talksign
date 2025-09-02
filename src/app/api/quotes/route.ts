@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     // 견적서 항목 총합 계산
     const items = body.items || []
-    const subtotal = items.reduce((sum: number, item: any) => sum + (item.amount || 0), 0)
+    const subtotal = items.reduce((sum: number, item: { amount?: number }) => sum + (item.amount || 0), 0)
     console.log('Calculated subtotal:', subtotal)
 
     // Supabase Auth를 사용해서 임시 사용자 생성

@@ -32,7 +32,7 @@ interface DatabaseQuote {
   client_company?: string;
   title: string;
   description?: string;
-  items: any[];
+  items: Array<{ id: string; name: string; amount: number; }>;
   subtotal: number;
   tax_rate: number;
   tax_amount: number;

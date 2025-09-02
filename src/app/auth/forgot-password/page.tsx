@@ -11,7 +11,7 @@ import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 
 export default function ForgotPasswordPage() {
-  const { forgotPassword } = useAuth()
+  const { resetPassword } = useAuth()
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
     setError('')
     
     try {
-      const result = await forgotPassword(email)
+      const result = await resetPassword(email)
       
       if (!result.success) {
         setError(result.error || '비밀번호 재설정 이메일 전송에 실패했습니다.')

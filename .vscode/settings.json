@@ -16,5 +16,6 @@
         }
       ]
     }
-  ]
+  ],
+  "claudeCodeChat.permissions.yoloMode": false
 }

@@ -23,40 +23,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
-  // 강화된 초기화 (타임아웃 방어 로직 포함)
+  // 단순하고 안정적인 초기화
   useEffect(() => {
-    console.log('AuthProvider: Starting enhanced initialization...')
+    console.log('AuthProvider: Starting initialization...')
     
     let mounted = true
     let timeoutId: NodeJS.Timeout
 
-    // 10초 후 강제로 로딩 완료 (방어 로직)
-    const setTimeoutDefense = () => {
-      timeoutId = setTimeout(() => {
-        if (mounted) {
-          console.warn('AuthProvider: Timeout reached, forcing isLoading to false')
-          setIsLoading(false)
-        }
-      }, 10000)
-    }
-
-    // 타임아웃 클리어 헬퍼
-    const clearTimeoutDefense = () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId)
+    // 1.5초 후 강제로 로딩 완료 (더 빠른 타임아웃)
+    timeoutId = setTimeout(() => {
+      if (mounted) {
+        console.warn('AuthProvider: Initialization timeout, setting loading to false')
+        setIsLoading(false)
       }
-    }
+    }, 1500)
 
     // 즉시 세션 확인
     const checkSession = async () => {
       try {
         console.log('AuthProvider: Checking session...')
-        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        // Supabase 연결 상태 빠른 확인
+        const healthCheck = Promise.race([
+          supabase.auth.getSession(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Supabase connection timeout')), 2000)
+          )
+        ])
+        
+        const { data: { session }, error } = await healthCheck as any
         
         if (!mounted) return
 
         if (error) {
           console.error('Session check error:', error)
+          // Refresh token 오류인 경우 로컬 스토리지 클리어
+          if (error.message?.includes('Refresh Token') || error.message?.includes('Invalid Refresh Token')) {
+            console.log('Clearing invalid refresh token from storage')
+            await supabase.auth.signOut()
+          }
           setUser(null)
         } else {
           console.log('Session check:', session?.user ? 'User found' : 'No user')
@@ -77,14 +82,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null)
       } finally {
         if (mounted) {
-          clearTimeoutDefense()
+          clearTimeout(timeoutId)
           setIsLoading(false)
         }
       }
     }
-
-    // 타임아웃 방어 로직 시작
-    setTimeoutDefense()
 
     // 세션 확인 실행
     checkSession()
@@ -108,13 +110,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(null)
           }
           
-          clearTimeoutDefense()
+          clearTimeout(timeoutId)
           setIsLoading(false)
         } catch (error) {
           console.error('Auth state change error:', error)
           if (mounted) {
             setUser(null)
-            clearTimeoutDefense()
+            clearTimeout(timeoutId)
             setIsLoading(false)
           }
         }
@@ -123,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false
-      clearTimeoutDefense()
+      clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
   }, [])
