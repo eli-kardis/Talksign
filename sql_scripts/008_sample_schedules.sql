@@ -1,0 +1,213 @@
+-- 008_sample_schedules.sql
+-- 샘플 일정 데이터 생성
+
+-- 김프리랜서의 일정들
+INSERT INTO public.schedules (
+    id,
+    user_id,
+    title,
+    description,
+    start_date,
+    start_time,
+    end_date,
+    end_time,
+    type,
+    priority,
+    quote_id,
+    contract_id,
+    reminder_minutes,
+    is_completed,
+    completed_at,
+    created_at
+) VALUES 
+-- 긴급한 마감일
+(
+    'aa0e8400-e29b-41d4-a716-446655440001'::uuid,
+    '550e8400-e29b-41d4-a716-446655440001'::uuid,
+    '스타트업 A 웹사이트 1차 시안 제출',
+    '웹사이트 1차 시안 완성 후 클라이언트에게 제출',
+    CURRENT_DATE + INTERVAL '1 day',
+    '14:00:00',
+    CURRENT_DATE + INTERVAL '1 day',
+    '18:00:00',
+    'deadline',
+    'high',
+    '660e8400-e29b-41d4-a716-446655440001'::uuid,
+    '770e8400-e29b-41d4-a716-446655440001'::uuid,
+    ARRAY[60, 1440],
+    false,
+    NULL,
+    NOW() - INTERVAL '5 days'
+),
+-- 클라이언트 미팅
+(
+    'aa0e8400-e29b-41d4-a716-446655440002'::uuid,
+    '550e8400-e29b-41d4-a716-446655440001'::uuid,
+    '기업 B와 계약서 검토 회의',
+    '계약 조건 및 세부사항 논의',
+    CURRENT_DATE + INTERVAL '2 days',
+    '10:30:00',
+    CURRENT_DATE + INTERVAL '2 days',
+    '12:00:00',
+    'meeting',
+    'medium',
+    '660e8400-e29b-41d4-a716-446655440002'::uuid,
+    '770e8400-e29b-41d4-a716-446655440003'::uuid,
+    ARRAY[15, 60],
+    false,
+    NULL,
+    NOW() - INTERVAL '3 days'
+),
+-- 완료된 작업
+(
+    'aa0e8400-e29b-41d4-a716-446655440003'::uuid,
+    '550e8400-e29b-41d4-a716-446655440001'::uuid,
+    '웹사이트 백엔드 API 개발 완료',
+    'REST API 구축 및 테스트 완료',
+    CURRENT_DATE - INTERVAL '5 days',
+    '09:00:00',
+    CURRENT_DATE - INTERVAL '5 days',
+    '18:00:00',
+    'task',
+    'high',
+    '660e8400-e29b-41d4-a716-446655440001'::uuid,
+    '770e8400-e29b-41d4-a716-446655440001'::uuid,
+    ARRAY[60],
+    true,
+    NOW() - INTERVAL '5 days',
+    NOW() - INTERVAL '10 days'
+),
+-- 프레젠테이션
+(
+    'aa0e8400-e29b-41d4-a716-446655440004'::uuid,
+    '550e8400-e29b-41d4-a716-446655440001'::uuid,
+    '프로젝트 최종 발표',
+    '클라이언트에게 완성된 웹사이트 최종 발표',
+    CURRENT_DATE + INTERVAL '7 days',
+    '15:00:00',
+    CURRENT_DATE + INTERVAL '7 days',
+    '16:30:00',
+    'presentation',
+    'high',
+    '660e8400-e29b-41d4-a716-446655440001'::uuid,
+    '770e8400-e29b-41d4-a716-446655440001'::uuid,
+    ARRAY[30, 60, 1440],
+    false,
+    NULL,
+    NOW() - INTERVAL '1 day'
+),
+-- 런칭 일정
+(
+    'aa0e8400-e29b-41d4-a716-446655440005'::uuid,
+    '550e8400-e29b-41d4-a716-446655440001'::uuid,
+    '웹사이트 정식 런칭',
+    '스타트업 A 웹사이트 정식 서비스 오픈',
+    CURRENT_DATE + INTERVAL '14 days',
+    '10:00:00',
+    CURRENT_DATE + INTERVAL '14 days',
+    '10:00:00',
+    'launch',
+    'medium',
+    '660e8400-e29b-41d4-a716-446655440001'::uuid,
+    '770e8400-e29b-41d4-a716-446655440001'::uuid,
+    ARRAY[1440, 10080],
+    false,
+    NULL,
+    NOW() - INTERVAL '2 days'
+);
+
+-- 박디자이너의 일정들
+INSERT INTO public.schedules (
+    id,
+    user_id,
+    title,
+    description,
+    start_date,
+    start_time,
+    end_date,
+    end_time,
+    type,
+    priority,
+    quote_id,
+    contract_id,
+    reminder_minutes,
+    is_completed,
+    completed_at,
+    created_at
+) VALUES 
+-- 디자인 작업
+(
+    'aa0e8400-e29b-41d4-a716-446655440006'::uuid,
+    '550e8400-e29b-41d4-a716-446655440002'::uuid,
+    '카페 브랜딩 디자인 작업',
+    '로고, 메뉴판, 인테리어 컨셉 디자인',
+    CURRENT_DATE + INTERVAL '3 days',
+    '09:00:00',
+    CURRENT_DATE + INTERVAL '5 days',
+    '18:00:00',
+    'task',
+    'medium',
+    '660e8400-e29b-41d4-a716-446655440004'::uuid,
+    NULL,
+    ARRAY[60, 1440],
+    false,
+    NULL,
+    NOW() - INTERVAL '1 day'
+),
+-- 클라이언트 미팅
+(
+    'aa0e8400-e29b-41d4-a716-446655440007'::uuid,
+    '550e8400-e29b-41d4-a716-446655440002'::uuid,
+    '한의원 브로슈어 시안 발표',
+    '제작된 브로슈어 시안을 클라이언트에게 발표',
+    CURRENT_DATE + INTERVAL '1 day',
+    '14:00:00',
+    CURRENT_DATE + INTERVAL '1 day',
+    '15:30:00',
+    'presentation',
+    'high',
+    '660e8400-e29b-41d4-a716-446655440005'::uuid,
+    '770e8400-e29b-41d4-a716-446655440002'::uuid,
+    ARRAY[30, 60],
+    false,
+    NULL,
+    NOW() - INTERVAL '2 days'
+),
+-- 완료된 작업
+(
+    'aa0e8400-e29b-41d4-a716-446655440008'::uuid,
+    '550e8400-e29b-41d4-a716-446655440002'::uuid,
+    '브로슈어 초안 완성',
+    '한의원 홍보 브로슈어 초안 디자인 완성',
+    CURRENT_DATE - INTERVAL '3 days',
+    '10:00:00',
+    CURRENT_DATE - INTERVAL '3 days',
+    '17:00:00',
+    'task',
+    'medium',
+    '660e8400-e29b-41d4-a716-446655440005'::uuid,
+    '770e8400-e29b-41d4-a716-446655440002'::uuid,
+    ARRAY[60],
+    true,
+    NOW() - INTERVAL '3 days',
+    NOW() - INTERVAL '6 days'
+),
+-- 정기 업무 (반복 일정)
+(
+    'aa0e8400-e29b-41d4-a716-446655440009'::uuid,
+    '550e8400-e29b-41d4-a716-446655440002'::uuid,
+    '주간 디자인 트렌드 리서치',
+    '최신 디자인 트렌드 조사 및 포트폴리오 업데이트',
+    CURRENT_DATE,
+    '09:00:00',
+    CURRENT_DATE,
+    '11:00:00',
+    'task',
+    'low',
+    NULL,
+    NULL,
+    ARRAY[30],
+    false,
+    NULL,
+    NOW() - INTERVAL '1 day'
+);

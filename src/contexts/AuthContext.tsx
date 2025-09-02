@@ -1,219 +1,198 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import type { User } from '@supabase/supabase-js'
-import { AuthService, onAuthStateChange } from '@/lib/auth'
-import type { Database } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+import type { User } from '@/types/user'
+import { supabase } from '@/lib/supabase'
+import { auth, type UserData, type AuthResult } from '@/lib/auth'
 
-type UserProfile = Database['public']['Tables']['users']['Row']
-
-interface AuthContextType {
+type AuthContextType = {
   user: User | null
-  profile: UserProfile | null
-  loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (data: {
-    email: string
-    password: string
-    name: string
-    phone?: string
-    role?: 'freelancer' | 'client'
-    business_name?: string
-    business_number?: string
-  }) => Promise<void>
-  signInWithGoogle: () => Promise<void>
-  signInWithKakao: () => Promise<void>
+  isLoading: boolean
+  signIn: (email: string, password: string) => Promise<AuthResult>
+  signUp: (data: UserData) => Promise<AuthResult>
   signOut: () => Promise<void>
-  updateProfile: (updates: Database['public']['Tables']['users']['Update']) => Promise<void>
+  resetPassword: (email: string) => Promise<AuthResult>
+  updatePassword: (password: string) => Promise<AuthResult>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
-
-interface AuthProviderProps {
-  children: React.ReactNode
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
-  // 사용자 프로필 로드
-  const loadUserProfile = async (userId: string) => {
-    try {
-      const userProfile = await AuthService.getUserProfile(userId)
-      setProfile(userProfile)
-    } catch (error) {
-      console.error('프로필 로드 실패:', error)
-      setProfile(null)
-    }
-  }
-
-  // 초기 인증 상태 확인
+  // 강화된 초기화 (타임아웃 방어 로직 포함)
   useEffect(() => {
-    const initializeAuth = async () => {
+    console.log('AuthProvider: Starting enhanced initialization...')
+    
+    let mounted = true
+    let timeoutId: NodeJS.Timeout
+
+    // 10초 후 강제로 로딩 완료 (방어 로직)
+    const setTimeoutDefense = () => {
+      timeoutId = setTimeout(() => {
+        if (mounted) {
+          console.warn('AuthProvider: Timeout reached, forcing isLoading to false')
+          setIsLoading(false)
+        }
+      }, 10000)
+    }
+
+    // 타임아웃 클리어 헬퍼
+    const clearTimeoutDefense = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
+
+    // 즉시 세션 확인
+    const checkSession = async () => {
       try {
-        const currentUser = await AuthService.getCurrentUser()
-        setUser(currentUser)
+        console.log('AuthProvider: Checking session...')
+        const { data: { session }, error } = await supabase.auth.getSession()
         
-        if (currentUser) {
-          await loadUserProfile(currentUser.id)
+        if (!mounted) return
+
+        if (error) {
+          console.error('Session check error:', error)
+          setUser(null)
+        } else {
+          console.log('Session check:', session?.user ? 'User found' : 'No user')
+          
+          if (session?.user) {
+            setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              name: session.user.user_metadata?.name || session.user.user_metadata?.full_name || '',
+              provider: 'email',
+            })
+          } else {
+            setUser(null)
+          }
         }
       } catch (error) {
-        console.error('인증 초기화 실패:', error)
+        console.error('Session check error:', error)
+        setUser(null)
       } finally {
-        setLoading(false)
+        if (mounted) {
+          clearTimeoutDefense()
+          setIsLoading(false)
+        }
       }
     }
 
-    initializeAuth()
-  }, [])
+    // 타임아웃 방어 로직 시작
+    setTimeoutDefense()
 
-  // 인증 상태 변화 감지
-  useEffect(() => {
-    const { data: { subscription } } = onAuthStateChange(async (user) => {
-      setUser(user)
-      
-      if (user) {
-        await loadUserProfile(user.id)
-      } else {
-        setProfile(null)
+    // 세션 확인 실행
+    checkSession()
+
+    // Auth 상태 변경 리스너 (에러 처리 포함)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        try {
+          console.log('Auth state change:', event)
+          
+          if (!mounted) return
+
+          if (session?.user) {
+            setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              name: session.user.user_metadata?.name || session.user.user_metadata?.full_name || '',
+              provider: 'email',
+            })
+          } else {
+            setUser(null)
+          }
+          
+          clearTimeoutDefense()
+          setIsLoading(false)
+        } catch (error) {
+          console.error('Auth state change error:', error)
+          if (mounted) {
+            setUser(null)
+            clearTimeoutDefense()
+            setIsLoading(false)
+          }
+        }
       }
-      
-      setLoading(false)
-    })
+    )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      clearTimeoutDefense()
+      subscription.unsubscribe()
+    }
   }, [])
 
+  // Auth 함수들 (에러 처리 강화)
   const signIn = async (email: string, password: string) => {
-    setLoading(true)
     try {
-      await AuthService.signIn({ email, password })
-      // 인증 상태 변화 리스너가 자동으로 처리함
+      return await auth.signIn(email, password)
     } catch (error) {
-      setLoading(false)
+      console.error('SignIn error:', error)
       throw error
     }
   }
 
-  const signUp = async (data: {
-    email: string
-    password: string
-    name: string
-    phone?: string
-    role?: 'freelancer' | 'client'
-    business_name?: string
-    business_number?: string
-  }) => {
-    setLoading(true)
+  const signUp = async (userData: UserData) => {
     try {
-      await AuthService.signUp(data)
-      // 인증 상태 변화 리스너가 자동으로 처리함
+      return await auth.signUp(userData)
     } catch (error) {
-      setLoading(false)
-      throw error
-    }
-  }
-
-  const signInWithGoogle = async () => {
-    setLoading(true)
-    try {
-      await AuthService.signInWithGoogle()
-      // OAuth 리다이렉트로 인해 페이지가 이동함
-    } catch (error) {
-      setLoading(false)
-      throw error
-    }
-  }
-
-  const signInWithKakao = async () => {
-    setLoading(true)
-    try {
-      await AuthService.signInWithKakao()
-      // OAuth 리다이렉트로 인해 페이지가 이동함
-    } catch (error) {
-      setLoading(false)
+      console.error('SignUp error:', error)
       throw error
     }
   }
 
   const signOut = async () => {
-    setLoading(true)
     try {
-      await AuthService.signOut()
-      // 인증 상태 변화 리스너가 자동으로 처리함
+      await auth.signOut()
+      setUser(null)
+      router.push('/auth/signin')
     } catch (error) {
-      setLoading(false)
+      console.error('SignOut error:', error)
+      // 에러가 있어도 로컬 상태는 클리어
+      setUser(null)
+      router.push('/auth/signin')
+    }
+  }
+
+  const resetPassword = async (email: string) => {
+    try {
+      return await auth.resetPassword(email)
+    } catch (error) {
+      console.error('ResetPassword error:', error)
       throw error
     }
   }
 
-  const updateProfile = async (updates: Database['public']['Tables']['users']['Update']) => {
-    if (!user) throw new Error('로그인이 필요합니다.')
-    
+  const updatePassword = async (password: string) => {
     try {
-      const updatedProfile = await AuthService.updateUserProfile(user.id, updates)
-      setProfile(updatedProfile)
+      return await auth.updatePassword(password)
     } catch (error) {
+      console.error('UpdatePassword error:', error)
       throw error
     }
   }
 
-  const value: AuthContextType = {
+  const value = {
     user,
-    profile,
-    loading,
+    isLoading,
     signIn,
     signUp,
-    signInWithGoogle,
-    signInWithKakao,
     signOut,
-    updateProfile,
+    resetPassword,
+    updatePassword,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-// 인증이 필요한 라우트를 보호하는 HOC
-export function withAuth<P extends object>(
-  Component: React.ComponentType<P>
-): React.ComponentType<P> {
-  return function AuthenticatedComponent(props: P) {
-    const { user, loading } = useAuth()
-
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
-        </div>
-      )
-    }
-
-    if (!user) {
-      // 로그인 페이지로 리다이렉트하거나 로그인 모달 표시
-      return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              로그인이 필요합니다
-            </h2>
-            <p className="text-gray-600">
-              이 페이지에 접근하려면 로그인해주세요.
-            </p>
-          </div>
-        </div>
-      )
-    }
-
-    return <Component {...props} />
-  }
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider')
+  return ctx
 }

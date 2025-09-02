@@ -13,13 +13,13 @@
 
 ## 🛠 기술 스택
 
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS, shadcn/ui
-- **Database**: Supabase
+- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Supabase Edge Functions (Deno), Hono Framework
+- **Database**: Supabase PostgreSQL + KV Store
+- **Authentication**: Supabase Auth (이메일, Google, Kakao)
 - **Payment**: 토스페이먼츠 / 아임포트
 - **Notification**: 카카오톡 알림톡 API
-- **Deployment**: Vercel
+- **Deployment**: Vercel (Frontend) + Supabase (Backend)
 - **CI/CD**: GitHub Actions
 
 ## 📋 프로젝트 구조
@@ -28,17 +28,32 @@
 linkflow/
 ├── src/
 │   ├── app/                    # Next.js App Router
+│   │   ├── auth/               # 인증 관련 페이지
+│   │   │   ├── callback/       # OAuth 콜백
+│   │   │   ├── signin/         # 로그인 페이지
+│   │   │   └── signup/         # 회원가입 페이지
 │   │   ├── globals.css         # 글로벌 스타일
 │   │   ├── layout.tsx          # 루트 레이아웃
-│   │   └── page.tsx            # 메인 페이지
+│   │   └── page.tsx            # 메인 애플리케이션
 │   ├── components/             # React 컴포넌트
 │   │   └── ui/                 # shadcn/ui 컴포넌트
+│   ├── contexts/               # React Context
+│   │   └── AuthContext.tsx     # 인증 상태 관리
 │   └── lib/                    # 유틸리티 및 설정
-│       ├── supabase.ts         # Supabase 클라이언트 설정
+│       ├── api.ts              # API 호출 함수
+│       ├── auth.ts             # 인증 유틸리티
+│       ├── supabase.ts         # Supabase 클라이언트
 │       └── utils.ts            # 공통 유틸리티
-├── .github/workflows/          # GitHub Actions 워크플로우
-├── .env.local                  # 환경 변수 (개발용)
-├── .env.example                # 환경 변수 예시
+├── supabase/                   # Supabase 설정
+│   ├── functions/              # Edge Functions
+│   │   └── server/             # 백엔드 API
+│   │       ├── index.tsx       # 메인 서버 로직
+│   │       └── kv_store.tsx    # KV Store 인터페이스
+│   ├── migrations/             # 데이터베이스 마이그레이션
+│   └── config.toml             # Supabase 로컬 설정
+├── ATTRIBUTIONS.md             # 라이브러리 저작권 정보
+├── LICENSE                     # MIT 라이선스
+├── .env.local.example          # 환경 변수 예시
 ├── components.json             # shadcn/ui 설정
 ├── vercel.json                 # Vercel 배포 설정
 └── package.json                # 의존성 및 스크립트
@@ -59,24 +74,56 @@ cd linkflow
 npm install
 ```
 
-### 3. 환경 변수 설정
-
-`.env.example` 파일을 참고하여 `.env.local` 파일을 생성하고 필요한 환경 변수를 설정하세요:
+### 3. Supabase 설정
 
 ```bash
-cp .env.example .env.local
+# Supabase CLI 설치 (필요한 경우)
+npm install -g supabase
+
+# Supabase 로컬 환경 시작
+supabase start
+
+# 데이터베이스 마이그레이션 실행
+supabase db reset
+```
+
+### 4. 환경 변수 설정
+
+`.env.local.example` 파일을 참고하여 `.env.local` 파일을 생성:
+
+```bash
+cp .env.local.example .env.local
 ```
 
 필수 환경 변수:
-- `NEXT_PUBLIC_SUPABASE_URL`: Supabase 프로젝트 URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase 익명 키
-- `SUPABASE_SERVICE_ROLE_KEY`: Supabase 서비스 역할 키
-- `NEXT_PUBLIC_TOSS_CLIENT_KEY`: 토스페이먼츠 클라이언트 키
-- `TOSS_SECRET_KEY`: 토스페이먼츠 시크릿 키
-- `KAKAO_API_KEY`: 카카오 API 키
-- `KAKAO_SENDER_KEY`: 카카오 발신자 키
+```bash
+# Supabase Configuration (개발환경)
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_local_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_local_service_role_key_here
 
-### 4. 개발 서버 실행
+# OAuth Provider Configuration
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+KAKAO_CLIENT_ID=your_kakao_client_id_here
+KAKAO_CLIENT_SECRET=your_kakao_client_secret_here
+
+# 프로덕션 환경에서는 환경 변수 없이도 작동 (supabase-info.ts 파일 사용)
+# NEXT_PUBLIC_SUPABASE_URL=https://fwbkesioorqklhlcgmio.supabase.co (자동 설정됨)
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (자동 설정됨)
+```
+
+### 5. Edge Functions 배포
+
+```bash
+# Edge Functions를 로컬 Supabase에 배포
+supabase functions deploy server
+
+# 또는 개발 모드로 실행 (파일 변경 감지)
+supabase functions serve server --no-verify-jwt
+```
+
+### 6. 개발 서버 실행
 
 ```bash
 npm run dev
@@ -116,23 +163,37 @@ npm run build
 
 ### 주요 API 엔드포인트
 
-- `/api/quotes` - 견적서 관리
-- `/api/contracts` - 계약서 관리
-- `/api/payments` - 결제 처리
-- `/api/notifications` - 카카오톡 알림
-- `/api/auth` - 사용자 인증
+**Edge Functions (백엔드 API)**
+- `POST /auth/signup` - 회원가입
+- `POST /auth/verify` - 사용자 인증 확인
+- `POST /auth/social-complete` - 소셜 로그인 추가 정보
+- `GET /user/profile` - 사용자 프로필 조회
+- `POST /user/data/:type` - 사용자 데이터 저장
+- `GET /user/data/:type` - 사용자 데이터 조회
+
+**클라이언트 API 함수**
+- `api.saveQuotes()` / `api.getQuotes()` - 견적서 관리
+- `api.saveContracts()` / `api.getContracts()` - 계약서 관리
+- `api.saveSchedules()` / `api.getSchedules()` - 일정 관리
+- `api.saveFinancialData()` / `api.getFinancialData()` - 재무 데이터 관리
 
 ## 🔧 개발 환경 요구사항
 
 - Node.js 18.x 이상
 - npm 9.x 이상
-- Supabase 계정
-- 토스페이먼츠 또는 아임포트 계정
-- 카카오 개발자 계정
+- Supabase CLI 및 계정
+- Docker (Supabase 로컬 환경용)
+- 토스페이먼츠 또는 아임포트 계정 (결제 기능용)
+- 카카오 개발자 계정 (알림톡 및 OAuth용)
+- Google Cloud Console 계정 (Google OAuth용)
 
 ## 📄 라이센스
 
-이 프로젝트는 MIT 라이센스 하에 배포됩니다.
+이 프로젝트는 MIT 라이센스 하에 배포됩니다. 자세한 내용은 [LICENSE](./LICENSE) 파일을 참조하세요.
+
+## 📋 저작권 정보
+
+사용된 라이브러리와 리소스에 대한 저작권 및 라이센스 정보는 [ATTRIBUTIONS.md](./ATTRIBUTIONS.md) 파일을 참조하세요.
 
 ## 🤝 기여하기
 

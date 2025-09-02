@@ -1,0 +1,20 @@
+{
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+  "css.customData": [
+    {
+      "version": 1.1,
+      "atDirectives": [
+        {
+          "name": "@theme",
+          "description": "Tailwind CSS v4 theme configuration directive"
+        },
+        {
+          "name": "@import",
+          "description": "Import external CSS files"
+        }
+      ]
+    }
+  ]
+}

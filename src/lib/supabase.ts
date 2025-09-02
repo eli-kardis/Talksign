@@ -1,14 +1,25 @@
 import { createClient } from '@supabase/supabase-js'
+import { projectId, publicAnonKey } from './supabase-info'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// 개발/프로덕션 환경에 따른 URL 설정
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 
+  (process.env.NODE_ENV === 'development' 
+    ? `https://${projectId}.supabase.co`  // 개발 환경에서도 원격 사용
+    : `https://${projectId}.supabase.co`)
 
+// 환경 변수가 있으면 우선 사용, 없으면 info 파일의 키 사용
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || publicAnonKey
+
+// Service Role Key 설정 (환경 변수가 없으면 anon key 사용 - 개발용)
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || publicAnonKey
+
+// Supabase 클라이언트 생성
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // 서버 사이드에서 사용할 클라이언트 (Service Role Key 사용)
 export const supabaseAdmin = createClient(
   supabaseUrl,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  supabaseServiceKey,
   {
     auth: {
       autoRefreshToken: false,
@@ -16,6 +27,39 @@ export const supabaseAdmin = createClient(
     }
   }
 )
+
+// 서버 API 호출을 위한 기본 URL
+export const API_BASE_URL = `https://${projectId}.supabase.co/functions/v1/make-server-e83d4894`
+
+// API 요청 헬퍼 함수
+export async function apiRequest(endpoint: string, options: RequestInit = {}) {
+  const url = `${API_BASE_URL}${endpoint}`
+  
+  const defaultHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  // 현재 세션에서 액세스 토큰 가져오기
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session?.access_token) {
+    defaultHeaders['Authorization'] = `Bearer ${session.access_token}`
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...options.headers,
+    },
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+  }
+
+  return response.json()
+}
 
 // Enhanced type definitions based on database schema
 export type UserRole = 'freelancer' | 'client' | 'admin'
