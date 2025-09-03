@@ -16,11 +16,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   
   // 경로 분석
   const isAuthPage = pathname?.startsWith('/auth')
+  const isRootPage = pathname === '/'
   const isDashboardRoute = pathname?.startsWith('/dashboard')
   const isProtectedRoute = isDashboardRoute || pathname?.startsWith('/documents') || pathname?.startsWith('/finance') || pathname?.startsWith('/schedule')
   
-  // 인증 페이지라면 헤더와 네비게이션 없이 렌더링
-  if (isAuthPage) {
+  // 인증 페이지나 루트 페이지라면 헤더와 네비게이션 없이 렌더링
+  if (isAuthPage || isRootPage) {
     return <>{children}</>
   }
   

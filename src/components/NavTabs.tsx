@@ -12,14 +12,24 @@ export function NavTabs() {
 
   const items = [
     { href: `${basePath}/dashboard`, label: "대시보드" },
-    { href: `${basePath}/documents/quotes`, label: "문서관리" },
-    { href: `${basePath}/finance/payments`, label: "재무관리" },
+    { href: `${basePath}/documents`, label: "문서관리" },
+    { href: `${basePath}/finance`, label: "재무관리" },
     { href: `${basePath}/schedule`, label: "일정" },
   ];
 
   // 현재 탭 활성화 - startsWith로 판정 (더 정확한 매칭을 위해 길이순 정렬)
   const getCurrentTab = () => {
     if (!pathname) return `${basePath}/dashboard`;
+    
+    // 특별 케이스: documents 관련 경로들은 모두 documents 탭으로 매핑
+    if (pathname.startsWith(`${basePath}/documents`)) {
+      return `${basePath}/documents`;
+    }
+    
+    // finance 관련 경로들은 모두 finance 탭으로 매핑
+    if (pathname.startsWith(`${basePath}/finance`)) {
+      return `${basePath}/finance`;
+    }
     
     // 가장 구체적인 경로부터 매칭 (길이순 정렬)
     const sortedItems = [...items].sort((a, b) => b.href.length - a.href.length);

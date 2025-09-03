@@ -2,8 +2,7 @@
 import type { Config } from "tailwindcss"
 
 const config: Config = {
-  // Tailwind v4: dark 모드는 클래스 기반으로 사용 (ThemeProvider에서 'dark' 토글과 일치)
-  darkMode: ["class"],
+  // 다크 모드가 기본이므로 darkMode 설정 제거
   // v4에서도 content 설정을 추가 (컴포넌트 스캔용)
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -12,7 +11,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // CSS 변수 기반 색상 시스템
+      // Tailwind v4 @theme 변수 기반 색상 시스템
       colors: {
         background: "var(--color-background)",
         foreground: "var(--color-foreground)",
@@ -37,12 +36,12 @@ const config: Config = {
           foreground: "var(--color-destructive-foreground)",
         },
         border: "var(--color-border)",
-        input: "var(--color-input)",
+        input: "var(--color-input-background)",
         "input-background": "var(--color-input-background)",
         ring: "var(--color-ring)",
         popover: {
-          DEFAULT: "var(--color-popover)",
-          foreground: "var(--color-popover-foreground)",
+          DEFAULT: "var(--color-card)",
+          foreground: "var(--color-card-foreground)",
         },
         card: {
           DEFAULT: "var(--color-card)",

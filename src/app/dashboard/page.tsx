@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Dashboard } from "@/components/Dashboard"
+import { supabase } from "@/lib/supabase"
 
 export interface ScheduleItem {
   id: number
@@ -18,27 +19,85 @@ export interface ScheduleItem {
 export default function DashboardPage() {
   const router = useRouter()
   const { user, isLoading } = useAuth()
-  
-  const [schedules, setSchedules] = useState<ScheduleItem[]>([
-    {
-      id: 1,
-      title: "스타트업 A 웹사이트 1차 시안 제출",
-      date: "2025-08-16",
-      time: "14:00",
-      type: "deadline",
-      priority: "high",
-      description: "웹사이트 1차 시안 완성 후 클라이언트에게 제출",
-    },
-    {
-      id: 2,
-      title: "기업 B와 계약서 검토 회의",
-      date: "2025-08-17",
-      time: "10:30",
-      type: "meeting",
-      priority: "medium",
-      description: "계약 조건 및 세부사항 논의",
-    },
-  ])
+  const [schedules, setSchedules] = useState<ScheduleItem[]>([])
+  const [schedulesLoading, setSchedulesLoading] = useState(true)
+
+  // 일정 데이터 로드 및 주기적 업데이트
+  useEffect(() => {
+    if (user?.id) {
+      loadSchedules()
+      
+      // 5분마다 일정 데이터 새로고침
+      const interval = setInterval(() => {
+        loadSchedules()
+      }, 5 * 60 * 1000) // 5분
+      
+      return () => clearInterval(interval)
+    }
+  }, [user?.id])
+
+
+
+  const loadSchedules = async () => {
+    try {
+      setSchedulesLoading(true)
+      
+      console.log('Loading schedules for user:', user?.id)
+      
+      // 오늘부터 30일 이내 일정을 가져오기 (과거 일정도 포함)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const todayString = today.toISOString().split('T')[0]
+      
+      const { data: schedules, error, count } = await supabase
+        .from('schedules')
+        .select('*', { count: 'exact' })
+        .eq('user_id', user?.id)
+        .order('start_date', { ascending: true })
+        .order('start_time', { ascending: true })
+        .limit(5)
+
+      console.log('Schedules query result:', { 
+        data: schedules, 
+        error, 
+        count,
+        user_id: user?.id 
+      })
+
+      if (error) {
+        console.error('Error loading schedules:', error)
+        return
+      }
+      
+      if (!schedules || schedules.length === 0) {
+        console.log('No schedules found for user')
+        setSchedules([])
+        return
+      }
+      
+      // Supabase 데이터를 Dashboard 컴포넌트 형식으로 변환
+      const formattedSchedules = schedules.map((schedule: any, index: number) => {
+        console.log(`Schedule ${index + 1}:`, schedule)
+        
+        return {
+          id: index + 1, // 단순히 배열 인덱스 사용
+          title: schedule.title,
+          date: schedule.start_date,
+          time: schedule.start_time || '00:00',
+          type: schedule.type,
+          priority: schedule.priority,
+          description: schedule.description
+        }
+      })
+      
+      console.log('Formatted schedules:', formattedSchedules)
+      setSchedules(formattedSchedules)
+    } catch (error) {
+      console.error('Error loading schedules:', error)
+    } finally {
+      setSchedulesLoading(false)
+    }
+  }
 
   // 비로그인 사용자는 로그인 페이지로 리다이렉트
   useEffect(() => {
@@ -75,19 +134,7 @@ export default function DashboardPage() {
     }
   }
 
-  // 일정 핸들러
-  const handleAddSchedule = (schedule: Omit<ScheduleItem, "id">) => {
-    const newId = Math.max(...schedules.map((s) => s.id), 0) + 1
-    setSchedules((prev) => [...prev, { ...schedule, id: newId }])
-  }
-  
-  const handleUpdateSchedule = (id: number, updated: Omit<ScheduleItem, "id">) => {
-    setSchedules((prev) => prev.map((s) => (s.id === id ? { ...updated, id } : s)))
-  }
-  
-  const handleDeleteSchedule = (id: number) => {
-    setSchedules((prev) => prev.filter((s) => s.id !== id))
-  }
+
 
   // 로딩 중일 때 표시
   if (isLoading) {
@@ -110,6 +157,7 @@ export default function DashboardPage() {
     <Dashboard 
       onNavigate={onNavigate} 
       schedules={schedules}
+      schedulesLoading={schedulesLoading}
     />
   )
 }

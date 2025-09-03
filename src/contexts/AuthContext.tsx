@@ -18,55 +18,95 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// public.users 테이블에 사용자 레코드가 있는지 확인하고 없으면 생성
+async function ensureUserExists(authUser: any) {
+  try {
+    // 기존 사용자 확인
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', authUser.id)
+      .single()
+
+    if (checkError && checkError.code === 'PGRST116') {
+      // 사용자가 없으면 생성
+      console.log('Creating user record in public.users table')
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert([{
+          id: authUser.id,
+          email: authUser.email || '',
+          name: authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'Unknown User',
+          phone: authUser.user_metadata?.phone || null,
+          business_name: authUser.user_metadata?.business_name || null,
+          role: 'freelancer'
+        }])
+
+      if (insertError) {
+        console.error('Error creating user record:', insertError)
+      } else {
+        console.log('User record created successfully')
+      }
+    } else if (checkError) {
+      console.error('Error checking user existence:', checkError)
+    }
+  } catch (error) {
+    console.error('Error in ensureUserExists:', error)
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
-  // 단순하고 안정적인 초기화
+  // 간단하고 안정적인 초기화
   useEffect(() => {
     console.log('AuthProvider: Starting initialization...')
     
     let mounted = true
-    let timeoutId: NodeJS.Timeout
-
-    // 1.5초 후 강제로 로딩 완료 (더 빠른 타임아웃)
-    timeoutId = setTimeout(() => {
-      if (mounted) {
-        console.warn('AuthProvider: Initialization timeout, setting loading to false')
-        setIsLoading(false)
-      }
-    }, 1500)
 
     // 즉시 세션 확인
     const checkSession = async () => {
       try {
         console.log('AuthProvider: Checking session...')
         
-        // Supabase 연결 상태 빠른 확인
-        const healthCheck = Promise.race([
-          supabase.auth.getSession(),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Supabase connection timeout')), 2000)
-          )
-        ])
+        // 타임아웃과 함께 세션 확인
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session check timeout')), 3000)
+        )
         
-        const { data: { session }, error } = await healthCheck as any
+        const result = await Promise.race([sessionPromise, timeoutPromise])
+        const { data: { session }, error } = result as any
         
         if (!mounted) return
 
         if (error) {
           console.error('Session check error:', error)
-          // Refresh token 오류인 경우 로컬 스토리지 클리어
-          if (error.message?.includes('Refresh Token') || error.message?.includes('Invalid Refresh Token')) {
+          // 네트워크 오류나 타임아웃인 경우 로그아웃 처리하지 않음
+          if (error.message?.includes('network') || error.message?.includes('timeout')) {
+            console.warn('Network/timeout error, treating as no session')
+            setUser(null)
+          } else if (error.message?.includes('Refresh Token') || error.message?.includes('Invalid Refresh Token')) {
             console.log('Clearing invalid refresh token from storage')
-            await supabase.auth.signOut()
+            try {
+              await supabase.auth.signOut()
+            } catch (signOutError) {
+              console.error('Error signing out:', signOutError)
+            }
+            setUser(null)
+          } else {
+            console.warn('Unknown auth error, treating as no session:', error)
+            setUser(null)
           }
-          setUser(null)
         } else {
           console.log('Session check:', session?.user ? 'User found' : 'No user')
           
           if (session?.user) {
+            // public.users 테이블에 사용자 레코드 확인/생성
+            await ensureUserExists(session.user)
+            
             setUser({
               id: session.user.id,
               email: session.user.email || '',
@@ -78,15 +118,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch (error) {
-        console.error('Session check error:', error)
+        console.error('Session check failed:', error)
+        // 네트워크 오류 등의 경우 사용자를 null로 설정
         setUser(null)
       } finally {
         if (mounted) {
-          clearTimeout(timeoutId)
+          console.log('AuthProvider: Setting loading to false')
           setIsLoading(false)
         }
       }
     }
+
+    // 강제 타임아웃 (최대 1초)
+    const forceTimeout = setTimeout(() => {
+      if (mounted) {
+        console.warn('AuthProvider: Force timeout reached')
+        setIsLoading(false)
+      }
+    }, 1000)
 
     // 세션 확인 실행
     checkSession()
@@ -100,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (!mounted) return
 
           if (session?.user) {
+            ensureUserExists(session.user)
             setUser({
               id: session.user.id,
               email: session.user.email || '',
@@ -110,13 +160,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(null)
           }
           
-          clearTimeout(timeoutId)
+          clearTimeout(forceTimeout)
           setIsLoading(false)
         } catch (error) {
           console.error('Auth state change error:', error)
           if (mounted) {
             setUser(null)
-            clearTimeout(timeoutId)
+            clearTimeout(forceTimeout)
             setIsLoading(false)
           }
         }
@@ -125,7 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false
-      clearTimeout(timeoutId)
+      clearTimeout(forceTimeout)
       subscription.unsubscribe()
     }
   }, [])

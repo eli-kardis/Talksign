@@ -13,15 +13,15 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         type={type}
         data-slot="input"
         className={cn(
-          "flex h-10 w-full rounded-[var(--radius)]",
-          "border border-[var(--color-border)]",
-          "bg-[var(--color-input-background)]",
+          "flex h-10 w-full rounded-lg",
+          "border border-border",
+          "bg-input-background",
           "px-3 py-2 text-sm",
-          "text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)]",
-          "file:border-0 file:bg-transparent file:text-[var(--color-foreground)] file:text-sm file:font-medium",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2",
+          "text-foreground placeholder:text-muted-foreground",
+          "file:border-0 file:bg-transparent file:text-foreground file:text-sm file:font-medium",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "disabled:cursor-not-allowed disabled:opacity-50",
-          "aria-invalid:ring-[var(--color-destructive)]/20 aria-invalid:border-[var(--color-destructive)]",
+          "aria-invalid:ring-destructive/20 aria-invalid:border-destructive",
           className
         )}
         {...props}

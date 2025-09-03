@@ -7,6 +7,7 @@ import { Badge } from './ui/badge';
 import { ImageWithFallback } from './ui/ImageWithFallback';
 import { FileText, CreditCard, CheckCircle, Clock, TrendingUp, Users, Calendar, CalendarClock, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { ScheduleDetailPopup } from './ScheduleDetailPopup';
 
 interface ScheduleItem {
   id: number;
@@ -58,9 +59,10 @@ interface WorkflowStep {
 interface DashboardProps {
   onNavigate: (view: string) => void;
   schedules: ScheduleItem[];
+  schedulesLoading?: boolean;
 }
 
-export function Dashboard({ onNavigate, schedules }: DashboardProps) {
+export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: DashboardProps) {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
     totalQuotes: 0,
@@ -70,6 +72,8 @@ export function Dashboard({ onNavigate, schedules }: DashboardProps) {
   });
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(null);
+  const [isSchedulePopupOpen, setIsSchedulePopupOpen] = useState(false);
 
   // 실제 데이터 가져오기 + 주기적 업데이트
   useEffect(() => {
@@ -300,6 +304,11 @@ export function Dashboard({ onNavigate, schedules }: DashboardProps) {
     }
   };
 
+  const handleScheduleClick = (schedule: ScheduleItem) => {
+    setSelectedSchedule(schedule);
+    setIsSchedulePopupOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="space-y-4 md:space-y-6">
@@ -465,31 +474,75 @@ export function Dashboard({ onNavigate, schedules }: DashboardProps) {
           </div>
           
           <div className="space-y-2 md:space-y-3">
-            {schedules.slice(0, 5).map((schedule) => (
-              <div key={schedule.id} className="flex items-center justify-between p-2 md:p-3 bg-secondary rounded-lg border border-border">
-                <div className="flex items-start gap-2 md:gap-3 flex-1 min-w-0">
-                  {getScheduleIcon(schedule.type)}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm md:text-base text-foreground truncate font-medium">
-                        {schedule.title}
-                      </p>
-                      <Badge className={`text-xs whitespace-nowrap ${getPriorityBadge(schedule.priority)}`}>
-                        {schedule.priority === 'high' ? '긴급' : schedule.priority === 'medium' ? '보통' : '낮음'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
-                      <span>{formatDate(schedule.date)}</span>
-                      <span>•</span>
-                      <span>{schedule.time}</span>
+            {schedulesLoading ? (
+              // 로딩 상태
+              [...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-2 md:p-3 bg-secondary rounded-lg border border-border">
+                  <div className="flex items-start gap-2 md:gap-3 flex-1">
+                    <div className="w-4 h-4 bg-muted rounded animate-pulse"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-muted rounded animate-pulse w-3/4"></div>
+                      <div className="h-3 bg-muted rounded animate-pulse w-1/2"></div>
                     </div>
                   </div>
                 </div>
+              ))
+            ) : schedules.length === 0 ? (
+              // 빈 상태
+              <div className="text-center py-8 text-muted-foreground">
+                <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">예정된 일정이 없습니다</p>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => onNavigate('schedule')}
+                  className="mt-2 text-primary hover:text-primary/80"
+                >
+                  일정 추가하기
+                </Button>
               </div>
-            ))}
+            ) : (
+              // 일정 목록
+              schedules.slice(0, 5).map((schedule) => (
+                <div 
+                  key={schedule.id} 
+                  className="flex items-center justify-between p-2 md:p-3 bg-secondary rounded-lg border border-border cursor-pointer hover:bg-secondary/80 transition-colors"
+                  onClick={() => handleScheduleClick(schedule)}
+                >
+                  <div className="flex items-start gap-2 md:gap-3 flex-1 min-w-0">
+                    {getScheduleIcon(schedule.type)}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm md:text-base text-foreground truncate font-medium">
+                          {schedule.title}
+                        </p>
+                        <Badge className={`text-xs whitespace-nowrap ${getPriorityBadge(schedule.priority)}`}>
+                          {schedule.priority === 'high' ? '긴급' : schedule.priority === 'medium' ? '보통' : '낮음'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                        <span>{formatDate(schedule.date)}</span>
+                        <span>•</span>
+                        <span>{schedule.time}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Card>
       </div>
+      
+      {/* 일정 상세 팝업 */}
+      <ScheduleDetailPopup
+        schedule={selectedSchedule}
+        isOpen={isSchedulePopupOpen}
+        onClose={() => {
+          setIsSchedulePopupOpen(false);
+          setSelectedSchedule(null);
+        }}
+      />
     </div>
   );
 }

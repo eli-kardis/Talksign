@@ -9,6 +9,8 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { CalendarClock, Plus, Edit, Trash2, AlertCircle, Users, FileText, TrendingUp, CheckCircle, Calendar as CalendarIcon } from 'lucide-react';
+import { formatDateToLocal, parseLocalDate } from '@/lib/utils';
+import { ScheduleDetailPopup } from './ScheduleDetailPopup';
 
 interface ScheduleItem {
   id: number;
@@ -32,6 +34,8 @@ export function Schedule({ onNavigate, schedules, onAddSchedule, onUpdateSchedul
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleItem | null>(null);
+  const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(null);
+  const [isSchedulePopupOpen, setIsSchedulePopupOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     date: '',
@@ -42,7 +46,7 @@ export function Schedule({ onNavigate, schedules, onAddSchedule, onUpdateSchedul
   });
 
   const formatDateForInput = (date: Date) => {
-    return date.toISOString().split('T')[0];
+    return formatDateToLocal(date);
   };
 
   const getSchedulesForDate = (date: Date) => {
@@ -180,10 +184,16 @@ export function Schedule({ onNavigate, schedules, onAddSchedule, onUpdateSchedul
     onDeleteSchedule(id);
   };
 
+  const handleScheduleClick = (schedule: ScheduleItem) => {
+    setSelectedSchedule(schedule);
+    setIsSchedulePopupOpen(true);
+  };
+
   const selectedDateSchedules = selectedDate ? getSchedulesForDate(selectedDate) : [];
 
   // Calendar에 일정이 있는 날짜 표시를 위한 modifier
-  const scheduleDates = schedules.map(schedule => new Date(schedule.date));
+  // 로컬 시간대로 정확한 날짜 생성 (시간대 오프셋 방지)
+  const scheduleDates = schedules.map(schedule => parseLocalDate(schedule.date));
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -256,7 +266,10 @@ export function Schedule({ onNavigate, schedules, onAddSchedule, onUpdateSchedul
                 selectedDateSchedules.map((schedule) => (
                   <div key={schedule.id} className="p-3 bg-secondary rounded-lg border border-border">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <div 
+                        className="flex items-start gap-2 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => handleScheduleClick(schedule)}
+                      >
                         {getScheduleIcon(schedule.type)}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
@@ -283,7 +296,10 @@ export function Schedule({ onNavigate, schedules, onAddSchedule, onUpdateSchedul
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEdit(schedule)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(schedule);
+                          }}
                           className="h-6 w-6 p-0"
                         >
                           <Edit className="w-3 h-3" />
@@ -291,7 +307,10 @@ export function Schedule({ onNavigate, schedules, onAddSchedule, onUpdateSchedul
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(schedule.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(schedule.id);
+                          }}
                           className="h-6 w-6 p-0 text-destructive hover:text-destructive/80"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -398,6 +417,18 @@ export function Schedule({ onNavigate, schedules, onAddSchedule, onUpdateSchedul
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 일정 상세 팝업 */}
+      <ScheduleDetailPopup
+        schedule={selectedSchedule}
+        isOpen={isSchedulePopupOpen}
+        onClose={() => {
+          setIsSchedulePopupOpen(false);
+          setSelectedSchedule(null);
+        }}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }

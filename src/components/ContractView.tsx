@@ -67,10 +67,11 @@ interface ContractViewProps {
   onNewContract: () => void;
 }
 
+type TabKey = "all" | "pending" | "sent" | "signed" | "completed";
+
 export function ContractView({ onNewContract }: ContractViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus] = useState('all');
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState<TabKey>('all');
 
   const getStatusBadge = (status: Contract['status']) => {
     const statusConfig = {
@@ -89,9 +90,8 @@ export function ContractView({ onNewContract }: ContractViewProps) {
   const filteredContracts = mockContracts.filter(contract => {
     const matchesSearch = contract.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          contract.project.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || contract.status === filterStatus;
     const matchesTab = activeTab === 'all' || contract.status === activeTab;
-    return matchesSearch && matchesFilter && matchesTab;
+    return matchesSearch && matchesTab;
   });
 
   const statusCounts = {
@@ -112,153 +112,138 @@ export function ContractView({ onNewContract }: ContractViewProps) {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Status Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 bg-transparent gap-2 p-0">
-          <TabsTrigger 
-            value="all" 
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            전체 ({statusCounts.all})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="pending" 
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <Clock className="w-4 h-4" />
-            작성중 ({statusCounts.pending})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="sent" 
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <PenTool className="w-4 h-4" />
-            서명대기 ({statusCounts.sent})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="signed" 
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <CheckCircle className="w-4 h-4" />
-            서명완료 ({statusCounts.signed})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="completed" 
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            완료 ({statusCounts.completed})
-          </TabsTrigger>
-        </TabsList>
+      {/* 상단 필터/검색/버튼 - QuoteList와 동일한 구조 */}
+      <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="w-full md:w-auto">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)}>
+            <TabsList className="grid w-full grid-cols-2 md:inline-flex md:w-auto gap-2 p-0 bg-transparent">
+              <TabsTrigger value="all">전체 ({statusCounts.all})</TabsTrigger>
+              <TabsTrigger value="pending" className="flex items-center justify-center gap-2">
+                <Clock className="w-4 h-4" />
+                작성중 ({statusCounts.pending})
+              </TabsTrigger>
+              <TabsTrigger value="sent" className="flex items-center justify-center gap-2">
+                <PenTool className="w-4 h-4" />
+                서명대기 ({statusCounts.sent})
+              </TabsTrigger>
+              <TabsTrigger value="signed" className="flex items-center justify-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                서명완료 ({statusCounts.signed})
+              </TabsTrigger>
+              <TabsTrigger value="completed">완료 ({statusCounts.completed})</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
-        {/* Filters */}
-        <Card className="p-3 md:p-4 bg-card border-border">
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="고객명 또는 프로젝트명으로 검색..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-input-background border-border text-sm md:text-base"
-                />
-              </div>
-            </div>
-            <Button onClick={onNewContract} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5">
-              <Plus className="w-4 h-4 mr-2" />
-              새 계약서
-            </Button>
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input
+              placeholder="고객명 또는 프로젝트명으로 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-input-background border-border text-sm md:text-base"
+            />
           </div>
-        </Card>
+          <Button
+            onClick={onNewContract}
+            className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-primary-foreground"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            새 계약서
+          </Button>
+        </div>
+      </div>
 
-        <TabsContent value={activeTab} className="space-y-4">
-          {filteredContracts.map((contract) => {
-            const statusConfig = getStatusBadge(contract.status);
-            const StatusIcon = statusConfig.icon;
-            
-            return (
-              <Card key={contract.id} className="p-6 hover:shadow-md transition-shadow">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-primary" />
-                      <h3 className="font-medium text-foreground">{contract.client}</h3>
-                      <Badge className={statusConfig.className}>
-                        <StatusIcon className="w-3 h-3 mr-1" />
-                        {statusConfig.label}
-                      </Badge>
-                    </div>
-                    
-                    <p className="text-muted-foreground">{contract.project}</p>
-                    
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                      <span className="font-medium text-lg text-foreground">
-                        {formatCurrency(contract.amount)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        작성일: {contract.createdDate}
-                      </span>
-                      {contract.signedDate && (
-                        <span className="flex items-center gap-1">
-                          <CheckCircle className="w-4 h-4" />
-                          서명일: {contract.signedDate}
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <User className="w-4 h-4" />
-                        {contract.phone}
-                      </span>
-                    </div>
+      {/* 계약서 목록 */}
+      <div className="space-y-4">
+        {filteredContracts.map((contract) => {
+          const statusConfig = getStatusBadge(contract.status);
+          const StatusIcon = statusConfig.icon;
+          
+          return (
+            <Card key={contract.id} className="p-6 hover:shadow-md transition-shadow">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex-1 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-5 h-5 text-primary" />
+                    <h3 className="font-medium text-foreground">{contract.client}</h3>
+                    <Badge className={statusConfig.className}>
+                      <StatusIcon className="w-3 h-3 mr-1" />
+                      {statusConfig.label}
+                    </Badge>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <Eye className="w-4 h-4 mr-1" />
-                      보기
-                    </Button>
-                    
-                    {contract.status === 'pending' && (
-                      <>
-                        <Button variant="outline" size="sm">
-                          <Edit className="w-4 h-4 mr-1" />
-                          수정
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                          onClick={() => sendToKakao(contract)}
-                        >
-                          <MessageSquare className="w-4 h-4 mr-1" />
-                          카톡발송
-                        </Button>
-                      </>
+                  
+                  <p className="text-muted-foreground">{contract.project}</p>
+                  
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <span className="font-medium text-lg text-foreground">
+                      {formatCurrency(contract.amount)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      작성일: {contract.createdDate}
+                    </span>
+                    {contract.signedDate && (
+                      <span className="flex items-center gap-1">
+                        <CheckCircle className="w-4 h-4" />
+                        서명일: {contract.signedDate}
+                      </span>
                     )}
-
-                    {contract.status === 'sent' && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => sendContractReminder(contract)}
-                      >
-                        <AlertCircle className="w-4 h-4 mr-1" />
-                        리마인드
-                      </Button>
-                    )}
-
-                    {contract.status === 'signed' && (
-                      <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                        결제 요청
-                      </Button>
-                    )}
+                    <span className="flex items-center gap-1">
+                      <User className="w-4 h-4" />
+                      {contract.phone}
+                    </span>
                   </div>
                 </div>
-              </Card>
-            );
-          })}
-        </TabsContent>
-      </Tabs>
 
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm">
+                    <Eye className="w-4 h-4 mr-1" />
+                    보기
+                  </Button>
+                  
+                  {contract.status === 'pending' && (
+                    <>
+                      <Button variant="outline" size="sm">
+                        <Edit className="w-4 h-4 mr-1" />
+                        수정
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                        onClick={() => sendToKakao(contract)}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-1" />
+                        카톡발송
+                      </Button>
+                    </>
+                  )}
+
+                  {contract.status === 'sent' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => sendContractReminder(contract)}
+                    >
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      리마인드
+                    </Button>
+                  )}
+
+                  {contract.status === 'signed' && (
+                    <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                      결제 요청
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* 빈 상태 */}
       {filteredContracts.length === 0 && (
         <Card className="p-12 text-center">
           <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
