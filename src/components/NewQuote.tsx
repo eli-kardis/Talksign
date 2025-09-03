@@ -7,16 +7,18 @@ import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
 import { Separator } from './ui/separator'
-import { ImageWithFallback } from './ui/ImageWithFallback' // 파일 존재 확인!
-import { ArrowLeft, Plus, Trash2, MessageSquare, Save, Calculator, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, MessageSquare, Save } from 'lucide-react'
+import { QuoteItemsTable } from './QuoteItemsTable'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatPhoneNumber, formatBusinessNumber, formatNumber } from '@/lib/formatters'
 
 interface QuoteItem {
   id: number
+  name: string
   description: string
-  quantity: number
   unitPrice: number
+  quantity: number
+  unit: string
   amount: number
 }
 
@@ -27,6 +29,8 @@ interface NewQuoteProps {
 export function NewQuote({ onNavigate }: NewQuoteProps) {
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
+  const [quoteTitle, setQuoteTitle] = useState('')
+  const [validUntil, setValidUntil] = useState('')
   const [supplierInfo, setSupplierInfo] = useState({
     name: '',
     email: '',
@@ -54,7 +58,7 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
   })
 
   const [items, setItems] = useState<QuoteItem[]>([
-    { id: 1, description: '', quantity: 1, unitPrice: 0, amount: 0 },
+    { id: 1, name: '', description: '', unitPrice: 0, quantity: 1, unit: '개', amount: 0 },
   ])
 
   // 사용자 정보를 자동으로 로드
@@ -82,38 +86,6 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
 
     loadUserInfo()
   }, [user?.id])
-
-  const addItem = () => {
-    const newId = (items.length ? Math.max(...items.map((i) => i.id)) : 0) + 1 // ✅ 빈 배열 대비
-    setItems([...items, { id: newId, description: '', quantity: 1, unitPrice: 0, amount: 0 }])
-  }
-
-  const removeItem = (id: number) => {
-    if (items.length > 1) setItems(items.filter((item) => item.id !== id))
-  }
-
-  const updateItem = (id: number, field: keyof QuoteItem, value: string | number) => {
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) return item
-        
-        let processedValue = value
-        
-        // 숫자 필드의 경우 앞의 0 제거
-        if (field === 'quantity' || field === 'unitPrice') {
-          if (typeof value === 'string') {
-            processedValue = formatNumber(value)
-          }
-        }
-        
-        const next = { ...item, [field]: processedValue } as QuoteItem
-        if (field === 'quantity' || field === 'unitPrice') {
-          next.amount = (Number(next.quantity) || 0) * (Number(next.unitPrice) || 0)
-        }
-        return next
-      })
-    )
-  }
 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
   const vatAmount = Math.floor(totalAmount * 0.1)
@@ -155,8 +127,8 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
       return
     }
     
-    if (!projectInfo.title.trim()) {
-      alert('프로젝트명을 입력해주세요.')
+    if (!quoteTitle.trim()) {
+      alert('견적서 제목을 입력해주세요.')
       return
     }
 
@@ -168,13 +140,16 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
         client_email: clientInfo.email.trim(),
         client_phone: clientInfo.phone.trim() || null,
         client_company: clientInfo.company.trim() || null,
-        title: projectInfo.title.trim(),
-        description: projectInfo.description.trim() || null,
+        title: quoteTitle.trim() || '견적서',
+        description: null,
+        valid_until: validUntil || null,
         items: items.map(item => ({
           id: item.id,
+          name: item.name.trim(),
           description: item.description.trim(),
-          quantity: item.quantity,
           unit_price: item.unitPrice,
+          quantity: item.quantity,
+          unit: item.unit.trim(),
           amount: item.amount
         })),
         status,
@@ -191,8 +166,8 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
         client_business_number: clientInfo.businessNumber.trim() || null,
         client_address: clientInfo.address.trim() || null,
         client_logo_url: clientInfo.logoUrl.trim() || null,
-        due_date: projectInfo.dueDate || null,
-        notes: projectInfo.notes.trim() || null,
+        due_date: null,
+        notes: null,
       }
 
       const response = await fetch('/api/quotes', {
@@ -258,6 +233,20 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Form */}
         <div className="lg:col-span-2 space-y-6">
+          {/* 견적서 제목 */}
+          <Card className="p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">견적서 제목</h3>
+            <div className="space-y-2">
+              <Label htmlFor="quoteTitle" className="text-foreground">제목 *</Label>
+              <Input
+                id="quoteTitle"
+                value={quoteTitle}
+                onChange={(e) => setQuoteTitle(e.target.value)}
+                placeholder="견적서 제목을 입력하세요 (예: 웹사이트 개발 견적서)"
+                className="bg-input-background border-border"
+              />
+            </div>
+          </Card>
           {/* 공급자 정보 */}
           <Card className="p-6 bg-card border-border">
             <h3 className="font-medium mb-4 text-foreground">공급자 정보 (본인)</h3>
@@ -401,186 +390,20 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
                 />
               </div>
             </div>
-
-            {/* 로고 (선택) */}
-            <div className="mt-6 pt-4 border-t border-border">
-              <Label className="text-foreground">회사 로고 (선택)</Label>
-              <div className="mt-2 flex items-start gap-4">
-                <div className="flex-1">
-                  <Input
-                    value={clientInfo.logoUrl}
-                    onChange={(e) => setClientInfo({ ...clientInfo, logoUrl: e.target.value })}
-                    placeholder="로고 이미지 URL을 입력하세요"
-                    className="bg-input-background border-border"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    직접 URL을 입력하거나 파일 업로드 서비스를 이용하세요
-                  </p>
-                </div>
-
-                {clientInfo.logoUrl ? (
-                  <div className="w-16 h-16 flex-shrink-0">
-                    <ImageWithFallback
-                      src={clientInfo.logoUrl}
-                      alt="클라이언트 로고 미리보기"
-                      className="w-full h-full rounded-lg object-cover border border-border"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center flex-shrink-0 border border-border">
-                    <ImageIcon className="w-6 h-6 text-muted-foreground" />
-                  </div>
-                )}
-              </div>
-            </div>
           </Card>
 
-          {/* 프로젝트 정보 */}
-          <Card className="p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">프로젝트 정보</h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="projectTitle" className="text-foreground">프로젝트명 *</Label>
-                <Input
-                  id="projectTitle"
-                  value={projectInfo.title}
-                  onChange={(e) => setProjectInfo({ ...projectInfo, title: e.target.value })}
-                  placeholder="웹사이트 리뉴얼 프로젝트"
-                  className="bg-input-background border-border"
-                />
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="projectDescription" className="text-foreground">프로젝트 설명</Label>
-                <Textarea
-                  id="projectDescription"
-                  value={projectInfo.description}
-                  onChange={(e) => setProjectInfo({ ...projectInfo, description: e.target.value })}
-                  placeholder="프로젝트에 대한 상세 설명을 입력하세요"
-                  rows={4}
-                  className="bg-input-background border-border"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dueDate" className="text-foreground">완료 예정일</Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={projectInfo.dueDate}
-                    onChange={(e) => setProjectInfo({ ...projectInfo, dueDate: e.target.value })}
-                    className="bg-input-background border-border"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes" className="text-foreground">특이사항</Label>
-                <Textarea
-                  id="notes"
-                  value={projectInfo.notes}
-                  onChange={(e) => setProjectInfo({ ...projectInfo, notes: e.target.value })}
-                  placeholder="추가 요청사항이나 특이사항을 입력하세요"
-                  rows={3}
-                  className="bg-input-background border-border"
-                />
-              </div>
-            </div>
-          </Card>
-
-          {/* 견적 항목 */}
-          <Card className="p-6 bg-card border-border">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-foreground">견적 항목</h3>
-              <Button type="button" variant="outline" onClick={addItem} className="border-border">
-                <Plus className="w-4 h-4 mr-2" />
-                항목 추가
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="grid grid-cols-12 gap-3 items-center p-4 border border-border rounded-lg bg-secondary"
-                >
-                  <div className="col-span-12 md:col-span-5">
-                    <Input
-                      placeholder="작업 내용"
-                      value={item.description}
-                      onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                      className="bg-input-background border-border"
-                    />
-                  </div>
-
-                  <div className="col-span-4 md:col-span-2">
-                    <Input
-                      type="number"
-                      placeholder="수량"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                      className="bg-input-background border-border"
-                    />
-                  </div>
-
-                  <div className="col-span-4 md:col-span-2">
-                    <Input
-                      type="number"
-                      placeholder="단가"
-                      value={item.unitPrice}
-                      onChange={(e) => updateItem(item.id, 'unitPrice', parseInt(e.target.value) || 0)}
-                      className="bg-input-background border-border"
-                    />
-                  </div>
-
-                  <div className="col-span-3 md:col-span-2 text-right font-medium text-foreground font-mono">
-                    {formatCurrency(item.amount)}원
-                  </div>
-
-                  <div className="col-span-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeItem(item.id)}
-                      disabled={items.length === 1}
-                      className="border-border hover:bg-destructive hover:text-destructive-foreground"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
+          {/* 견적 항목 테이블 */}
+          <QuoteItemsTable 
+            items={items} 
+            onItemsChange={setItems}
+            validUntil={validUntil}
+            onValidUntilChange={setValidUntil}
+          />
         </div>
 
-        {/* Summary Sidebar */}
+        {/* Action Sidebar */}
         <div className="space-y-6">
-          <Card className="p-6 bg-card border-border">
-            <div className="flex items-center gap-2 mb-4">
-              <Calculator className="w-5 h-5 text-primary" />
-              <h3 className="font-medium text-foreground">견적 요약</h3>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">소계</span>
-                <span className="text-foreground font-mono">{formatCurrency(totalAmount)}원</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">부가세 (10%)</span>
-                <span className="text-foreground font-mono">{formatCurrency(vatAmount)}원</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between font-medium">
-                <span className="text-foreground">총 금액</span>
-                <span className="text-primary font-mono">{formatCurrency(finalAmount)}원</span>
-              </div>
-            </div>
-          </Card>
-
           <Card className="p-6 bg-card border-border">
             <h3 className="font-medium mb-4 text-foreground">발송 옵션</h3>
             <div className="space-y-3">
@@ -588,7 +411,7 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
                 type="button"
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 onClick={handleSaveAndSend}
-                disabled={isLoading || !supplierInfo.name || !supplierInfo.email || !supplierInfo.phone || !clientInfo.name || !clientInfo.email || !projectInfo.title || (supplierInfo.businessRegistrationNumber && !supplierInfo.companyName)}
+                disabled={isLoading || !supplierInfo.name || !supplierInfo.email || !supplierInfo.phone || !clientInfo.name || !clientInfo.email || !quoteTitle.trim() || (supplierInfo.businessRegistrationNumber && !supplierInfo.companyName)}
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 {isLoading ? '발송 중...' : '카카오톡으로 발송'}
