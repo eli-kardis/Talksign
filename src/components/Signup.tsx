@@ -135,7 +135,7 @@ export function Signup({ onNavigate }: SignupProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="businessName" className="text-foreground">사업자명 (선택)</Label>
+                <Label htmlFor="businessName" className="text-foreground">비즈니스명 (회사명)</Label>
                 <Input
                   id="businessName"
                   type="text"
