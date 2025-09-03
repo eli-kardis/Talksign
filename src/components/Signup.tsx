@@ -8,7 +8,7 @@ import { Checkbox } from './ui/checkbox'
 import { Alert, AlertDescription } from './ui/alert'
 import { FileText, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { formatPhoneNumber } from '@/lib/formatters'
+import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters'
 import type { UserData } from '@/lib/auth'
 
 interface SignupProps {
@@ -19,13 +19,16 @@ export function Signup({ onNavigate }: SignupProps) {
   const { signUp } = useAuth()
   const [formData, setFormData] = useState<UserData>({
     name: '',
+    businessRegistrationNumber: '',
+    companyName: '',
+    phone: '',
     email: '',
     password: '',
-    businessName: '',
-    phone: ''
+    businessName: ''
   })
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showCompanyField, setShowCompanyField] = useState(false)
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [agreePrivacy, setAgreePrivacy] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -33,8 +36,9 @@ export function Signup({ onNavigate }: SignupProps) {
 
   // 간단한 유효성 검사
   const isValid = () => {
-    return (
+    const basicRequirements = (
       formData.name &&
+      formData.phone &&
       formData.email &&
       formData.password &&
       formData.password.length >= 6 &&
@@ -42,6 +46,13 @@ export function Signup({ onNavigate }: SignupProps) {
       agreeTerms &&
       agreePrivacy
     )
+    
+    // 사업자등록번호를 입력했으면 회사명도 필수
+    if (showCompanyField && !formData.companyName) {
+      return false
+    }
+    
+    return basicRequirements
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,10 +79,31 @@ export function Signup({ onNavigate }: SignupProps) {
   }
 
   const handleInputChange = (field: keyof UserData, value: string) => {
+    let formattedValue = value
+    
+    // 필드별 포맷팅 적용
+    if (field === 'phone') {
+      formattedValue = formatPhoneNumber(value)
+    } else if (field === 'businessRegistrationNumber') {
+      formattedValue = formatBusinessNumber(value)
+    }
+    
     setFormData(prev => ({ 
       ...prev, 
-      [field]: field === 'phone' ? formatPhoneNumber(value) : value 
+      [field]: formattedValue
     }))
+    
+    // 사업자등록번호 입력시 회사명 필드 표시/숨김
+    if (field === 'businessRegistrationNumber') {
+      // 숫자만 추출해서 길이 확인 (하이픈 제외)
+      const numbersOnly = formattedValue.replace(/\D/g, '')
+      setShowCompanyField(numbersOnly.length > 0)
+      // 사업자등록번호를 지우면 회사명도 초기화
+      if (numbersOnly.length === 0) {
+        setFormData(prev => ({ ...prev, companyName: '' }))
+      }
+    }
+    
     setError('') // 입력시 에러 초기화
   }
 
@@ -110,8 +142,9 @@ export function Signup({ onNavigate }: SignupProps) {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+              {/* 대표자명 */}
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-foreground">이름 *</Label>
+                <Label htmlFor="name" className="text-foreground">대표자명 *</Label>
                 <Input
                   id="name"
                   type="text"
@@ -122,38 +155,86 @@ export function Signup({ onNavigate }: SignupProps) {
                 />
               </div>
 
+              {/* 사업자등록번호 (선택) */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-foreground">이메일 *</Label>
+                <Label htmlFor="businessRegistrationNumber" className="text-foreground">사업자등록번호 (선택)</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="example@email.com"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="bg-input-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="businessName" className="text-foreground">사업자명 (선택)</Label>
-                <Input
-                  id="businessName"
+                  id="businessRegistrationNumber"
                   type="text"
-                  placeholder="개인사업자 또는 법인명"
-                  value={formData.businessName}
-                  onChange={(e) => handleInputChange('businessName', e.target.value)}
+                  placeholder="123-12-12345"
+                  value={formData.businessRegistrationNumber}
+                  onChange={(e) => handleInputChange('businessRegistrationNumber', e.target.value)}
                   className="bg-input-background border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
 
+              {/* 회사명 (사업자등록번호 입력시에만 표시) - 슬라이드 애니메이션 */}
+              <div 
+                className="transition-all duration-500 ease-out overflow-hidden"
+                style={{
+                  maxHeight: showCompanyField ? '120px' : '0px',
+                  opacity: showCompanyField ? 1 : 0,
+                  transform: `translateY(${showCompanyField ? '0px' : '-20px'})`,
+                  marginBottom: showCompanyField ? '16px' : '0px',
+                  paddingTop: showCompanyField ? '0px' : '0px'
+                }}
+              >
+                <div 
+                  className="space-y-2"
+                  style={{
+                    transform: `translateY(${showCompanyField ? '0px' : '-10px'})`,
+                    transition: 'transform 0.5s ease-out 0.1s'
+                  }}
+                >
+                  <Label 
+                    htmlFor="companyName" 
+                    className="text-foreground block"
+                    style={{
+                      opacity: showCompanyField ? 1 : 0,
+                      transition: 'opacity 0.4s ease-out 0.2s'
+                    }}
+                  >
+                    회사명 *
+                  </Label>
+                  <Input
+                    id="companyName"
+                    type="text"
+                    placeholder="(주)회사명 또는 개인사업자명"
+                    value={formData.companyName}
+                    onChange={(e) => handleInputChange('companyName', e.target.value)}
+                    className="bg-input-background border-border text-foreground placeholder:text-muted-foreground"
+                    style={{
+                      opacity: showCompanyField ? 1 : 0,
+                      transform: `translateY(${showCompanyField ? '0px' : '-5px'})`,
+                      transition: 'opacity 0.4s ease-out 0.3s, transform 0.4s ease-out 0.3s'
+                    }}
+                    tabIndex={showCompanyField ? 0 : -1}
+                  />
+                </div>
+              </div>
+
+              {/* 연락처 */}
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-foreground">전화번호 *</Label>
+                <Label htmlFor="phone" className="text-foreground">연락처 *</Label>
                 <Input
                   id="phone"
                   type="tel"
                   placeholder="010-1234-5678"
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
+                  className="bg-input-background border-border text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+
+              {/* 이메일 (ID) */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-foreground">이메일 (ID) *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="example@email.com"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
                   className="bg-input-background border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>

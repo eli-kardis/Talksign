@@ -5,9 +5,11 @@ import { supabase } from './supabase'
 export interface UserData {
   email: string
   password: string
-  name: string
-  phone?: string
-  businessName?: string
+  name: string // 대표자명
+  phone: string // 연락처
+  businessRegistrationNumber?: string // 사업자등록번호 (선택)
+  companyName?: string // 회사명 (사업자등록번호 입력시에만)
+  businessName?: string // 기존 호환성을 위해 유지
 }
 
 // 통합된 인증 결과 타입
@@ -28,7 +30,9 @@ export const auth = {
           data: {
             name: userData.name,
             phone: userData.phone,
-            business_name: userData.businessName
+            business_registration_number: userData.businessRegistrationNumber,
+            company_name: userData.companyName,
+            business_name: userData.businessName // 기존 호환성
           }
         }
       })

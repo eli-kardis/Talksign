@@ -39,6 +39,8 @@ async function ensureUserExists(authUser: any) {
           name: authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'Unknown User',
           phone: authUser.user_metadata?.phone || null,
           business_name: authUser.user_metadata?.business_name || null,
+          business_registration_number: authUser.user_metadata?.business_registration_number || null,
+          company_name: authUser.user_metadata?.company_name || null,
           role: 'freelancer'
         }])
 

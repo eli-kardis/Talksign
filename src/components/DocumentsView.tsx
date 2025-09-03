@@ -72,7 +72,10 @@ export function DocumentsView({
         <TabsContent value="quotes" className="mt-6">
           <QuoteList
             onNewQuote={() => onNavigate("new-quote")}
-            onViewQuote={() => onNavigate("quote-detail")}
+            onViewQuote={(quoteId) => {
+              // Navigate to the quote detail page with the specific quote ID
+              window.location.href = `${basePath}/documents/quotes/${quoteId}`;
+            }}
           />
         </TabsContent>
 

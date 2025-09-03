@@ -124,7 +124,27 @@ export async function POST(request: NextRequest) {
 
     console.log('Public user created:', publicUser)
 
-    // 3. 견적서 생성
+    // 3. 공급자 정보로 사용자 프로필 업데이트 (필요시)
+    if (body.supplier_info) {
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          name: body.supplier_info.name,
+          phone: body.supplier_info.phone,
+          business_registration_number: body.supplier_info.business_registration_number,
+          company_name: body.supplier_info.company_name,
+          business_name: body.supplier_info.business_name,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', authUser.user.id)
+
+      if (updateError) {
+        console.warn('Failed to update user profile:', updateError)
+        // 사용자 프로필 업데이트 실패는 치명적이지 않으므로 계속 진행
+      }
+    }
+
+    // 4. 견적서 생성
     const quoteData: QuoteInsert = {
       user_id: authUser.user.id,
       client_name: body.client_name,

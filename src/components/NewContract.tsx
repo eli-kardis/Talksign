@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -6,12 +6,26 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ArrowLeft, MessageSquare, Save, User, Building } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters';
 
 interface NewContractProps {
   onNavigate: (view: string) => void;
 }
 
 export function NewContract({ onNavigate }: NewContractProps) {
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const [supplierInfo, setSupplierInfo] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    businessRegistrationNumber: '',
+    companyName: '',
+    businessName: '',
+  });
+
   const [contractInfo, setContractInfo] = useState({
     title: '',
     startDate: '',
@@ -21,13 +35,39 @@ export function NewContract({ onNavigate }: NewContractProps) {
     additionalTerms: ''
   });
 
-  const [clientInfo] = useState({
-    name: '스타트업 A',
-    company: '(주)스타트업에이',
-    phone: '010-1234-5678',
-    email: 'client@startup-a.com',
-    amount: 3000000
+  const [clientInfo, setClientInfo] = useState({
+    name: '',
+    company: '',
+    phone: '',
+    email: '',
+    amount: 0
   });
+
+  // 사용자 정보를 자동으로 로드
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      if (!user?.id) return
+
+      try {
+        const response = await fetch(`/api/users/${user.id}`)
+        if (response.ok) {
+          const userData = await response.json()
+          setSupplierInfo({
+            name: userData.name || '',
+            email: userData.email || '',
+            phone: userData.phone || '',
+            businessRegistrationNumber: userData.business_registration_number || '',
+            companyName: userData.company_name || '',
+            businessName: userData.business_name || '',
+          })
+        }
+      } catch (error) {
+        console.error('Failed to load user info:', error)
+      }
+    }
+
+    loadUserInfo()
+  }, [user?.id]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ko-KR').format(amount) + '원';

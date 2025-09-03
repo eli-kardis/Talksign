@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card } from './ui/card'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -27,6 +27,14 @@ interface NewQuoteProps {
 export function NewQuote({ onNavigate }: NewQuoteProps) {
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
+  const [supplierInfo, setSupplierInfo] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    businessRegistrationNumber: '',
+    companyName: '',
+    businessName: '',
+  })
   
   const [clientInfo, setClientInfo] = useState({
     name: '',
@@ -48,6 +56,32 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
   const [items, setItems] = useState<QuoteItem[]>([
     { id: 1, description: '', quantity: 1, unitPrice: 0, amount: 0 },
   ])
+
+  // 사용자 정보를 자동으로 로드
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      if (!user?.id) return
+
+      try {
+        const response = await fetch(`/api/users/${user.id}`)
+        if (response.ok) {
+          const userData = await response.json()
+          setSupplierInfo({
+            name: userData.name || '',
+            email: userData.email || '',
+            phone: userData.phone || '',
+            businessRegistrationNumber: userData.business_registration_number || '',
+            companyName: userData.company_name || '',
+            businessName: userData.business_name || '',
+          })
+        }
+      } catch (error) {
+        console.error('Failed to load user info:', error)
+      }
+    }
+
+    loadUserInfo()
+  }, [user?.id])
 
   const addItem = () => {
     const newId = (items.length ? Math.max(...items.map((i) => i.id)) : 0) + 1 // ✅ 빈 배열 대비
@@ -88,7 +122,29 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
   const formatCurrency = (amount: number) => new Intl.NumberFormat('ko-KR').format(amount)
 
   const saveQuote = async (status: 'draft' | 'sent' = 'draft') => {
-    // 필수 필드 검증
+    // 공급자 정보 필수 필드 검증
+    if (!supplierInfo.name.trim()) {
+      alert('공급자 대표자명을 입력해주세요.')
+      return
+    }
+    
+    if (!supplierInfo.email.trim()) {
+      alert('공급자 이메일을 입력해주세요.')
+      return
+    }
+    
+    if (!supplierInfo.phone.trim()) {
+      alert('공급자 연락처를 입력해주세요.')
+      return
+    }
+
+    // 사업자등록번호가 있으면 회사명도 필수
+    if (supplierInfo.businessRegistrationNumber.trim() && !supplierInfo.companyName.trim()) {
+      alert('사업자등록번호를 입력하셨다면 회사명도 입력해주세요.')
+      return
+    }
+
+    // 고객 정보 필수 필드 검증
     if (!clientInfo.name.trim()) {
       alert('고객명을 입력해주세요.')
       return
@@ -122,6 +178,15 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
           amount: item.amount
         })),
         status,
+        // 공급자 정보 추가
+        supplier_info: {
+          name: supplierInfo.name.trim(),
+          email: supplierInfo.email.trim(),
+          phone: supplierInfo.phone.trim(),
+          business_registration_number: supplierInfo.businessRegistrationNumber.trim() || null,
+          company_name: supplierInfo.companyName.trim() || null,
+          business_name: supplierInfo.businessName.trim() || null,
+        },
         // 추가 메타데이터 (필요시)
         client_business_number: clientInfo.businessNumber.trim() || null,
         client_address: clientInfo.address.trim() || null,
@@ -193,6 +258,77 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Form */}
         <div className="lg:col-span-2 space-y-6">
+          {/* 공급자 정보 */}
+          <Card className="p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">공급자 정보 (본인)</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="supplierName" className="text-foreground">대표자명 *</Label>
+                <Input
+                  id="supplierName"
+                  value={supplierInfo.name}
+                  onChange={(e) => setSupplierInfo({ ...supplierInfo, name: e.target.value })}
+                  placeholder="홍길동"
+                  className="bg-input-background border-border"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="supplierEmail" className="text-foreground">이메일 *</Label>
+                <Input
+                  id="supplierEmail"
+                  type="email"
+                  value={supplierInfo.email}
+                  onChange={(e) => setSupplierInfo({ ...supplierInfo, email: e.target.value })}
+                  placeholder="supplier@example.com"
+                  className="bg-input-background border-border"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="supplierPhone" className="text-foreground">연락처 *</Label>
+                <Input
+                  id="supplierPhone"
+                  value={supplierInfo.phone}
+                  onChange={(e) => setSupplierInfo({ ...supplierInfo, phone: formatPhoneNumber(e.target.value) })}
+                  placeholder="010-1234-5678"
+                  className="bg-input-background border-border"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="supplierBusinessNumber" className="text-foreground">사업자등록번호</Label>
+                <Input
+                  id="supplierBusinessNumber"
+                  value={supplierInfo.businessRegistrationNumber}
+                  onChange={(e) => setSupplierInfo({ ...supplierInfo, businessRegistrationNumber: formatBusinessNumber(e.target.value) })}
+                  placeholder="123-12-12345"
+                  className="bg-input-background border-border"
+                />
+              </div>
+
+              {supplierInfo.businessRegistrationNumber && (
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="supplierCompanyName" className="text-foreground">회사명 *</Label>
+                  <Input
+                    id="supplierCompanyName"
+                    value={supplierInfo.companyName}
+                    onChange={(e) => setSupplierInfo({ ...supplierInfo, companyName: e.target.value })}
+                    placeholder="(주)회사명 또는 개인사업자명"
+                    className="bg-input-background border-border"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                💡 이 정보는 견적서와 계약서에 공급자 정보로 자동 삽입됩니다. 필요시 수정하세요.
+              </p>
+            </div>
+          </Card>
+
           {/* 고객 정보 */}
           <Card className="p-6 bg-card border-border">
             <h3 className="font-medium mb-4 text-foreground">고객 정보</h3>
@@ -452,7 +588,7 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
                 type="button"
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 onClick={handleSaveAndSend}
-                disabled={isLoading || !clientInfo.name || !clientInfo.email || !projectInfo.title}
+                disabled={isLoading || !supplierInfo.name || !supplierInfo.email || !supplierInfo.phone || !clientInfo.name || !clientInfo.email || !projectInfo.title || (supplierInfo.businessRegistrationNumber && !supplierInfo.companyName)}
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 {isLoading ? '발송 중...' : '카카오톡으로 발송'}
