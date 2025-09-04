@@ -1,13 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { FileText, User as UserIcon, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Settings as SettingsModal } from "@/components/Settings";
 
 export default function HeaderClient() {
   const { user, signOut } = useAuth();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -40,14 +43,17 @@ export default function HeaderClient() {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-black border-gray-700" align="end" forceMount>
+            <DropdownMenuContent className="w-56 bg-black border-2 border-gray-600 shadow-lg" align="end" forceMount>
               <div className="flex flex-col space-y-1 p-2">
                 <p className="text-white font-medium">{user?.name || '사용자'}</p>
                 {user?.email && <p className="text-xs text-gray-300">{user.email}</p>}
                 {user?.businessName && <p className="text-xs text-gray-300">{user.businessName}</p>}
               </div>
               <DropdownMenuSeparator className="bg-gray-700" />
-              <DropdownMenuItem className="cursor-pointer text-white hover:bg-gray-800">
+              <DropdownMenuItem 
+                className="cursor-pointer text-white hover:bg-gray-800"
+                onClick={() => setIsSettingsOpen(true)}
+              >
                 <Settings className="mr-2 h-4 w-4" />
                 <span>계정 설정</span>
               </DropdownMenuItem>
@@ -63,6 +69,11 @@ export default function HeaderClient() {
           </DropdownMenu>
         </div>
       </div>
+      
+      <SettingsModal 
+        open={isSettingsOpen} 
+        onOpenChange={setIsSettingsOpen} 
+      />
     </header>
   );
 }

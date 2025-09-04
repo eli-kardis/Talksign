@@ -146,13 +146,6 @@ export function PaymentView({ onNavigate }: PaymentViewProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-medium text-foreground">결제 관리</h2>
-          <p className="text-muted-foreground">결제 현황을 확인하고 리마인드를 관리하세요</p>
-        </div>
-      </div>
 
       {/* Payment Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

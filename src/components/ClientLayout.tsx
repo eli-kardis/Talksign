@@ -37,25 +37,29 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   
   // 비보호 라우트 또는 로그인된 사용자
   if (!isProtectedRoute || user) {
-    // 로그인된 사용자의 보호된 라우트라면 헤더와 네비게이션 포함
+    // 로그인된 사용자의 보호된 라우트라면 헤더와 사이드바 포함
     if (isProtectedRoute && user) {
       return (
-        <>
+        <div className="min-h-screen bg-background">
           {/* 공통 헤더 */}
           <HeaderClient />
 
-          {/* 공통 탭 내비게이션 */}
-          <nav className="bg-background border-b border-border px-4 py-4">
-            <div className="max-w-7xl mx-auto">
-              <NavTabs />
-            </div>
-          </nav>
+          <div className="flex">
+            {/* 왼쪽 사이드바 */}
+            <aside className="w-64 bg-card border-r border-border sticky top-0" style={{ height: 'calc(100vh - 64px)' }}>
+              <nav className="p-4">
+                <NavTabs />
+              </nav>
+            </aside>
 
-          {/* 페이지 컨텐츠 */}
-          <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
-            {children}
-          </main>
-        </>
+            {/* 페이지 컨텐츠 */}
+            <main className="flex-1 p-6">
+              <div className="max-w-6xl mx-auto">
+                {children}
+              </div>
+            </main>
+          </div>
+        </div>
       )
     }
     

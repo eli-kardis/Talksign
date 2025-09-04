@@ -3,57 +3,164 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { useTenant } from "@/contexts/TenantContext";
+import React, { useState } from "react";
+import { 
+  LayoutDashboard, 
+  FileText, 
+  DollarSign, 
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  FileSignature,
+  CreditCard,
+  Receipt
+} from "lucide-react";
+
+interface SubItem {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+}
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  subItems?: SubItem[];
+}
 
 export function NavTabs() {
   const pathname = usePathname();
   const { basePath } = useTenant();
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
-  const items = [
-    { href: `${basePath}/dashboard`, label: "대시보드" },
-    { href: `${basePath}/documents`, label: "문서관리" },
-    { href: `${basePath}/finance`, label: "재무관리" },
-    { href: `${basePath}/schedule`, label: "일정" },
+  const items: NavItem[] = [
+    { 
+      href: `${basePath}/dashboard`, 
+      label: "대시보드", 
+      icon: LayoutDashboard 
+    },
+    { 
+      href: `${basePath}/documents`, 
+      label: "문서관리", 
+      icon: FileText,
+      subItems: [
+        { href: `${basePath}/documents/quotes`, label: "견적서", icon: FileText },
+        { href: `${basePath}/documents/contracts`, label: "계약서", icon: FileSignature },
+      ]
+    },
+    { 
+      href: `${basePath}/finance`, 
+      label: "재무관리", 
+      icon: DollarSign,
+      subItems: [
+        { href: `${basePath}/finance/payments`, label: "결제", icon: CreditCard },
+        { href: `${basePath}/finance/tax-invoices`, label: "세금계산서", icon: Receipt },
+      ]
+    },
+    { 
+      href: `${basePath}/schedule`, 
+      label: "일정", 
+      icon: Calendar 
+    },
   ];
 
-  // 현재 탭 활성화 - startsWith로 판정 (더 정확한 매칭을 위해 길이순 정렬)
-  const getCurrentTab = () => {
-    if (!pathname) return `${basePath}/dashboard`;
+  // 페이지 로드시 자동 확장
+  React.useEffect(() => {
+    const shouldExpand = items.find(item => 
+      item.subItems && pathname?.startsWith(item.href + '/')
+    );
     
-    // 특별 케이스: documents 관련 경로들은 모두 documents 탭으로 매핑
-    if (pathname.startsWith(`${basePath}/documents`)) {
-      return `${basePath}/documents`;
+    if (shouldExpand && !expandedItems.includes(shouldExpand.href)) {
+      setExpandedItems([shouldExpand.href]);
     }
-    
-    // finance 관련 경로들은 모두 finance 탭으로 매핑
-    if (pathname.startsWith(`${basePath}/finance`)) {
-      return `${basePath}/finance`;
-    }
-    
-    // 가장 구체적인 경로부터 매칭 (길이순 정렬)
-    const sortedItems = [...items].sort((a, b) => b.href.length - a.href.length);
-    const matched = sortedItems.find((i) => pathname.startsWith(i.href));
-    
-    return matched?.href ?? `${basePath}/dashboard`;
+  }, [pathname]);
+
+  const toggleExpanded = (href: string) => {
+    setExpandedItems(prev => {
+      if (prev.includes(href)) {
+        // 현재 항목이 확장되어 있으면 축소
+        return prev.filter(item => item !== href);
+      } else {
+        // 현재 항목이 축소되어 있으면 확장하고 다른 모든 항목은 축소
+        return [href];
+      }
+    });
   };
 
-  const value = getCurrentTab();
-
   return (
-    <Tabs value={value}>
-      <TabsList className="grid w-full grid-cols-4 gap-2 p-0 bg-transparent">
-        {items.map((i) => (
-          <TabsTrigger
-            key={i.href}
-            asChild
-            value={i.href}
-            // 기본 스타일은 ui/tabs.tsx에서 처리, 여기서는 최소한만 오버라이드
-          >
-            <Link href={i.href}>{i.label}</Link>
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    </Tabs>
+    <nav className="space-y-1">
+      {items.map((item) => {
+        const isMainActive = pathname === item.href;
+        const isChildActive = pathname?.startsWith(item.href + '/');
+        const isExpanded = expandedItems.includes(item.href);
+        const Icon = item.icon;
+        
+        return (
+          <div key={item.href}>
+            {/* 메인 네비게이션 아이템 */}
+            <div
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer",
+                "hover:bg-accent hover:text-accent-foreground",
+                isMainActive || (isChildActive && !item.subItems)
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : isChildActive
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground"
+              )}
+              onClick={() => {
+                if (item.subItems) {
+                  toggleExpanded(item.href);
+                } else {
+                  window.location.href = item.href;
+                }
+              }}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="flex-1">{item.label}</span>
+              {item.subItems && (
+                <div className="ml-auto">
+                  {isExpanded ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 서브 네비게이션 아이템들 */}
+            {item.subItems && isExpanded && (
+              <div className="ml-6 mt-1 space-y-1">
+                {item.subItems.map((subItem) => {
+                  const isSubActive = pathname === subItem.href || pathname?.startsWith(subItem.href + '/');
+                  const SubIcon = subItem.icon;
+                  
+                  return (
+                    <Link
+                      key={subItem.href}
+                      href={subItem.href}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                        "hover:bg-accent hover:text-accent-foreground",
+                        isSubActive
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      <SubIcon className="w-4 h-4" />
+                      {subItem.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </nav>
   );
 }

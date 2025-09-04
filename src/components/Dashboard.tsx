@@ -380,9 +380,10 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+    <div className="h-full max-h-[calc(100vh-120px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="space-y-4 md:space-y-6 p-1">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card className="p-4 md:p-6 bg-card border-border">
           <div className="flex items-center justify-between">
             <div>
@@ -426,23 +427,23 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Workflow Status */}
-        <Card className="p-4 md:p-6 bg-card border-border">
-          <div className="flex items-center justify-between mb-4">
+        <Card className="p-4 md:p-6 bg-card border-border h-fit max-h-[400px]">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="font-medium text-foreground">현재 진행 상황</h3>
             <Button variant="outline" size="sm" className="border-border text-xs md:text-sm hover:bg-accent hover:text-accent-foreground transition-colors" onClick={() => router.push('/documents/quotes')}>전체보기</Button>
           </div>
           
-          <div className="space-y-2 md:space-y-3">
+          <div className="space-y-2 max-h-[300px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {workflowSteps.map((item, index) => {
               const totalItems = workflowSteps.reduce((sum, step) => sum + step.count, 0);
               const percentage = totalItems > 0 ? (item.count / totalItems) * 100 : 0;
               
               return (
                 <div key={index} className="p-2 md:p-3 bg-secondary rounded-lg border border-border">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2 md:gap-3">
                       <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      <span className="text-sm md:text-base text-foreground">{item.step}</span>
+                      <span className="text-sm text-foreground">{item.step}</span>
                     </div>
                     <Badge className={`text-xs ${item.color}`}>
                       {item.count}건
@@ -464,8 +465,8 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
         </Card>
 
         {/* Schedule Management */}
-        <Card className="p-4 md:p-6 bg-card border-border">
-          <div className="flex items-center justify-between mb-4">
+        <Card className="p-4 md:p-6 bg-card border-border h-fit max-h-[400px]">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <CalendarClock className="w-5 h-5 text-primary" />
               <h3 className="font-medium text-foreground">일정 관리</h3>
@@ -473,24 +474,26 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
             <Button variant="outline" size="sm" className="border-border text-xs md:text-sm hover:bg-accent hover:text-accent-foreground transition-colors" onClick={() => router.push('/schedule')}>전체보기</Button>
           </div>
           
-          <div className="space-y-2 md:space-y-3">
+          <div className="max-h-[300px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {schedulesLoading ? (
               // 로딩 상태
-              [...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center justify-between p-2 md:p-3 bg-secondary rounded-lg border border-border">
-                  <div className="flex items-start gap-2 md:gap-3 flex-1">
-                    <div className="w-4 h-4 bg-muted rounded animate-pulse"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-muted rounded animate-pulse w-3/4"></div>
-                      <div className="h-3 bg-muted rounded animate-pulse w-1/2"></div>
+              <div className="space-y-2">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex items-center justify-between p-2 md:p-3 bg-secondary rounded-lg border border-border">
+                    <div className="flex items-start gap-2 md:gap-3 flex-1">
+                      <div className="w-4 h-4 bg-muted rounded animate-pulse"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-muted rounded animate-pulse w-3/4"></div>
+                        <div className="h-3 bg-muted rounded animate-pulse w-1/2"></div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             ) : schedules.length === 0 ? (
               // 빈 상태
-              <div className="text-center py-8 text-muted-foreground">
-                <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <div className="text-center py-6 text-muted-foreground">
+                <Calendar className="w-6 h-6 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">예정된 일정이 없습니다</p>
                 <Button 
                   variant="ghost" 
@@ -503,46 +506,49 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
               </div>
             ) : (
               // 일정 목록
-              schedules.slice(0, 5).map((schedule) => (
-                <div 
-                  key={schedule.id} 
-                  className="flex items-center justify-between p-2 md:p-3 bg-secondary rounded-lg border border-border cursor-pointer hover:bg-secondary/80 transition-colors"
-                  onClick={() => handleScheduleClick(schedule)}
-                >
-                  <div className="flex items-start gap-2 md:gap-3 flex-1 min-w-0">
-                    {getScheduleIcon(schedule.type)}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm md:text-base text-foreground truncate font-medium">
-                          {schedule.title}
-                        </p>
-                        <Badge className={`text-xs whitespace-nowrap ${getPriorityBadge(schedule.priority)}`}>
-                          {schedule.priority === 'high' ? '긴급' : schedule.priority === 'medium' ? '보통' : '낮음'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
-                        <span>{formatDate(schedule.date)}</span>
-                        <span>•</span>
-                        <span>{schedule.time}</span>
+              <div className="space-y-2">
+                {schedules.slice(0, 4).map((schedule) => (
+                  <div 
+                    key={schedule.id} 
+                    className="flex items-center justify-between p-2 md:p-3 bg-secondary rounded-lg border border-border cursor-pointer hover:bg-secondary/80 transition-colors"
+                    onClick={() => handleScheduleClick(schedule)}
+                  >
+                    <div className="flex items-start gap-2 md:gap-3 flex-1 min-w-0">
+                      {getScheduleIcon(schedule.type)}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-sm text-foreground truncate font-medium">
+                            {schedule.title}
+                          </p>
+                          <Badge className={`text-xs whitespace-nowrap ${getPriorityBadge(schedule.priority)}`}>
+                            {schedule.priority === 'high' ? '긴급' : schedule.priority === 'medium' ? '보통' : '낮음'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{formatDate(schedule.date)}</span>
+                          <span>•</span>
+                          <span>{schedule.time}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
         </Card>
+        </div>
+        
+        {/* 일정 상세 팝업 */}
+        <ScheduleDetailPopup
+          schedule={selectedSchedule}
+          isOpen={isSchedulePopupOpen}
+          onClose={() => {
+            setIsSchedulePopupOpen(false);
+            setSelectedSchedule(null);
+          }}
+        />
       </div>
-      
-      {/* 일정 상세 팝업 */}
-      <ScheduleDetailPopup
-        schedule={selectedSchedule}
-        isOpen={isSchedulePopupOpen}
-        onClose={() => {
-          setIsSchedulePopupOpen(false);
-          setSelectedSchedule(null);
-        }}
-      />
     </div>
   );
 }

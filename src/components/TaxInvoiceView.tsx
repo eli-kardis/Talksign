@@ -5,7 +5,7 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Receipt, Search, Filter, Download, Eye, Calendar, User, Building, CheckCircle, Clock, AlertCircle, ArrowLeft, Send } from 'lucide-react';
+import { Receipt, Search, Filter, Download, Eye, Calendar, User, Building, CheckCircle, Clock, AlertCircle, Send } from 'lucide-react';
 
 interface TaxInvoice {
   id: number;
@@ -57,11 +57,9 @@ const mockTaxInvoices: TaxInvoice[] = [
   }
 ];
 
-interface TaxInvoiceViewProps {
-  onBack: () => void;
-}
+interface TaxInvoiceViewProps {}
 
-export function TaxInvoiceView({ onBack }: TaxInvoiceViewProps) {
+export function TaxInvoiceView({}: TaxInvoiceViewProps = {}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [activeTab, setActiveTab] = useState('all');
@@ -114,19 +112,6 @@ export function TaxInvoiceView({ onBack }: TaxInvoiceViewProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={onBack} className="border-border">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            돌아가기
-          </Button>
-          <div>
-            <h2 className="text-2xl font-medium text-foreground">세금계산서 관리</h2>
-            <p className="text-muted-foreground">결제 완료 후 자동 발행되는 세금계산서를 관리하세요</p>
-          </div>
-        </div>
-      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -14,6 +14,7 @@ type AuthContextType = {
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<AuthResult>
   updatePassword: (password: string) => Promise<AuthResult>
+  updateProfile: (data: Partial<UserData>) => Promise<AuthResult>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -232,6 +233,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const updateProfile = async (userData: Partial<UserData>) => {
+    try {
+      return await auth.updateProfile(userData)
+    } catch (error) {
+      console.error('UpdateProfile error:', error)
+      throw error
+    }
+  }
+
   const value = {
     user,
     isLoading,
@@ -240,6 +250,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     resetPassword,
     updatePassword,
+    updateProfile,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

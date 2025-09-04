@@ -145,7 +145,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. 견적서 생성
-    const quoteData: QuoteInsert = {
+    const expiresAt = body.valid_until ? new Date(body.valid_until).toISOString() : (body.expires_at ? new Date(body.expires_at).toISOString() : null)
+    
+    const quoteData: any = {
       user_id: authUser.user.id,
       client_name: body.client_name,
       client_email: body.client_email,
@@ -156,7 +158,9 @@ export async function POST(request: NextRequest) {
       items: items,
       subtotal: subtotal,
       status: body.status || 'draft',
-      expires_at: body.expires_at || null,
+      expires_at: expiresAt,
+      client_business_number: body.client_business_number || null,
+      client_address: body.client_address || null,
     }
     
     console.log('Quote data to insert:', JSON.stringify(quoteData, null, 2))

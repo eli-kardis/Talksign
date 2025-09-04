@@ -19,7 +19,8 @@ import {
   FileText,
   Loader2,
   AlertCircle,
-  User
+  User,
+  Clock
 } from "lucide-react";
 
 interface QuoteItem {

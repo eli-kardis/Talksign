@@ -7,7 +7,8 @@ import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
 import { Separator } from './ui/separator'
-import { ArrowLeft, MessageSquare, Save } from 'lucide-react'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
+import { ArrowLeft, MessageSquare, Save, AlertTriangle } from 'lucide-react'
 import { QuoteItemsTable } from './QuoteItemsTable'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatPhoneNumber, formatBusinessNumber, formatNumber } from '@/lib/formatters'
@@ -24,13 +25,41 @@ interface QuoteItem {
 
 interface NewQuoteProps {
   onNavigate: (view: string) => void
+  isEdit?: boolean
+  editQuoteId?: string
+  initialData?: {
+    client: {
+      name: string
+      email: string
+      phone: string
+      company: string
+      businessNumber?: string
+      address?: string
+    }
+    project: {
+      title: string
+      description: string
+    }
+    items: Array<{
+      id: string
+      description: string
+      amount: number
+    }>
+    taxRate: number
+    expiresAt: string
+  }
 }
 
-export function NewQuote({ onNavigate }: NewQuoteProps) {
+export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData }: NewQuoteProps) {
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [quoteTitle, setQuoteTitle] = useState('')
   const [validUntil, setValidUntil] = useState('')
+  
+  // 변경사항 감지 및 확인 팝업 관련 상태
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [initialFormData, setInitialFormData] = useState<any>(null)
   const [supplierInfo, setSupplierInfo] = useState({
     name: '',
     email: '',
@@ -86,6 +115,135 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
 
     loadUserInfo()
   }, [user?.id])
+
+
+  // 수정 모드일 때 초기 데이터 설정
+  useEffect(() => {
+    if (isEdit && initialData) {
+      const newClientInfo = {
+        name: initialData.client.name,
+        email: initialData.client.email,
+        phone: initialData.client.phone,
+        company: initialData.client.company,
+        businessNumber: initialData.client.businessNumber || '',
+        address: initialData.client.address || '',
+        logoUrl: '',
+      }
+      
+      const newProjectInfo = {
+        title: initialData.project.title,
+        description: initialData.project.description,
+        dueDate: '',
+        notes: '',
+      }
+
+      const newQuoteTitle = initialData.project.title
+      const newValidUntil = initialData.expiresAt ? initialData.expiresAt.split('T')[0] : ''
+      
+      // items 변환
+      const transformedItems = initialData.items.map((item, index) => ({
+        id: index + 1,
+        name: item.description,
+        description: item.description,
+        unitPrice: item.amount,
+        quantity: 1,
+        unit: '개',
+        amount: item.amount
+      }))
+      
+      setClientInfo(newClientInfo)
+      setProjectInfo(newProjectInfo)
+      setQuoteTitle(newQuoteTitle)
+      setValidUntil(newValidUntil)
+      
+      if (transformedItems.length > 0) {
+        setItems(transformedItems)
+      }
+    }
+  }, [isEdit, initialData])
+
+  // 초기 폼 데이터 설정 (수정 모드에서만)
+  useEffect(() => {
+    if (isEdit && initialData && supplierInfo.name) {
+      // 공급자 정보가 로드된 후에 초기 데이터 설정
+      setInitialFormData({
+        clientInfo: {
+          name: initialData.client.name,
+          email: initialData.client.email,
+          phone: initialData.client.phone,
+          company: initialData.client.company,
+          businessNumber: initialData.client.businessNumber || '',
+          address: initialData.client.address || '',
+          logoUrl: '',
+        },
+        projectInfo: {
+          title: initialData.project.title,
+          description: initialData.project.description,
+          dueDate: '',
+          notes: '',
+        },
+        quoteTitle: initialData.project.title,
+        validUntil: initialData.expiresAt ? initialData.expiresAt.split('T')[0] : '',
+        items: initialData.items.map((item, index) => ({
+          id: index + 1,
+          name: item.description,
+          description: item.description,
+          unitPrice: item.amount,
+          quantity: 1,
+          unit: '개',
+          amount: item.amount
+        })),
+        supplierInfo
+      })
+    }
+  }, [isEdit, initialData, supplierInfo.name])
+
+  // 변경사항 감지
+  useEffect(() => {
+    if (!initialFormData || !isEdit) {
+      setHasUnsavedChanges(false)
+      return
+    }
+
+    // Deep comparison을 위한 함수
+    const compareObjects = (obj1: any, obj2: any) => {
+      try {
+        return JSON.stringify(obj1) === JSON.stringify(obj2)
+      } catch (error) {
+        console.warn('Object comparison failed:', error)
+        return true // 에러 발생시 변경사항 없음으로 처리
+      }
+    }
+
+    const currentFormData = {
+      clientInfo,
+      projectInfo,
+      quoteTitle,
+      validUntil,
+      items,
+      supplierInfo
+    }
+
+    const hasChanges = !compareObjects(currentFormData, initialFormData)
+    setHasUnsavedChanges(hasChanges)
+  }, [clientInfo, projectInfo, quoteTitle, validUntil, items, supplierInfo, initialFormData, isEdit])
+
+
+  // 페이지 언로드 시 경고 (변경사항이 있을 때)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [hasUnsavedChanges])
 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
   const vatAmount = Math.floor(totalAmount * 0.1)
@@ -170,8 +328,11 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
         notes: null,
       }
 
-      const response = await fetch('/api/quotes', {
-        method: 'POST',
+      const url = isEdit && editQuoteId ? `/api/quotes/${editQuoteId}` : '/api/quotes'
+      const method = isEdit ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -199,9 +360,22 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
       const savedQuote = await response.json()
       
       if (status === 'sent') {
-        alert(`${clientInfo.name}님께 카카오톡으로 견적서가 발송되었습니다!`)
+        alert(`${clientInfo.name}님께 카카오톡으로 견적서가 ${isEdit ? '수정되어' : ''} 발송되었습니다!`)
       } else {
-        alert('견적서가 임시저장되었습니다.')
+        alert(`견적서가 ${isEdit ? '수정되어' : ''} 임시저장되었습니다.`)
+      }
+
+      // 저장 후 변경사항 상태 리셋
+      if (isEdit) {
+        setInitialFormData({
+          clientInfo,
+          projectInfo,
+          quoteTitle,
+          validUntil,
+          items,
+          supplierInfo
+        })
+        setHasUnsavedChanges(false)
       }
       
       onNavigate('documents')
@@ -216,17 +390,49 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
   const handleSaveAndSend = () => saveQuote('sent')
   const handleSaveDraft = () => saveQuote('draft')
 
+  // 돌아가기 버튼 클릭 핸들러
+  const handleBackClick = () => {
+    // 수정 모드이고 변경사항이 있을 때만 확인 팝업 표시
+    if (isEdit && hasUnsavedChanges) {
+      setShowExitConfirm(true)
+    } else {
+      // 새 작성이거나 변경사항이 없으면 바로 이동
+      onNavigate('documents')
+    }
+  }
+
+  // 저장하고 나가기
+  const handleSaveAndExit = async () => {
+    setShowExitConfirm(false)
+    await saveQuote('draft')
+  }
+
+  // 저장하지 않고 나가기
+  const handleExitWithoutSaving = () => {
+    setShowExitConfirm(false)
+    onNavigate('documents')
+  }
+
+  // 취소 (계속 작업하기)
+  const handleCancelExit = () => {
+    setShowExitConfirm(false)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button type="button" variant="outline" onClick={() => onNavigate('documents')} className="border-border">
+        <Button type="button" variant="outline" onClick={handleBackClick} className="border-border">
           <ArrowLeft className="w-4 h-4 mr-2" />
           돌아가기
         </Button>
         <div>
-          <h2 className="text-2xl font-medium text-foreground">새 견적서 작성</h2>
-          <p className="text-muted-foreground">고객 정보와 프로젝트 내용을 입력하세요</p>
+          <h2 className="text-2xl font-medium text-foreground">
+            {isEdit ? '견적서 수정' : '새 견적서 작성'}
+          </h2>
+          <p className="text-muted-foreground">
+            {isEdit ? '견적서 정보를 수정하세요' : '고객 정보와 프로젝트 내용을 입력하세요'}
+          </p>
         </div>
       </div>
 
@@ -402,41 +608,85 @@ export function NewQuote({ onNavigate }: NewQuoteProps) {
           />
         </div>
 
-        {/* Action Sidebar */}
-        <div className="space-y-6">
-          <Card className="p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">발송 옵션</h3>
-            <div className="space-y-3">
-              <Button
-                type="button"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                onClick={handleSaveAndSend}
-                disabled={isLoading || !supplierInfo.name || !supplierInfo.email || !supplierInfo.phone || !clientInfo.name || !clientInfo.email || !quoteTitle.trim() || (supplierInfo.businessRegistrationNumber && !supplierInfo.companyName)}
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                {isLoading ? '발송 중...' : '카카오톡으로 발송'}
-              </Button>
+        {/* Action Sidebar - Sticky */}
+        <div className="sticky top-6 self-start">
+          <div className="space-y-6">
+            <Card className="p-6 bg-card border-border shadow-lg">
+              <h3 className="font-medium mb-4 text-foreground">발송 옵션</h3>
+              <div className="space-y-3">
+                <Button
+                  type="button"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={handleSaveAndSend}
+                  disabled={isLoading || !supplierInfo.name || !supplierInfo.email || !supplierInfo.phone || !clientInfo.name || !clientInfo.email || !quoteTitle.trim() || (supplierInfo.businessRegistrationNumber && !supplierInfo.companyName)}
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  {isLoading ? '발송 중...' : '카카오톡으로 발송'}
+                </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-border"
-                onClick={handleSaveDraft}
-                disabled={isLoading}
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {isLoading ? '저장 중...' : '임시저장'}
-              </Button>
-            </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-border"
+                  onClick={handleSaveDraft}
+                  disabled={isLoading || (isEdit && !hasUnsavedChanges)}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {isLoading ? '저장 중...' : '임시저장'}
+                </Button>
+              </div>
 
-            <div className="mt-4 p-3 bg-accent rounded-lg">
-              <p className="text-sm text-accent-foreground">
-                💡 견적서가 카카오톡으로 발송되면 고객이 바로 확인하고 승인할 수 있습니다.
-              </p>
-            </div>
-          </Card>
+              <div className="mt-4 p-3 bg-accent rounded-lg">
+                <p className="text-sm text-accent-foreground">
+                  💡 견적서가 카카오톡으로 발송되면 고객이 바로 확인하고 승인할 수 있습니다.
+                </p>
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
+
+      {/* 저장 확인 팝업 */}
+      <Dialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="w-5 h-5" />
+              변경사항이 있습니다
+            </DialogTitle>
+            <DialogDescription>
+              수정한 내용이 저장되지 않았습니다. 어떻게 하시겠습니까?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DialogFooter className="flex gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancelExit}
+              className="flex-1"
+            >
+              계속 작업하기
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleExitWithoutSaving}
+              className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              저장하지 않고 나가기
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSaveAndExit}
+              disabled={isLoading}
+              className="flex-1 bg-primary hover:bg-primary/90"
+            >
+              {isLoading ? '저장 중...' : '저장하고 나가기'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -102,6 +102,49 @@ export const auth = {
     }
   },
 
+  // 사용자 프로필 업데이트
+  async updateProfile(userData: Partial<UserData>): Promise<AuthResult> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        return { success: false, error: '인증되지 않은 사용자입니다.' }
+      }
+
+      // 이메일이 변경된 경우 Supabase Auth 업데이트
+      if (userData.email && userData.email !== user.email) {
+        const { error: authError } = await supabase.auth.updateUser({
+          email: userData.email
+        })
+
+        if (authError) {
+          return { success: false, error: this.getErrorMessage(authError.message) }
+        }
+      }
+
+      // users 테이블 업데이트
+      const { error: dbError } = await supabase
+        .from('users')
+        .update({
+          name: userData.name,
+          phone: userData.phone,
+          email: userData.email,
+          business_registration_number: userData.businessRegistrationNumber || null,
+          company_name: userData.companyName || null,
+          business_name: userData.businessName || null
+        })
+        .eq('id', user.id)
+
+      if (dbError) {
+        return { success: false, error: '공급자 정보 업데이트에 실패했습니다.' }
+      }
+
+      return { success: true }
+    } catch {
+      return { success: false, error: '공급자 정보 업데이트 중 오류가 발생했습니다.' }
+    }
+  },
+
   // 에러 메시지 변환
   getErrorMessage(error: string): string {
     if (error.includes('Invalid login credentials')) {

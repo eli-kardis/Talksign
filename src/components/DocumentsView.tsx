@@ -2,11 +2,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { QuoteList } from "./QuoteList";
 import { ContractView } from "./ContractView";
-import { FileText, FileCheck } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
 
 type DocTab = "quotes" | "contracts";
@@ -40,49 +37,34 @@ export function DocumentsView({
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* 상단 서브탭 */}
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-2 bg-transparent gap-2 p-0">
-          {/* 견적서 탭 → /documents/quotes */}
-          <TabsTrigger
-            asChild
-            value="quotes"
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <Link href={`${basePath}/documents/quotes`}>
-              <FileText className="w-4 h-4" />
-              <span className="ml-1">견적서</span>
-            </Link>
-          </TabsTrigger>
+      {/* 탭에 따른 콘텐츠 렌더링 */}
+      {activeTab === "quotes" && (
+        <QuoteList
+          onNewQuote={() => onNavigate("new-quote")}
+          onViewQuote={(quoteId) => {
+            // Navigate to the quote detail page with the specific quote ID
+            window.location.href = `${basePath}/documents/quotes/${quoteId}`;
+          }}
+          onEditQuote={(quoteId) => {
+            // Navigate to the quote edit page
+            window.location.href = `${basePath}/documents/quotes/${quoteId}/edit`;
+          }}
+        />
+      )}
 
-          {/* 계약서 탭 → /documents/contracts */}
-          <TabsTrigger
-            asChild
-            value="contracts"
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <Link href={`${basePath}/documents/contracts`}>
-              <FileCheck className="w-4 h-4" />
-              <span className="ml-1">계약서</span>
-            </Link>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* 탭 콘텐츠 (클라이언트 전환 시 깜빡임 방지용) */}
-        <TabsContent value="quotes" className="mt-6">
-          <QuoteList
-            onNewQuote={() => onNavigate("new-quote")}
-            onViewQuote={(quoteId) => {
-              // Navigate to the quote detail page with the specific quote ID
-              window.location.href = `${basePath}/documents/quotes/${quoteId}`;
-            }}
-          />
-        </TabsContent>
-
-        <TabsContent value="contracts" className="mt-6">
-          <ContractView onNewContract={() => onNavigate("new-contract")} />
-        </TabsContent>
-      </Tabs>
+      {activeTab === "contracts" && (
+        <ContractView 
+          onNewContract={() => onNavigate("new-contract")}
+          onEditContract={(contractId) => {
+            // Navigate to the contract edit page
+            window.location.href = `${basePath}/documents/contracts/${contractId}/edit`;
+          }}
+          onViewContract={(contractId) => {
+            // Navigate to the contract detail page
+            window.location.href = `${basePath}/documents/contracts/${contractId}`;
+          }}
+        />
+      )}
     </div>
   );
 }
