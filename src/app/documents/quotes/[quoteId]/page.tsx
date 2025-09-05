@@ -157,6 +157,56 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
 
   const statusBadge = getStatusBadge(quote.status);
 
+  const handleCreateContract = async () => {
+    try {
+      // 견적서 데이터를 기반으로 계약서 생성
+      const contractData = {
+        quote_id: quote.id,
+        title: `${quote.title} - 계약서`,
+        client_name: quote.client_name,
+        client_email: quote.client_email,
+        client_phone: quote.client_phone,
+        client_company: quote.client_company,
+        client_business_number: quote.client_business_number,
+        client_address: quote.client_address,
+        supplier_info: quote.supplier,
+        items: quote.items,
+        subtotal: quote.subtotal,
+        tax_amount: quote.tax_amount,
+        tax_rate: quote.tax_rate,
+        total_amount: quote.total_amount,
+        description: quote.description,
+        terms: [
+          "프로젝트 수행 기간은 계약서 체결 후 협의하여 결정합니다.",
+          "계약금 50% 선입금, 완료 후 50% 잔금 지급",
+          "프로젝트 요구사항 변경 시 추가 비용이 발생할 수 있습니다.",
+          "저작권은 완전한 대금 지급 후 발주처로 이전됩니다.",
+          "계약 위반 시 위약금이 부과될 수 있습니다."
+        ],
+        status: 'draft'
+      };
+
+      const response = await fetch('/api/contracts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(contractData),
+      });
+
+      if (response.ok) {
+        const contract = await response.json();
+        // 새로 생성된 계약서 편집 페이지로 이동
+        router.push(`/documents/contracts/${contract.id}/edit`);
+      } else {
+        throw new Error('계약서 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Contract creation error:', error);
+      alert('계약서 생성 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -191,6 +241,12 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
             <Download className="w-4 h-4 mr-2" />
             다운로드
           </Button>
+          {(quote.status === 'approved' || quote.status === 'sent') && (
+            <Button onClick={handleCreateContract} className="bg-green-600 hover:bg-green-700 text-white">
+              <FileText className="w-4 h-4 mr-2" />
+              계약서 작성
+            </Button>
+          )}
           <Button onClick={() => router.push(`/documents/quotes/${quoteId}/edit`)}>
             <Edit className="w-4 h-4 mr-2" />
             수정
@@ -205,12 +261,11 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
           {/* 1. 견적서 제목과 견적일자 */}
           <div className="border-b border-gray-300 pb-6">
             <div className="flex justify-between items-start">
-              <div className="flex-1"></div>
-              <div className="text-center flex-1">
+              <div className="flex-1">
                 <h2 className="text-3xl md:text-4xl font-bold text-black mb-2">{quote.title}</h2>
                 <p className="text-sm text-gray-600">견적서 번호: {quote.id.slice(0, 8).toUpperCase()}</p>
               </div>
-              <div className="text-right flex-1">
+              <div className="text-right">
                 <div className="flex items-center gap-2 justify-end">
                   <span className="text-sm font-medium text-gray-600">견적일자:</span>
                   <span className="font-semibold text-black">

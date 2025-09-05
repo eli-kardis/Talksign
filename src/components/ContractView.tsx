@@ -12,7 +12,7 @@ import { ko } from 'date-fns/locale';
 import { PenTool, FileText, Clock, CheckCircle, AlertCircle, Search, MessageSquare, Eye, Edit, Calendar, User, Plus, ChevronUp, ChevronDown, Filter } from 'lucide-react';
 
 interface Contract {
-  id: number;
+  id: string;
   client: string;
   project: string;
   amount: number;
@@ -25,7 +25,7 @@ interface Contract {
 
 const mockContracts: Contract[] = [
   {
-    id: 1,
+    id: "90cfcedd-b86d-4f13-96c0-bce2d9072665",
     client: "스타트업 A",
     project: "웹사이트 리뉴얼 프로젝트",
     amount: 3000000,
@@ -36,7 +36,7 @@ const mockContracts: Contract[] = [
     phone: "010-1234-5678"
   },
   {
-    id: 2,
+    id: "7b4e3f2a-c5d6-4e8f-9a1b-2c3d4e5f6789",
     client: "기업 B",
     project: "모바일 앱 개발",
     amount: 8000000,
@@ -46,7 +46,7 @@ const mockContracts: Contract[] = [
     phone: "010-2345-6789"
   },
   {
-    id: 3,
+    id: "a1b2c3d4-e5f6-4789-abc1-23456789abcd",
     client: "개인 C",
     project: "브랜딩 디자인 패키지",
     amount: 1500000,
@@ -57,7 +57,7 @@ const mockContracts: Contract[] = [
     phone: "010-3456-7890"
   },
   {
-    id: 4,
+    id: "f9e8d7c6-b5a4-4321-9876-543210fedcba",
     client: "소상공인 D",
     project: "온라인 쇼핑몰 구축",
     amount: 2500000,
@@ -70,8 +70,8 @@ const mockContracts: Contract[] = [
 
 interface ContractViewProps {
   onNewContract: () => void;
-  onEditContract?: (contractId: number) => void;
-  onViewContract?: (contractId: number) => void;
+  onEditContract?: (contractId: string) => void;
+  onViewContract?: (contractId: string) => void;
 }
 
 type TabKey = "all" | "pending" | "sent" | "signed" | "completed";
