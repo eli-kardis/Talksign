@@ -50,7 +50,8 @@ export default function NewContractPage() {
     
     if (fromQuote === 'quote' && encodedData) {
       try {
-        const decodedData = JSON.parse(atob(encodedData)) as QuoteData;
+        // UTF-8 안전한 Base64 디코딩 (encodeURIComponent로 인코딩된 데이터 처리)
+        const decodedData = JSON.parse(decodeURIComponent(atob(encodedData))) as QuoteData;
         setQuoteData(decodedData);
       } catch (error) {
         console.error('Failed to decode quote data:', error);

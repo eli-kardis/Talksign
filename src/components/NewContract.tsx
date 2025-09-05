@@ -224,6 +224,49 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     };
   }, [hasUnsavedChanges]);
 
+  // initialData가 나중에 로드되는 경우를 위한 useEffect
+  useEffect(() => {
+    if (initialData && !isEdit) {
+      // 발주처 정보 업데이트
+      if (initialData.client) {
+        setClientInfo({
+          name: initialData.client.name || '',
+          company: initialData.client.company || '',
+          phone: initialData.client.phone || '',
+          email: initialData.client.email || '',
+          businessNumber: initialData.client.businessNumber || '',
+          address: initialData.client.address || ''
+        });
+      }
+
+      // 프로젝트 정보 업데이트
+      if (initialData.project) {
+        setProjectInfo({
+          startDate: initialData.project.startDate || '',
+          endDate: initialData.project.endDate || '',
+          description: initialData.project.description || ''
+        });
+      }
+
+      // 계약 항목 업데이트
+      if (initialData.items && initialData.items.length > 0) {
+        setContractItems(initialData.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description || '',
+          quantity: item.quantity || 1,
+          unit_price: item.unit_price || item.amount,
+          amount: item.amount
+        })));
+      }
+
+      // 계약 조건 업데이트
+      if (initialData.terms && initialData.terms.length > 0) {
+        setContractTerms(initialData.terms);
+      }
+    }
+  }, [initialData, isEdit]);
+
   // 유틸리티 함수들
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ko-KR').format(amount) + '원';
@@ -468,9 +511,9 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main Form */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-3 space-y-6">
           {/* 견적서에서 온 경우 안내 문구 */}
           {fromQuote && (
             <Card className="p-4 bg-accent border-accent">
@@ -680,75 +723,98 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
               </Button>
             </div>
             
-            <div className="space-y-4">
-              {contractItems.map((item, index) => (
-                <Card key={item.id} className="p-4 bg-background border-border">
-                  <div className="flex items-start justify-between mb-3">
-                    <h4 className="font-medium text-sm text-foreground">항목 {index + 1}</h4>
-                    {contractItems.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeContractItem(item.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-2 md:col-span-2">
-                      <Label className="text-foreground text-xs">항목명 *</Label>
-                      <Input
-                        value={item.name}
-                        onChange={(e) => updateContractItem(item.id, 'name', e.target.value)}
-                        placeholder="서비스 또는 상품명"
-                        className="bg-input-background border-border"
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label className="text-foreground text-xs">설명</Label>
-                      <Textarea
-                        value={item.description}
-                        onChange={(e) => updateContractItem(item.id, 'description', e.target.value)}
-                        placeholder="항목에 대한 상세한 설명"
-                        rows={2}
-                        className="bg-input-background border-border"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-foreground text-xs">수량</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) => updateContractItem(item.id, 'quantity', parseInt(e.target.value) || 1)}
-                        className="bg-input-background border-border"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-foreground text-xs">단가 (원)</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={item.unit_price}
-                        onChange={(e) => updateContractItem(item.id, 'unit_price', parseInt(e.target.value) || 0)}
-                        className="bg-input-background border-border"
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label className="text-foreground text-xs">금액</Label>
-                      <Input
-                        value={formatCurrency(item.amount)}
-                        disabled
-                        className="bg-muted text-muted-foreground font-mono"
-                      />
-                    </div>
-                  </div>
-                </Card>
-              ))}
+            <div className="overflow-hidden">
+                <table className="w-full table-auto">
+                  <thead className="bg-muted/50 border-b border-border">
+                    <tr>
+                      <th className="px-2 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-1/5">항목명</th>
+                      <th className="px-2 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-2/5">설명</th>
+                      <th className="px-2 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-16 whitespace-nowrap">수량</th>
+                      <th className="px-2 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-16 whitespace-nowrap">단위</th>
+                      <th className="px-2 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider w-32">단가</th>
+                      <th className="px-2 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider w-36">금액</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {contractItems.map((item, index) => (
+                      <tr key={item.id} className="hover:bg-muted/30 transition-colors border-b border-border">
+                        <td className="px-2 py-3 align-top">
+                          <Input
+                            value={item.name}
+                            onChange={(e) => updateContractItem(item.id, 'name', e.target.value)}
+                            placeholder="서비스 또는 상품명"
+                            className="border-0 bg-transparent p-2 h-9 text-sm font-medium focus:ring-1 focus:ring-primary focus:bg-muted/30 hover:bg-muted/20 w-full break-words rounded-sm transition-colors"
+                          />
+                        </td>
+                        <td className="px-2 py-3 align-top">
+                          <Textarea
+                            value={item.description}
+                            onChange={(e) => updateContractItem(item.id, 'description', e.target.value)}
+                            placeholder="항목에 대한 상세한 설명"
+                            rows={1}
+                            className="border-0 bg-transparent p-2 h-9 text-sm resize-none focus:ring-1 focus:ring-primary focus:bg-muted/30 hover:bg-muted/20 w-full break-words rounded-sm transition-colors"
+                          />
+                        </td>
+                        <td className="px-2 py-3 text-center align-top">
+                          <Input
+                            type="text"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '');
+                              updateContractItem(item.id, 'quantity', parseInt(value) || 1);
+                            }}
+                            className="border-0 bg-transparent p-2 h-9 text-sm text-center w-full focus:ring-1 focus:ring-primary focus:bg-muted/30 hover:bg-muted/20 rounded-sm transition-colors"
+                          />
+                        </td>
+                        <td className="px-2 py-3 text-center align-top">
+                          <Input
+                            type="text"
+                            value="개"
+                            onChange={(e) => {
+                              // You can implement unit changes here if needed
+                              // For now, keeping it as "개"
+                            }}
+                            className="border-0 bg-transparent p-2 h-9 text-sm text-center w-full focus:ring-1 focus:ring-primary focus:bg-muted/30 hover:bg-muted/20 rounded-sm transition-colors"
+                          />
+                        </td>
+                        <td className="px-2 py-3 text-right align-top">
+                          <div className="flex items-center justify-end">
+                            <Input
+                              type="text"
+                              value={item.unit_price ? new Intl.NumberFormat('ko-KR').format(item.unit_price) : ''}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[^0-9]/g, '');
+                                updateContractItem(item.id, 'unit_price', parseInt(value) || 0);
+                              }}
+                              onWheel={(e) => e.currentTarget.blur()}
+                              className="border-0 bg-transparent p-2 h-9 text-sm text-right focus:ring-1 focus:ring-primary focus:bg-muted/30 hover:bg-muted/20 w-20 rounded-sm transition-colors"
+                              placeholder="0"
+                            />
+                            <span className="text-sm text-muted-foreground ml-1 whitespace-nowrap">원</span>
+                          </div>
+                        </td>
+                        <td className="px-2 py-3 text-right align-top">
+                          <div className="flex items-center justify-end gap-1 h-9">
+                            <span className="font-semibold text-foreground text-sm whitespace-nowrap">
+                              {new Intl.NumberFormat('ko-KR').format(item.amount)}원
+                            </span>
+                            {contractItems.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeContractItem(item.id)}
+                                className="text-destructive hover:text-destructive p-1 h-6 w-6 flex-shrink-0"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
             </div>
 
             {/* 합계 */}
@@ -756,15 +822,15 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
               <div className="flex flex-col gap-2 max-w-xs ml-auto">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">소계</span>
-                  <span className="text-foreground font-mono">{formatCurrency(subtotal)}</span>
+                  <span className="text-foreground">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">부가세 (10%)</span>
-                  <span className="text-foreground font-mono">{formatCurrency(taxAmount)}</span>
+                  <span className="text-foreground">{formatCurrency(taxAmount)}</span>
                 </div>
                 <div className="flex justify-between font-medium pt-2 border-t border-border">
                   <span className="text-foreground">총 금액</span>
-                  <span className="text-lg text-primary font-mono">{formatCurrency(total)}</span>
+                  <span className="text-lg text-primary">{formatCurrency(total)}</span>
                 </div>
               </div>
             </div>
@@ -888,7 +954,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 </div>
                 <div>
                   <p className="text-muted-foreground">총 계약 금액</p>
-                  <p className="text-primary font-bold text-lg font-mono">{formatCurrency(total)}</p>
+                  <p className="text-primary font-bold text-lg">{formatCurrency(total)}</p>
                 </div>
               </div>
             </Card>

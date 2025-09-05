@@ -176,8 +176,8 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
       totalAmount: quote.total_amount
     };
 
-    // Base64로 인코딩하여 URL에 안전하게 전달
-    const encodedData = btoa(JSON.stringify(quoteData));
+    // UTF-8 안전한 Base64 인코딩
+    const encodedData = btoa(encodeURIComponent(JSON.stringify(quoteData)));
     router.push(`/documents/contracts/new?from=quote&data=${encodedData}`);
   };
 
