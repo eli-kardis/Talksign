@@ -571,7 +571,6 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                   >
                     총합계
                   </SortableHeader>
-                  <th className="w-20 px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody>
@@ -613,20 +612,6 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                       <span className="font-mono font-semibold text-foreground text-sm">
                         ₩{new Intl.NumberFormat('ko-KR').format(quote.amount)}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 w-20">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => onViewQuote(quote.id)}>
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => onEditQuote?.(quote.id)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
                     </td>
                   </tr>
                 ))}

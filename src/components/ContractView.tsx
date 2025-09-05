@@ -520,7 +520,6 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                   >
                     총합계
                   </SortableHeader>
-                  <th className="w-20 px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody>
@@ -569,56 +568,6 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                         <span className="font-mono font-semibold text-foreground text-sm">
                           {formatCurrency(contract.amount)}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 w-20">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => onViewContract?.(contract.id)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          
-                          {contract.status === 'pending' && (
-                            <>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => onEditContract?.(contract.id)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => sendToKakao(contract)}
-                              >
-                                <MessageSquare className="w-4 h-4" />
-                              </Button>
-                            </>
-                          )}
-
-                          {contract.status === 'sent' && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => sendContractReminder(contract)}
-                            >
-                              <AlertCircle className="w-4 h-4" />
-                            </Button>
-                          )}
-
-                          {contract.status === 'signed' && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-accent-foreground hover:bg-accent/20"
-                            >
-                              <Calendar className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
                       </td>
                     </tr>
                   );
