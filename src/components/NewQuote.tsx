@@ -552,7 +552,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="businessNumber" className="text-foreground">사업자번호</Label>
+                <Label htmlFor="businessNumber" className="text-foreground">사업자등록번호</Label>
                 <Input
                   id="businessNumber"
                   value={clientInfo.businessNumber}

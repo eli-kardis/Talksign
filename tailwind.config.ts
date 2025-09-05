@@ -67,10 +67,10 @@ const config: Config = {
           ring: "var(--sidebar-ring)",
         },
       },
-      // 글로벌 CSS(Geist 변수)와 정합
+      // 기본 시스템 폰트 사용
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "Menlo", "monospace"],
+        sans: ["system-ui", "sans-serif"],
+        mono: ["ui-monospace", "monospace"],
       },
       // 추가 스페이싱
       spacing: {

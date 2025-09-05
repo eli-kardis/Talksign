@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { CalendarClock, Plus, Edit, Trash2, AlertCircle, Users, FileText, TrendingUp, CheckCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { formatDateToLocal, parseLocalDate } from '@/lib/utils';
 import { ScheduleDetailPopup } from './ScheduleDetailPopup';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 interface ScheduleItem {
   id: number;
@@ -212,12 +214,18 @@ export function Schedule({ onNavigate, schedules, onAddSchedule, onUpdateSchedul
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Calendar */}
         <Card className="lg:col-span-2 p-4 md:p-6 bg-card border-border">
-          <div className="flex flex-col items-center">
+          <div className="w-full">
             <Calendar
               mode="single"
               selected={selectedDate}
               onSelect={handleDateSelect}
-              className="rounded-md border-0"
+              locale={ko}
+              className="w-full [&_.rdp-month]:w-full [&_.rdp-table]:w-full [&_.rdp-head]:w-full [&_.rdp-tbody]:w-full [&_td]:p-1 [&_th]:p-1 [&_.rdp-cell]:text-sm [&_.rdp-button]:h-7 [&_.rdp-button]:w-7 [&_.rdp-button]:text-sm [&_.rdp-caption]:text-base [&_.rdp-caption]:font-medium [&_.rdp-caption]:mb-2"
+              formatters={{
+                formatCaption: (date, options) => {
+                  return format(date, "yyyy년 M월", { locale: ko });
+                },
+              }}
               modifiers={{
                 hasSchedule: scheduleDates
               }}

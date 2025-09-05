@@ -538,7 +538,11 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                   const StatusIcon = statusConfig.icon;
                   
                   return (
-                    <tr key={contract.id} className="hover:bg-muted/10 transition-colors border-b border-border/50">
+                    <tr 
+                      key={contract.id} 
+                      className="hover:bg-muted/30 hover:shadow-sm transition-all duration-200 border-b border-border/50 cursor-pointer group"
+                      onClick={() => onViewContract?.(contract.id)}
+                    >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div>
@@ -548,7 +552,7 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="font-medium text-foreground text-sm">{contract.project}</p>
+                        <p className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">{contract.project}</p>
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-sm">

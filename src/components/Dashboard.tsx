@@ -418,7 +418,7 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs md:text-sm text-muted-foreground">이번 달 매출</p>
-              <p className="text-lg md:text-2xl font-medium text-foreground font-mono break-all">{formatCurrency(stats.monthlyRevenue)}</p>
+              <p className="text-lg md:text-2xl font-medium text-foreground break-all">{formatCurrency(stats.monthlyRevenue)}</p>
             </div>
             <TrendingUp className="w-6 h-6 md:w-8 md:h-8 text-primary" />
           </div>

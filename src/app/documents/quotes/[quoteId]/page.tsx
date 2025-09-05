@@ -49,6 +49,8 @@ interface Quote {
   client_email: string;
   client_phone?: string;
   client_company?: string;
+  client_business_number?: string;
+  client_address?: string;
   title: string;
   description?: string;
   items: QuoteItem[];
@@ -189,7 +191,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
             <Download className="w-4 h-4 mr-2" />
             다운로드
           </Button>
-          <Button>
+          <Button onClick={() => router.push(`/documents/quotes/${quoteId}/edit`)}>
             <Edit className="w-4 h-4 mr-2" />
             수정
           </Button>
@@ -197,127 +199,105 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
       </div>
 
       {/* Quote Document */}
-      <Card className="max-w-4xl mx-auto bg-card border-border shadow-lg">
-        <div className="p-6 md:p-8 space-y-6 md:space-y-8">
+      <Card className="max-w-4xl mx-auto bg-white border-gray-300 shadow-lg">
+        <div className="p-6 md:p-8 space-y-6 md:space-y-8 text-black">
           
-          {/* 1. 견적서 제목 */}
-          <div className="text-center border-b border-border pb-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">{quote.title}</h2>
-            <p className="text-sm text-muted-foreground">견적서 번호: {quote.id.slice(0, 8).toUpperCase()}</p>
-          </div>
-
-          {/* 2. 견적일자 */}
-          <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-muted/30 px-4 py-2 rounded-lg">
-              <Calendar className="w-5 h-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">견적일자</p>
-                <p className="font-semibold text-foreground">{new Date(quote.created_at).toLocaleDateString('ko-KR')}</p>
+          {/* 1. 견적서 제목과 견적일자 */}
+          <div className="border-b border-gray-300 pb-6">
+            <div className="flex justify-between items-start">
+              <div className="flex-1"></div>
+              <div className="text-center flex-1">
+                <h2 className="text-3xl md:text-4xl font-bold text-black mb-2">{quote.title}</h2>
+                <p className="text-sm text-gray-600">견적서 번호: {quote.id.slice(0, 8).toUpperCase()}</p>
+              </div>
+              <div className="text-right flex-1">
+                <div className="flex items-center gap-2 justify-end">
+                  <span className="text-sm font-medium text-gray-600">견적일자:</span>
+                  <span className="font-semibold text-black">
+                    {new Date(quote.created_at).getFullYear()}년 {String(new Date(quote.created_at).getMonth() + 1).padStart(2, '0')}월 {String(new Date(quote.created_at).getDate()).padStart(2, '0')}일
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          <Separator className="bg-border" />
-
-          {/* 3. 공급자 정보 */}
-          {quote.supplier && (
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-primary" />
-                공급자 정보
-              </h3>
-              <Card className="bg-muted/20 border-border">
-                <div className="p-4 md:p-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    <div className="space-y-3">
-                      <div>
-                        <p className="font-semibold text-foreground text-lg">
-                          {quote.supplier.company_name || quote.supplier.business_name || quote.supplier.name}
+          {/* 3. 공급자 정보 및 수신자 정보 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:items-start">
+            {/* 공급자 정보 */}
+            {quote.supplier && (
+              <div>
+                <h3 className="text-lg font-semibold text-black mb-4">
+                  공급자 정보
+                </h3>
+                <Card className="bg-gray-50 border-gray-300 h-full">
+                  <div className="p-4 md:p-5">
+                    <div className="space-y-2">
+                      <p className="font-semibold text-black text-lg">
+                        회사명: {quote.supplier.company_name || quote.supplier.business_name || quote.supplier.name}
+                      </p>
+                      <p className="text-sm text-gray-700">대표자: {quote.supplier.name}</p>
+                      {quote.supplier.business_registration_number && (
+                        <p className="text-sm text-gray-700">
+                          사업자등록번호: {quote.supplier.business_registration_number}
                         </p>
-                        <p className="text-sm text-muted-foreground">대표자: {quote.supplier.name}</p>
-                        {quote.supplier.business_registration_number && (
-                          <p className="text-sm text-muted-foreground">
-                            사업자등록번호: {quote.supplier.business_registration_number}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-sm text-foreground">{quote.supplier.email}</span>
-                      </div>
+                      )}
+                      <p className="text-sm text-gray-700">이메일: {quote.supplier.email}</p>
                       {quote.supplier.phone && (
-                        <div className="flex items-center gap-3">
-                          <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                          <span className="text-sm text-foreground">{quote.supplier.phone}</span>
-                        </div>
+                        <p className="text-sm text-gray-700">전화번호: {quote.supplier.phone}</p>
+                      )}
+                      {quote.supplier.business_address && (
+                        <p className="text-sm text-gray-700">주소: {quote.supplier.business_address}</p>
                       )}
                     </div>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* 수신자 정보 */}
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">
+                수신자 정보
+              </h3>
+              <Card className="bg-gray-50 border-gray-300 h-full">
+                <div className="p-4 md:p-5">
+                  <div className="space-y-2">
+                    {quote.client_company && (
+                      <p className="font-semibold text-black text-lg">회사명: {quote.client_company}</p>
+                    )}
+                    <p className="text-sm text-gray-700">고객명: {quote.client_name}</p>
+                    {quote.client_business_number && (
+                      <p className="text-sm text-gray-700">
+                        사업자등록번호: {quote.client_business_number}
+                      </p>
+                    )}
+                    <p className="text-sm text-gray-700">이메일: {quote.client_email}</p>
+                    {quote.client_phone && (
+                      <p className="text-sm text-gray-700">전화번호: {quote.client_phone}</p>
+                    )}
+                    {quote.client_address && (
+                      <p className="text-sm text-gray-700">주소: {quote.client_address}</p>
+                    )}
                   </div>
                 </div>
               </Card>
             </div>
-          )}
-
-          {/* 4. 수신자 정보 */}
-          <div>
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <User className="w-5 h-5 text-primary" />
-              수신자 정보
-            </h3>
-            <Card className="bg-muted/30 border-border">
-              <div className="p-4 md:p-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div className="space-y-3">
-                    <div>
-                      <p className="font-semibold text-foreground text-lg">{quote.client_name}</p>
-                      {quote.client_company && (
-                        <p className="text-sm text-muted-foreground mt-1">{quote.client_company}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-sm text-foreground">{quote.client_email}</span>
-                    </div>
-                    {quote.client_phone && (
-                      <div className="flex items-center gap-3">
-                        <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-sm text-foreground">{quote.client_phone}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </Card>
           </div>
 
           {/* 5. 견적 유효기간 */}
           {quote.expires_at && (
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold text-black mb-4">
                 견적 유효기간
               </h3>
-              <Card className="bg-primary/5 border-primary/20">
+              <Card className="bg-gray-50 border-gray-300">
                 <div className="p-4 md:p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                        <Clock className="w-6 h-6 text-primary" />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">
-                        {new Date(quote.expires_at).toLocaleDateString('ko-KR')}까지 유효
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        해당 날짜 이후에는 견적이 자동으로 만료됩니다.
-                      </p>
-                    </div>
-                  </div>
+                  <p className="font-semibold text-black mb-2">
+                    {new Date(quote.expires_at).toLocaleDateString('ko-KR')}까지 유효
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    해당 날짜 이후에는 견적이 자동으로 만료됩니다.
+                  </p>
                 </div>
               </Card>
             </div>
@@ -325,32 +305,44 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
 
           {/* 6. 견적 항목 */}
           <div>
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-semibold text-black mb-4">
               견적 항목
             </h3>
-            <Card className="border-border overflow-hidden">
+            <Card className="border-gray-300 overflow-hidden bg-white">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[500px]">
-                  <thead className="bg-muted">
+                <table className="w-full min-w-[800px]">
+                  <thead className="bg-gray-100 border-b border-gray-300">
                     <tr>
-                      <th className="px-4 md:px-6 py-4 text-left text-sm font-semibold text-foreground">항목명</th>
-                      <th className="px-4 md:px-6 py-4 text-right text-sm font-semibold text-foreground">금액</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">항목명</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">설명</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">수량</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">단위</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">단가</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">금액</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border">
+                  <tbody>
                     {quote.items.map((item, index) => (
-                      <tr key={item.id || index} className="hover:bg-muted/20 transition-colors">
-                        <td className="px-4 md:px-6 py-4">
-                          <div>
-                            <p className="font-medium text-foreground">{item.name}</p>
-                            {item.description && (
-                              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{item.description}</p>
-                            )}
-                          </div>
+                      <tr key={item.id || index} className="hover:bg-gray-50 transition-colors border-b border-gray-200">
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-black text-sm">{item.name}</p>
                         </td>
-                        <td className="px-4 md:px-6 py-4 text-right">
-                          <span className="font-mono text-lg font-medium text-foreground">
+                        <td className="px-4 py-3">
+                          <p className="text-sm text-gray-700">{item.description || '-'}</p>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <p className="text-sm text-black">{item.quantity || 1}</p>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <p className="text-sm text-black">개</p>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="text-sm text-black">
+                            ₩{new Intl.NumberFormat('ko-KR').format(item.unit_price || item.amount)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-semibold text-black text-sm">
                             ₩{new Intl.NumberFormat('ko-KR').format(item.amount)}
                           </span>
                         </td>
@@ -365,13 +357,12 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
           {/* 7. 참고사항 */}
           {quote.description && (
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold text-black mb-4">
                 참고사항
               </h3>
-              <Card className="bg-muted/20 border-border">
+              <Card className="bg-gray-50 border-gray-300">
                 <div className="p-4 md:p-5">
-                  <p className="text-foreground whitespace-pre-wrap leading-relaxed">{quote.description}</p>
+                  <p className="text-black whitespace-pre-wrap leading-relaxed">{quote.description}</p>
                 </div>
               </Card>
             </div>
@@ -379,27 +370,27 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
 
           {/* 8. 총 합계 */}
           <div>
-            <h3 className="text-lg font-semibold text-foreground mb-4">총 합계</h3>
-            <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+            <h3 className="text-lg font-semibold text-black mb-4">총 합계</h3>
+            <Card className="bg-gray-50 border-gray-300">
               <div className="p-4 md:p-6 space-y-4">
                 <div className="flex justify-between items-center text-base">
-                  <span className="text-muted-foreground">소계</span>
-                  <span className="font-mono text-foreground font-semibold">₩{new Intl.NumberFormat('ko-KR').format(quote.subtotal)}</span>
+                  <span className="text-gray-700">소계</span>
+                  <span className="text-black font-semibold">₩{new Intl.NumberFormat('ko-KR').format(quote.subtotal)}</span>
                 </div>
                 {quote.tax_amount > 0 && (
                   <div className="flex justify-between items-center text-base">
-                    <span className="text-muted-foreground">부가세 ({(quote.tax_rate * 100).toFixed(0)}%)</span>
-                    <span className="font-mono text-foreground font-semibold">₩{new Intl.NumberFormat('ko-KR').format(quote.tax_amount)}</span>
+                    <span className="text-gray-700">부가세 ({(quote.tax_rate * 100).toFixed(0)}%)</span>
+                    <span className="text-black font-semibold">₩{new Intl.NumberFormat('ko-KR').format(quote.tax_amount)}</span>
                   </div>
                 )}
-                <Separator className="bg-border" />
-                <div className="flex justify-between items-center bg-primary/10 p-4 rounded-lg">
-                  <span className="text-xl font-bold text-foreground">총 금액</span>
+                <Separator className="bg-gray-300" />
+                <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
+                  <span className="text-xl font-bold text-black">총 금액</span>
                   <div className="text-right">
-                    <span className="font-mono text-3xl font-bold text-primary">
+                    <span className="text-3xl font-bold text-black">
                       ₩{new Intl.NumberFormat('ko-KR').format(quote.total_amount)}
                     </span>
-                    <p className="text-sm text-muted-foreground mt-1">부가세 포함</p>
+                    <p className="text-sm text-gray-700 mt-1">부가세 포함</p>
                   </div>
                 </div>
               </div>
@@ -410,13 +401,13 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
           <div className="text-center pt-6 border-t border-border">
             <div className="space-y-2 text-sm text-muted-foreground">
               <div className="flex items-center justify-center gap-2 mb-4">
-                <div className="w-2 h-2 rounded-full bg-primary"></div>
-                <span className="text-xs font-medium">LinkFlow Quote System</span>
-                <div className="w-2 h-2 rounded-full bg-primary"></div>
+                <div className="w-2 h-2 rounded-full bg-black"></div>
+                <span className="text-xs font-medium text-black">LinkFlow Quote System</span>
+                <div className="w-2 h-2 rounded-full bg-black"></div>
               </div>
-              <p>본 견적서는 <span className="text-foreground font-medium">{new Date(quote.created_at).toLocaleDateString('ko-KR')}</span>에 작성되었습니다.</p>
+              <p className="text-gray-700">본 견적서는 <span className="text-black font-medium">{new Date(quote.created_at).toLocaleDateString('ko-KR')}</span>에 작성되었습니다.</p>
               {quote.expires_at && (
-                <p>견적서 승인은 <span className="text-foreground font-medium">{new Date(quote.expires_at).toLocaleDateString('ko-KR')}</span>까지 가능합니다.</p>
+                <p className="text-gray-700">견적서 승인은 <span className="text-black font-medium">{new Date(quote.expires_at).toLocaleDateString('ko-KR')}</span>까지 가능합니다.</p>
               )}
             </div>
           </div>

@@ -21,7 +21,7 @@ export const formatPhoneNumber = (value: string): string => {
 }
 
 /**
- * 사업자번호 자동 포맷팅 (123-12-12345)
+ * 사업자등록번호 자동 포맷팅 (123-12-12345)
  */
 export const formatBusinessNumber = (value: string): string => {
   // 숫자만 추출
