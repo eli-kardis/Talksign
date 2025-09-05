@@ -3,7 +3,7 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
-import { ArrowLeft, Edit, Download, MessageSquare, FileText, Calendar, User, Building, Phone, Mail, MapPin } from 'lucide-react';
+import { ArrowLeft, Edit, Download, FileText, Calendar, User, Building, Phone, Mail, MapPin } from 'lucide-react';
 
 interface QuoteDetailProps {
   quoteId: number | null;
@@ -86,8 +86,8 @@ export function QuoteDetail({ quoteId, onBack, onEdit }: QuoteDetailProps) {
     alert('견적서 PDF 다운로드 기능은 실제 서비스에서 구현됩니다.');
   };
 
-  const handleSendReminder = () => {
-    alert(`${mockQuote.client.name}님께 견적서 확인 알림을 카카오톡으로 발송했습니다.`);
+  const handleCreateContract = () => {
+    alert('계약서 작성 기능은 실제 서비스에서 구현됩니다.');
   };
 
   return (
@@ -111,19 +111,17 @@ export function QuoteDetail({ quoteId, onBack, onEdit }: QuoteDetailProps) {
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" onClick={handleDownload} className="border-border text-xs md:text-sm">
-            <Download className="w-4 h-4 md:mr-2" />
-            <span className="hidden md:inline">PDF 다운로드</span>
-          </Button>
-          {mockQuote.status === '대기중' && (
-            <Button variant="outline" onClick={handleSendReminder} className="border-border text-xs md:text-sm">
-              <MessageSquare className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">알림 발송</span>
-            </Button>
-          )}
           <Button onClick={onEdit} className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs md:text-sm">
             <Edit className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">수정</span>
+          </Button>
+          <Button variant="outline" onClick={handleDownload} className="border-border text-xs md:text-sm">
+            <Download className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">다운로드</span>
+          </Button>
+          <Button variant="outline" onClick={handleCreateContract} className="border-border text-xs md:text-sm">
+            <FileText className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">계약서 작성</span>
           </Button>
         </div>
       </div>

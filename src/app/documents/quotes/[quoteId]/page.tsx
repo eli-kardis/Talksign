@@ -10,7 +10,6 @@ import { Separator } from "@/components/ui/separator";
 import { 
   ArrowLeft, 
   Download, 
-  Share2, 
   Edit, 
   Calendar,
   Building2,
@@ -157,54 +156,29 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
 
   const statusBadge = getStatusBadge(quote.status);
 
-  const handleCreateContract = async () => {
-    try {
-      // 견적서 데이터를 기반으로 계약서 생성
-      const contractData = {
-        quote_id: quote.id,
-        title: `${quote.title} - 계약서`,
-        client_name: quote.client_name,
-        client_email: quote.client_email,
-        client_phone: quote.client_phone,
-        client_company: quote.client_company,
-        client_business_number: quote.client_business_number,
-        client_address: quote.client_address,
-        supplier_info: quote.supplier,
-        items: quote.items,
-        subtotal: quote.subtotal,
-        tax_amount: quote.tax_amount,
-        tax_rate: quote.tax_rate,
-        total_amount: quote.total_amount,
-        description: quote.description,
-        terms: [
-          "프로젝트 수행 기간은 계약서 체결 후 협의하여 결정합니다.",
-          "계약금 50% 선입금, 완료 후 50% 잔금 지급",
-          "프로젝트 요구사항 변경 시 추가 비용이 발생할 수 있습니다.",
-          "저작권은 완전한 대금 지급 후 발주처로 이전됩니다.",
-          "계약 위반 시 위약금이 부과될 수 있습니다."
-        ],
-        status: 'draft'
-      };
+  const handleCreateContract = () => {
+    // 견적서 데이터를 쿼리 파라미터로 인코딩하여 계약서 작성 페이지로 이동
+    const quoteData = {
+      quoteId: quote.id,
+      title: quote.title,
+      description: quote.description,
+      clientName: quote.client_name,
+      clientEmail: quote.client_email,
+      clientPhone: quote.client_phone,
+      clientCompany: quote.client_company,
+      clientBusinessNumber: quote.client_business_number,
+      clientAddress: quote.client_address,
+      supplier: quote.supplier,
+      items: quote.items,
+      subtotal: quote.subtotal,
+      taxAmount: quote.tax_amount,
+      taxRate: quote.tax_rate,
+      totalAmount: quote.total_amount
+    };
 
-      const response = await fetch('/api/contracts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(contractData),
-      });
-
-      if (response.ok) {
-        const contract = await response.json();
-        // 새로 생성된 계약서 편집 페이지로 이동
-        router.push(`/documents/contracts/${contract.id}/edit`);
-      } else {
-        throw new Error('계약서 생성에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('Contract creation error:', error);
-      alert('계약서 생성 중 오류가 발생했습니다.');
-    }
+    // Base64로 인코딩하여 URL에 안전하게 전달
+    const encodedData = btoa(JSON.stringify(quoteData));
+    router.push(`/documents/contracts/new?from=quote&data=${encodedData}`);
   };
 
   return (
@@ -233,9 +207,9 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline">
-            <Share2 className="w-4 h-4 mr-2" />
-            공유
+          <Button onClick={() => router.push(`/documents/quotes/${quoteId}/edit`)}>
+            <Edit className="w-4 h-4 mr-2" />
+            수정
           </Button>
           <Button variant="outline">
             <Download className="w-4 h-4 mr-2" />
@@ -247,10 +221,6 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
               계약서 작성
             </Button>
           )}
-          <Button onClick={() => router.push(`/documents/quotes/${quoteId}/edit`)}>
-            <Edit className="w-4 h-4 mr-2" />
-            수정
-          </Button>
         </div>
       </div>
 

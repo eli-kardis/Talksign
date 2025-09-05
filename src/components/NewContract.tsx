@@ -5,31 +5,56 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ArrowLeft, MessageSquare, Save, User, Building, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Save, User, Building, AlertTriangle, Plus, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters';
+
+interface ContractItem {
+  id: string;
+  name: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+}
 
 interface NewContractProps {
   onNavigate: (view: string) => void;
   isEdit?: boolean;
   editContractId?: string;
+  fromQuote?: boolean;
   initialData?: {
     client: {
       name: string;
       email: string;
       phone: string;
       company: string;
+      businessNumber?: string;
+      address?: string;
     };
     project: {
       title: string;
       description: string;
       amount: number;
+      startDate?: string;
+      endDate?: string;
     };
+    items?: Array<{
+      id: string;
+      name: string;
+      description?: string;
+      quantity?: number;
+      unit_price?: number;
+      amount: number;
+    }>;
+    terms?: string[];
+    supplier?: any;
+    quoteId?: string;
   };
 }
 
-export function NewContract({ onNavigate, isEdit = false, editContractId, initialData }: NewContractProps) {
+export function NewContract({ onNavigate, isEdit = false, editContractId, fromQuote = false, initialData }: NewContractProps) {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
@@ -37,7 +62,24 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [initialFormData, setInitialFormData] = useState<any>(null);
-  
+
+  // 1. 계약서 기본 정보
+  const [contractBasicInfo, setContractBasicInfo] = useState({
+    title: initialData?.project.title || '',
+    description: initialData?.project.description || ''
+  });
+
+  // 2. 발주처 정보 (클라이언트)
+  const [clientInfo, setClientInfo] = useState({
+    name: initialData?.client.name || '',
+    company: initialData?.client.company || '',
+    phone: initialData?.client.phone || '',
+    email: initialData?.client.email || '',
+    businessNumber: initialData?.client.businessNumber || '',
+    address: initialData?.client.address || ''
+  });
+
+  // 3. 수급업체 정보 (공급자)
   const [supplierInfo, setSupplierInfo] = useState({
     name: '',
     email: '',
@@ -45,23 +87,53 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
     businessRegistrationNumber: '',
     companyName: '',
     businessName: '',
+    businessAddress: ''
   });
 
-  const [contractInfo, setContractInfo] = useState({
-    title: '',
-    startDate: '',
-    endDate: '',
-    paymentTerms: '',
-    deliverables: '',
+  // 4. 프로젝트 정보
+  const [projectInfo, setProjectInfo] = useState({
+    startDate: initialData?.project.startDate || '',
+    endDate: initialData?.project.endDate || '',
+    description: initialData?.project.description || ''
+  });
+
+  // 5. 계약 내역 (항목들)
+  const [contractItems, setContractItems] = useState<ContractItem[]>(
+    initialData?.items && initialData.items.length > 0 
+      ? initialData.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description || '',
+          quantity: item.quantity || 1,
+          unit_price: item.unit_price || item.amount,
+          amount: item.amount
+        }))
+      : [{
+          id: Date.now().toString(),
+          name: '',
+          description: '',
+          quantity: 1,
+          unit_price: 0,
+          amount: 0
+        }]
+  );
+
+  // 6. 계약 조건
+  const [contractTerms, setContractTerms] = useState<string[]>(
+    initialData?.terms || [
+      "프로젝트 수행 기간은 계약서 체결 후 협의하여 결정합니다.",
+      "계약금 50% 선입금, 완료 후 50% 잔금 지급",
+      "프로젝트 요구사항 변경 시 추가 비용이 발생할 수 있습니다.",
+      "저작권은 완전한 대금 지급 후 발주처로 이전됩니다.",
+      "계약 위반 시 위약금이 부과될 수 있습니다."
+    ]
+  );
+
+  // 7. 결제 정보
+  const [paymentInfo, setPaymentInfo] = useState({
+    paymentTerms: '50-50', // 기본값
+    paymentMethod: '',
     additionalTerms: ''
-  });
-
-  const [clientInfo, setClientInfo] = useState({
-    name: '',
-    company: '',
-    phone: '',
-    email: '',
-    amount: 0
   });
 
   // 사용자 정보를 자동으로 로드
@@ -80,6 +152,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
             businessRegistrationNumber: userData.business_registration_number || '',
             companyName: userData.company_name || '',
             businessName: userData.business_name || '',
+            businessAddress: userData.business_address || ''
           })
         }
       } catch (error) {
@@ -90,54 +163,17 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
     loadUserInfo()
   }, [user?.id]);
 
-
-  // 수정 모드일 때 초기 데이터 설정
-  useEffect(() => {
-    if (isEdit && initialData) {
-      const newClientInfo = {
-        name: initialData.client.name,
-        email: initialData.client.email,
-        phone: initialData.client.phone,
-        company: initialData.client.company,
-        amount: initialData.project.amount
-      };
-      
-      const newContractInfo = {
-        title: initialData.project.title,
-        startDate: '',
-        endDate: '',
-        paymentTerms: '',
-        deliverables: initialData.project.description,
-        additionalTerms: ''
-      };
-      
-      setClientInfo(newClientInfo);
-      setContractInfo(newContractInfo);
-      
-    }
-  }, [isEdit, initialData]);
-
   // 초기 폼 데이터 설정 (수정 모드에서만)
   useEffect(() => {
     if (isEdit && initialData && supplierInfo.name) {
-      // 공급자 정보가 로드된 후에 초기 데이터 설정
       setInitialFormData({
-        clientInfo: {
-          name: initialData.client.name,
-          email: initialData.client.email,
-          phone: initialData.client.phone,
-          company: initialData.client.company,
-          amount: initialData.project.amount
-        },
-        contractInfo: {
-          title: initialData.project.title,
-          startDate: '',
-          endDate: '',
-          paymentTerms: '',
-          deliverables: initialData.project.description,
-          additionalTerms: ''
-        },
-        supplierInfo
+        contractBasicInfo,
+        clientInfo,
+        supplierInfo,
+        projectInfo,
+        contractItems,
+        contractTerms,
+        paymentInfo
       });
     }
   }, [isEdit, initialData, supplierInfo.name]);
@@ -149,28 +185,30 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
       return;
     }
 
-    // Deep comparison을 위한 함수
     const compareObjects = (obj1: any, obj2: any) => {
       try {
         return JSON.stringify(obj1) === JSON.stringify(obj2);
       } catch (error) {
         console.warn('Object comparison failed:', error);
-        return true; // 에러 발생시 변경사항 없음으로 처리
+        return true;
       }
     };
 
     const currentFormData = {
+      contractBasicInfo,
       clientInfo,
-      contractInfo,
-      supplierInfo
+      supplierInfo,
+      projectInfo,
+      contractItems,
+      contractTerms,
+      paymentInfo
     };
 
     const hasChanges = !compareObjects(currentFormData, initialFormData);
     setHasUnsavedChanges(hasChanges);
-  }, [clientInfo, contractInfo, supplierInfo, initialFormData, isEdit]);
+  }, [contractBasicInfo, clientInfo, supplierInfo, projectInfo, contractItems, contractTerms, paymentInfo, initialFormData, isEdit]);
 
-
-  // 페이지 언로드 시 경고 (변경사항이 있을 때)
+  // 페이지 언로드 시 경고
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
@@ -186,27 +224,95 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
     };
   }, [hasUnsavedChanges]);
 
+  // 유틸리티 함수들
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ko-KR').format(amount) + '원';
   };
 
+  const calculateTotals = () => {
+    const subtotal = contractItems.reduce((sum, item) => sum + item.amount, 0);
+    const taxAmount = Math.floor(subtotal * 0.1);
+    const total = subtotal + taxAmount;
+    return { subtotal, taxAmount, total };
+  };
+
+  // 계약 항목 관련 함수들
+  const addContractItem = () => {
+    const newItem: ContractItem = {
+      id: Date.now().toString(),
+      name: '',
+      description: '',
+      quantity: 1,
+      unit_price: 0,
+      amount: 0
+    };
+    setContractItems([...contractItems, newItem]);
+  };
+
+  const updateContractItem = (id: string, field: keyof ContractItem, value: any) => {
+    setContractItems(items => items.map(item => {
+      if (item.id === id) {
+        const updated = { ...item, [field]: value };
+        if (field === 'quantity' || field === 'unit_price') {
+          updated.amount = updated.quantity * updated.unit_price;
+        }
+        return updated;
+      }
+      return item;
+    }));
+  };
+
+  const removeContractItem = (id: string) => {
+    setContractItems(items => items.filter(item => item.id !== id));
+  };
+
+  // 계약 조건 관련 함수들
+  const addTerm = () => {
+    setContractTerms([...contractTerms, '']);
+  };
+
+  const updateTerm = (index: number, value: string) => {
+    const newTerms = [...contractTerms];
+    newTerms[index] = value;
+    setContractTerms(newTerms);
+  };
+
+  const removeTerm = (index: number) => {
+    setContractTerms(terms => terms.filter((_, i) => i !== index));
+  };
+
+  // 저장 및 발송 함수들
   const handleSaveAndSend = async () => {
     setIsLoading(true);
     
     try {
       const contractData = {
-        supplierInfo,
-        contractInfo,
-        clientInfo
+        title: contractBasicInfo.title,
+        description: contractBasicInfo.description,
+        client_name: clientInfo.name,
+        client_email: clientInfo.email,
+        client_phone: clientInfo.phone,
+        client_company: clientInfo.company,
+        client_business_number: clientInfo.businessNumber,
+        client_address: clientInfo.address,
+        supplier_info: supplierInfo,
+        project_start_date: projectInfo.startDate,
+        project_end_date: projectInfo.endDate,
+        project_description: projectInfo.description,
+        items: contractItems,
+        terms: contractTerms.filter(term => term.trim()),
+        payment_terms: paymentInfo.paymentTerms,
+        payment_method: paymentInfo.paymentMethod,
+        additional_terms: paymentInfo.additionalTerms,
+        ...calculateTotals(),
+        status: 'sent',
+        ...(initialData?.quoteId && { quote_id: initialData.quoteId })
       };
 
       if (isEdit && editContractId) {
-        // Update existing contract
         const response = await fetch(`/api/contracts/${editContractId}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(contractData),
         });
 
@@ -214,14 +320,11 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
           throw new Error('계약서 수정에 실패했습니다.');
         }
         
-        alert(`${clientInfo.name}님께 수정된 계약서가 카카오톡으로 발송되었습니다!`);
+        alert(`${clientInfo.name}님께 수정된 계약서가 발송되었습니다!`);
       } else {
-        // Create new contract
         const response = await fetch('/api/contracts', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(contractData),
         });
 
@@ -229,15 +332,13 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
           throw new Error('계약서 생성에 실패했습니다.');
         }
         
-        alert(`${clientInfo.name}님께 카카오톡으로 계약서가 발송되었습니다!`);
+        alert(`${clientInfo.name}님께 계약서가 발송되었습니다!`);
       }
 
-      // 저장 후 변경사항 상태 리셋
       if (isEdit) {
         setInitialFormData({
-          clientInfo,
-          contractInfo,
-          supplierInfo
+          contractBasicInfo, clientInfo, supplierInfo, projectInfo,
+          contractItems, contractTerms, paymentInfo
         });
         setHasUnsavedChanges(false);
       }
@@ -256,19 +357,32 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
     
     try {
       const contractData = {
-        supplierInfo,
-        contractInfo,
-        clientInfo,
-        isDraft: true
+        title: contractBasicInfo.title,
+        description: contractBasicInfo.description,
+        client_name: clientInfo.name,
+        client_email: clientInfo.email,
+        client_phone: clientInfo.phone,
+        client_company: clientInfo.company,
+        client_business_number: clientInfo.businessNumber,
+        client_address: clientInfo.address,
+        supplier_info: supplierInfo,
+        project_start_date: projectInfo.startDate,
+        project_end_date: projectInfo.endDate,
+        project_description: projectInfo.description,
+        items: contractItems,
+        terms: contractTerms.filter(term => term.trim()),
+        payment_terms: paymentInfo.paymentTerms,
+        payment_method: paymentInfo.paymentMethod,
+        additional_terms: paymentInfo.additionalTerms,
+        ...calculateTotals(),
+        status: 'draft',
+        ...(initialData?.quoteId && { quote_id: initialData.quoteId })
       };
 
       if (isEdit && editContractId) {
-        // Update existing contract as draft
         const response = await fetch(`/api/contracts/${editContractId}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(contractData),
         });
 
@@ -278,12 +392,9 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
         
         alert('계약서가 수정되어 임시저장되었습니다.');
       } else {
-        // Create new draft contract
         const response = await fetch('/api/contracts', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(contractData),
         });
 
@@ -294,12 +405,10 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
         alert('계약서가 임시저장되었습니다.');
       }
 
-      // 저장 후 변경사항 상태 리셋
       if (isEdit) {
         setInitialFormData({
-          clientInfo,
-          contractInfo,
-          supplierInfo
+          contractBasicInfo, clientInfo, supplierInfo, projectInfo,
+          contractItems, contractTerms, paymentInfo
         });
         setHasUnsavedChanges(false);
       }
@@ -315,11 +424,9 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
 
   // 돌아가기 버튼 클릭 핸들러
   const handleBackClick = () => {
-    // 수정 모드이고 변경사항이 있을 때만 확인 팝업 표시
     if (isEdit && hasUnsavedChanges) {
       setShowExitConfirm(true);
     } else {
-      // 새 작성이거나 변경사항이 없으면 바로 이동
       onNavigate('contracts');
     }
   };
@@ -341,6 +448,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
     setShowExitConfirm(false);
   };
 
+  const { subtotal, taxAmount, total } = calculateTotals();
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -354,7 +463,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
             {isEdit ? '계약서 수정' : '새 계약서 작성'}
           </h2>
           <p className="text-muted-foreground">
-            {isEdit ? '계약서 정보를 수정하세요' : '승인된 견적서를 바탕으로 계약서를 작성하세요'}
+            {isEdit ? '계약서 정보를 수정하세요' : (fromQuote ? '견적서 데이터가 자동으로 입력되었습니다. 필요한 정보를 추가 입력하세요.' : '승인된 견적서를 바탕으로 계약서를 작성하세요')}
           </p>
         </div>
       </div>
@@ -362,49 +471,171 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Form */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Quote Information (Auto-filled) */}
+          {/* 견적서에서 온 경우 안내 문구 */}
+          {fromQuote && (
+            <Card className="p-4 bg-accent border-accent">
+              <div className="flex items-center gap-2 text-accent-foreground">
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
+                <span className="text-sm font-medium">견적서에서 가져온 정보</span>
+              </div>
+              <p className="text-sm text-accent-foreground mt-1">
+                견적서 데이터가 자동으로 입력되었습니다. 필요한 항목을 수정하거나 추가 정보를 입력하세요.
+              </p>
+            </Card>
+          )}
+          {/* 1. 계약서 기본 정보 */}
           <Card className="p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">견적서 정보 (자동 입력)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-foreground">고객명</Label>
-                <Input value={clientInfo.name} disabled className="bg-muted text-muted-foreground" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">회사명</Label>
-                <Input value={clientInfo.company} disabled className="bg-muted text-muted-foreground" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">계약 금액</Label>
-                <Input value={formatCurrency(clientInfo.amount)} disabled className="bg-muted text-muted-foreground font-mono" />
-              </div>
-            </div>
-          </Card>
-
-          {/* Contract Details */}
-          <Card className="p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">계약서 세부사항</h3>
-            
+            <h3 className="font-medium mb-4 text-foreground">계약서 기본 정보</h3>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="contractTitle" className="text-foreground">계약서 제목 *</Label>
                 <Input
                   id="contractTitle"
-                  value={contractInfo.title}
-                  onChange={(e) => setContractInfo({...contractInfo, title: e.target.value})}
+                  value={contractBasicInfo.title}
+                  onChange={(e) => setContractBasicInfo({...contractBasicInfo, title: e.target.value})}
                   placeholder="웹사이트 리뉴얼 프로젝트 용역계약서"
                   className="bg-input-background border-border"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="contractDescription" className="text-foreground">계약서 설명</Label>
+                <Textarea
+                  id="contractDescription"
+                  value={contractBasicInfo.description}
+                  onChange={(e) => setContractBasicInfo({...contractBasicInfo, description: e.target.value})}
+                  placeholder="계약서에 대한 간단한 설명을 입력하세요"
+                  rows={3}
+                  className="bg-input-background border-border"
+                />
+              </div>
+            </div>
+          </Card>
 
+          {/* 2. 발주처 정보 */}
+          <Card className="p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">발주처 정보 (고객)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-foreground">고객명 *</Label>
+                <Input 
+                  value={clientInfo.name} 
+                  onChange={(e) => setClientInfo({...clientInfo, name: e.target.value})}
+                  className="bg-input-background border-border" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">회사명</Label>
+                <Input 
+                  value={clientInfo.company} 
+                  onChange={(e) => setClientInfo({...clientInfo, company: e.target.value})}
+                  className="bg-input-background border-border" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">이메일 *</Label>
+                <Input 
+                  type="email"
+                  value={clientInfo.email} 
+                  onChange={(e) => setClientInfo({...clientInfo, email: e.target.value})}
+                  className="bg-input-background border-border" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">전화번호</Label>
+                <Input 
+                  value={clientInfo.phone} 
+                  onChange={(e) => setClientInfo({...clientInfo, phone: e.target.value})}
+                  className="bg-input-background border-border" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">사업자등록번호</Label>
+                <Input 
+                  value={clientInfo.businessNumber} 
+                  onChange={(e) => setClientInfo({...clientInfo, businessNumber: e.target.value})}
+                  className="bg-input-background border-border" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">주소</Label>
+                <Input 
+                  value={clientInfo.address} 
+                  onChange={(e) => setClientInfo({...clientInfo, address: e.target.value})}
+                  className="bg-input-background border-border" 
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* 3. 수급업체 정보 */}
+          <Card className="p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">수급업체 정보 (공급자)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-foreground">대표자명</Label>
+                <Input 
+                  value={supplierInfo.name} 
+                  onChange={(e) => setSupplierInfo({...supplierInfo, name: e.target.value})}
+                  className="bg-muted text-muted-foreground" 
+                  disabled
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">회사명</Label>
+                <Input 
+                  value={supplierInfo.companyName || supplierInfo.businessName} 
+                  onChange={(e) => setSupplierInfo({...supplierInfo, companyName: e.target.value})}
+                  className="bg-muted text-muted-foreground"
+                  disabled
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">이메일</Label>
+                <Input 
+                  value={supplierInfo.email} 
+                  className="bg-muted text-muted-foreground" 
+                  disabled
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">전화번호</Label>
+                <Input 
+                  value={supplierInfo.phone} 
+                  className="bg-muted text-muted-foreground" 
+                  disabled
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">사업자등록번호</Label>
+                <Input 
+                  value={supplierInfo.businessRegistrationNumber} 
+                  className="bg-muted text-muted-foreground" 
+                  disabled
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">사업장 주소</Label>
+                <Input 
+                  value={supplierInfo.businessAddress} 
+                  onChange={(e) => setSupplierInfo({...supplierInfo, businessAddress: e.target.value})}
+                  className="bg-input-background border-border" 
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* 4. 프로젝트 정보 */}
+          <Card className="p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">프로젝트 정보</h3>
+            <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="startDate" className="text-foreground">프로젝트 시작일 *</Label>
                   <Input
                     id="startDate"
                     type="date"
-                    value={contractInfo.startDate}
-                    onChange={(e) => setContractInfo({...contractInfo, startDate: e.target.value})}
+                    value={projectInfo.startDate}
+                    onChange={(e) => setProjectInfo({...projectInfo, startDate: e.target.value})}
                     className="bg-input-background border-border"
                   />
                 </div>
@@ -413,16 +644,184 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
                   <Input
                     id="endDate"
                     type="date"
-                    value={contractInfo.endDate}
-                    onChange={(e) => setContractInfo({...contractInfo, endDate: e.target.value})}
+                    value={projectInfo.endDate}
+                    onChange={(e) => setProjectInfo({...projectInfo, endDate: e.target.value})}
                     className="bg-input-background border-border"
                   />
                 </div>
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="paymentTerms" className="text-foreground">결제 조건</Label>
-                <Select value={contractInfo.paymentTerms} onValueChange={(value) => setContractInfo({...contractInfo, paymentTerms: value})}>
+                <Label htmlFor="projectDescription" className="text-foreground">프로젝트 상세 설명</Label>
+                <Textarea
+                  id="projectDescription"
+                  value={projectInfo.description}
+                  onChange={(e) => setProjectInfo({...projectInfo, description: e.target.value})}
+                  placeholder="프로젝트에 대한 상세한 설명을 입력하세요"
+                  rows={4}
+                  className="bg-input-background border-border"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* 5. 계약 내역 */}
+          <Card className="p-6 bg-card border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium text-foreground">계약 내역</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addContractItem}
+                className="border-border"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                항목 추가
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              {contractItems.map((item, index) => (
+                <Card key={item.id} className="p-4 bg-background border-border">
+                  <div className="flex items-start justify-between mb-3">
+                    <h4 className="font-medium text-sm text-foreground">항목 {index + 1}</h4>
+                    {contractItems.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeContractItem(item.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-2 md:col-span-2">
+                      <Label className="text-foreground text-xs">항목명 *</Label>
+                      <Input
+                        value={item.name}
+                        onChange={(e) => updateContractItem(item.id, 'name', e.target.value)}
+                        placeholder="서비스 또는 상품명"
+                        className="bg-input-background border-border"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label className="text-foreground text-xs">설명</Label>
+                      <Textarea
+                        value={item.description}
+                        onChange={(e) => updateContractItem(item.id, 'description', e.target.value)}
+                        placeholder="항목에 대한 상세한 설명"
+                        rows={2}
+                        className="bg-input-background border-border"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-foreground text-xs">수량</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => updateContractItem(item.id, 'quantity', parseInt(e.target.value) || 1)}
+                        className="bg-input-background border-border"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-foreground text-xs">단가 (원)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={item.unit_price}
+                        onChange={(e) => updateContractItem(item.id, 'unit_price', parseInt(e.target.value) || 0)}
+                        className="bg-input-background border-border"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label className="text-foreground text-xs">금액</Label>
+                      <Input
+                        value={formatCurrency(item.amount)}
+                        disabled
+                        className="bg-muted text-muted-foreground font-mono"
+                      />
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* 합계 */}
+            <div className="mt-6 pt-4 border-t border-border">
+              <div className="flex flex-col gap-2 max-w-xs ml-auto">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">소계</span>
+                  <span className="text-foreground font-mono">{formatCurrency(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">부가세 (10%)</span>
+                  <span className="text-foreground font-mono">{formatCurrency(taxAmount)}</span>
+                </div>
+                <div className="flex justify-between font-medium pt-2 border-t border-border">
+                  <span className="text-foreground">총 금액</span>
+                  <span className="text-lg text-primary font-mono">{formatCurrency(total)}</span>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* 6. 계약 조건 */}
+          <Card className="p-6 bg-card border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium text-foreground">계약 조건</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addTerm}
+                className="border-border"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                조건 추가
+              </Button>
+            </div>
+            
+            <div className="space-y-3">
+              {contractTerms.map((term, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <span className="text-sm text-muted-foreground mt-2 min-w-[20px]">{index + 1}.</span>
+                  <div className="flex-1">
+                    <Textarea
+                      value={term}
+                      onChange={(e) => updateTerm(index, e.target.value)}
+                      placeholder="계약 조건을 입력하세요"
+                      rows={2}
+                      className="bg-input-background border-border"
+                    />
+                  </div>
+                  {contractTerms.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeTerm(index)}
+                      className="text-destructive hover:text-destructive mt-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* 7. 결제 정보 */}
+          <Card className="p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">결제 정보</h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="paymentTerms" className="text-foreground">결제 조건 *</Label>
+                <Select value={paymentInfo.paymentTerms} onValueChange={(value) => setPaymentInfo({...paymentInfo, paymentTerms: value})}>
                   <SelectTrigger className="bg-input-background border-border">
                     <SelectValue placeholder="결제 조건을 선택하세요" />
                   </SelectTrigger>
@@ -434,15 +833,30 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
                   </SelectContent>
                 </Select>
               </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="paymentMethod" className="text-foreground">결제 방법</Label>
+                <Select value={paymentInfo.paymentMethod} onValueChange={(value) => setPaymentInfo({...paymentInfo, paymentMethod: value})}>
+                  <SelectTrigger className="bg-input-background border-border">
+                    <SelectValue placeholder="결제 방법을 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bank-transfer">계좌이체</SelectItem>
+                    <SelectItem value="card">카드결제</SelectItem>
+                    <SelectItem value="cash">현금결제</SelectItem>
+                    <SelectItem value="check">수표결제</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div className="space-y-2">
-                <Label htmlFor="deliverables" className="text-foreground">납품물 및 서비스 내용 *</Label>
+                <Label htmlFor="additionalTerms" className="text-foreground">추가 결제 조건</Label>
                 <Textarea
-                  id="deliverables"
-                  value={contractInfo.deliverables}
-                  onChange={(e) => setContractInfo({...contractInfo, deliverables: e.target.value})}
-                  placeholder="구체적인 납품물과 서비스 내용을 입력하세요"
-                  rows={5}
+                  id="additionalTerms"
+                  value={paymentInfo.additionalTerms}
+                  onChange={(e) => setPaymentInfo({...paymentInfo, additionalTerms: e.target.value})}
+                  placeholder="결제와 관련된 추가 조건이 있다면 입력하세요"
+                  rows={3}
                   className="bg-input-background border-border"
                 />
               </div>
@@ -462,15 +876,19 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
               <div className="space-y-3 text-sm">
                 <div>
                   <p className="text-muted-foreground">고객명</p>
-                  <p className="text-foreground font-medium">{clientInfo.name}</p>
+                  <p className="text-foreground font-medium">{clientInfo.name || '미입력'}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">회사명</p>
-                  <p className="text-foreground">{clientInfo.company}</p>
+                  <p className="text-foreground">{clientInfo.company || '미입력'}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">연락처</p>
-                  <p className="text-foreground">{clientInfo.phone}</p>
+                  <p className="text-foreground">{clientInfo.phone || '미입력'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">총 계약 금액</p>
+                  <p className="text-primary font-bold text-lg font-mono">{formatCurrency(total)}</p>
                 </div>
               </div>
             </Card>
@@ -481,10 +899,10 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, initia
                 <Button 
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                   onClick={handleSaveAndSend}
-                  disabled={isLoading || !contractInfo.title || !contractInfo.startDate || !contractInfo.endDate || !contractInfo.deliverables}
+                  disabled={isLoading || !contractBasicInfo.title || !clientInfo.name || !clientInfo.email || !projectInfo.startDate || !projectInfo.endDate || contractItems.length === 0}
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
-                  {isLoading ? '처리중...' : (isEdit ? '수정 후 발송' : '카카오톡으로 발송')}
+                  {isLoading ? '처리중...' : (isEdit ? '수정 후 발송' : '계약서 발송')}
                 </Button>
                 <Button 
                   variant="outline" 
