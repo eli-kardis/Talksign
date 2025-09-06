@@ -94,10 +94,21 @@ END $$;
 -- STEP 7: Temporarily disable RLS and drop all policies on contracts table
 ALTER TABLE public.contracts DISABLE ROW LEVEL SECURITY;
 
--- Drop all existing policies on contracts table
-DROP POLICY IF EXISTS "Public can view sent contracts" ON public.contracts;
-DROP POLICY IF EXISTS "Users can manage own contracts" ON public.contracts;
-DROP POLICY IF EXISTS "Enable read access for all users" ON public.contracts;
+-- Drop ALL existing policies on contracts table (get complete list first)
+DO $$
+DECLARE
+    policy_name text;
+BEGIN
+    -- Drop all policies on contracts table
+    FOR policy_name IN 
+        SELECT policyname 
+        FROM pg_policies 
+        WHERE schemaname = 'public' AND tablename = 'contracts'
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS "' || policy_name || '" ON public.contracts';
+        RAISE NOTICE 'Dropped policy: %', policy_name;
+    END LOOP;
+END $$;
 
 -- STEP 8: Remove the default value temporarily
 ALTER TABLE public.contracts ALTER COLUMN status DROP DEFAULT;
@@ -129,7 +140,7 @@ END $$;
 -- Enable RLS back on the table
 ALTER TABLE public.contracts ENABLE ROW LEVEL SECURITY;
 
--- Recreate the most common policies (you may need to adjust based on your specific needs)
+-- Recreate common policies with updated enum values
 -- Public can view sent contracts (updated to use new enum values)
 CREATE POLICY "Public can view sent contracts" ON public.contracts
     FOR SELECT 
@@ -144,6 +155,17 @@ CREATE POLICY "Users can manage own contracts" ON public.contracts
 CREATE POLICY "Enable read access for authenticated users" ON public.contracts
     FOR SELECT 
     USING (auth.uid() = user_id);
+
+-- Public can update contract signatures (if this was one of the dropped policies)
+CREATE POLICY "Public can update contract signatures" ON public.contracts
+    FOR UPDATE 
+    USING (status = 'sent'::contract_status)
+    WITH CHECK (status IN ('sent'::contract_status, 'completed'::contract_status));
+
+-- Allow public to insert new contracts (if needed)
+CREATE POLICY "Enable insert for authenticated users" ON public.contracts
+    FOR INSERT 
+    WITH CHECK (auth.uid() = user_id);
 
 -- STEP 14: Final verification
 SELECT DISTINCT status, COUNT(*) as count 
