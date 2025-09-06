@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ArrowLeft, MessageSquare, Save, User, Building, AlertTriangle, Plus, X } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Save, User, Building, AlertTriangle, Plus, X, Edit3 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters';
@@ -62,6 +62,21 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [initialFormData, setInitialFormData] = useState<any>(null);
+  
+  // 편집 모드 상태
+  const [isEditingClient, setIsEditingClient] = useState(false);
+  const [isEditingSupplier, setIsEditingSupplier] = useState(false);
+
+  // 폼 요소 참조들 (유효성 검사를 위한 스크롤 및 포커스용)
+  const titleRef = useRef<HTMLInputElement>(null);
+  const clientNameRef = useRef<HTMLInputElement>(null);
+  const clientEmailRef = useRef<HTMLInputElement>(null);
+  const startDateRef = useRef<HTMLInputElement>(null);
+  const endDateRef = useRef<HTMLInputElement>(null);
+  const paymentTermsRef = useRef<HTMLButtonElement>(null);
+
+  // 툴팁 상태 관리
+  const [fieldTooltips, setFieldTooltips] = useState<{[key: string]: string}>({});
 
   // 1. 계약서 기본 정보
   const [contractBasicInfo, setContractBasicInfo] = useState({
@@ -132,6 +147,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   // 7. 결제 정보
   const [paymentInfo, setPaymentInfo] = useState({
     paymentTerms: '50-50', // 기본값
+    customPaymentTerms: '', // 직접 입력용
     paymentMethod: '',
     additionalTerms: ''
   });
@@ -272,6 +288,189 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     return new Intl.NumberFormat('ko-KR').format(amount) + '원';
   };
 
+  // 툴팁 헬퍼 함수들
+  const showFieldTooltip = (fieldKey: string, message: string) => {
+    setFieldTooltips(prev => ({ ...prev, [fieldKey]: message }));
+  };
+
+  const hideFieldTooltip = (fieldKey: string) => {
+    setFieldTooltips(prev => {
+      const newTooltips = { ...prev };
+      delete newTooltips[fieldKey];
+      return newTooltips;
+    });
+  };
+
+  // 유효성 검사 및 툴팁으로 오류 표시
+  const validateWithTooltips = () => {
+    // 모든 이전 툴팁 제거
+    setFieldTooltips({});
+    
+    let firstErrorRef = null;
+    let firstErrorKey = '';
+
+    if (!contractBasicInfo.title.trim()) {
+      showFieldTooltip('title', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorRef = titleRef;
+        firstErrorKey = 'title';
+      }
+    }
+    
+    if (!clientInfo.name.trim()) {
+      showFieldTooltip('clientName', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorRef = clientNameRef;
+        firstErrorKey = 'clientName';
+      }
+    }
+    
+    if (!clientInfo.email.trim()) {
+      showFieldTooltip('clientEmail', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorRef = clientEmailRef;
+        firstErrorKey = 'clientEmail';
+      }
+    } else if (clientInfo.email.trim() && !isValidEmail(clientInfo.email)) {
+      showFieldTooltip('clientEmail', '올바른 이메일 형식을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorRef = clientEmailRef;
+        firstErrorKey = 'clientEmail';
+      }
+    }
+    
+    if (!projectInfo.startDate) {
+      showFieldTooltip('startDate', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorRef = startDateRef;
+        firstErrorKey = 'startDate';
+      }
+    }
+    
+    if (!projectInfo.endDate) {
+      showFieldTooltip('endDate', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorRef = endDateRef;
+        firstErrorKey = 'endDate';
+      }
+    } else if (projectInfo.startDate && projectInfo.endDate && projectInfo.startDate > projectInfo.endDate) {
+      showFieldTooltip('startDate', '프로젝트 시작일은 완료일보다 이전이어야 합니다');
+      if (!firstErrorRef) {
+        firstErrorRef = startDateRef;
+        firstErrorKey = 'startDate';
+      }
+    }
+    
+    if (!paymentInfo.paymentTerms) {
+      showFieldTooltip('paymentTerms', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorRef = paymentTermsRef;
+        firstErrorKey = 'paymentTerms';
+      }
+    }
+    
+    const validItems = contractItems.filter(item => item.name.trim() && item.amount > 0);
+    if (validItems.length === 0) {
+      if (!firstErrorRef) {
+        // 첫 번째 항목의 name 필드로 스크롤
+        const contractItemsCard = document.querySelector('[data-section="contract-items"]');
+        if (contractItemsCard) {
+          contractItemsCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => {
+            const firstNameInput = document.querySelector('[data-item-field="name"]:first-of-type') as HTMLInputElement;
+            if (firstNameInput) {
+              firstNameInput.focus();
+              // 첫 번째 항목에 툴팁 추가 (임시로 DOM 조작)
+              const tooltip = document.createElement('div');
+              tooltip.className = 'absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap';
+              tooltip.textContent = '해당 항목을 입력해주세요';
+              tooltip.style.pointerEvents = 'none';
+              firstNameInput.parentElement?.appendChild(tooltip);
+              
+              // 입력 시 툴팁 제거
+              const removeTooltip = () => {
+                if (tooltip && tooltip.parentElement) {
+                  tooltip.parentElement.removeChild(tooltip);
+                  firstNameInput.removeEventListener('input', removeTooltip);
+                }
+              };
+              firstNameInput.addEventListener('input', removeTooltip);
+            }
+          }, 500);
+        }
+        return true; // 오류가 있음
+      }
+    }
+
+    // 첫 번째 오류 필드로 스크롤
+    if (firstErrorRef && firstErrorRef.current) {
+      firstErrorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        if (firstErrorRef && firstErrorRef.current) {
+          firstErrorRef.current.focus();
+        }
+      }, 500);
+      return true; // 오류가 있음
+    }
+
+    return false; // 오류가 없음
+  };
+
+  // 임시저장을 위한 유효성 검사 (기본 필수 항목들)
+  const validateForDraft = () => {
+    // 모든 이전 툴팁 제거
+    setFieldTooltips({});
+    
+    let firstErrorRef = null;
+
+    if (!contractBasicInfo.title.trim()) {
+      showFieldTooltip('title', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorRef = titleRef;
+      }
+    }
+    
+    if (!clientInfo.name.trim()) {
+      showFieldTooltip('clientName', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorRef = clientNameRef;
+      }
+    }
+    
+    if (!projectInfo.startDate) {
+      showFieldTooltip('startDate', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorRef = startDateRef;
+      }
+    }
+    
+    if (!projectInfo.endDate) {
+      showFieldTooltip('endDate', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorRef = endDateRef;
+      }
+    }
+
+    // 첫 번째 오류 필드로 스크롤
+    if (firstErrorRef && firstErrorRef.current) {
+      firstErrorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        if (firstErrorRef && firstErrorRef.current) {
+          firstErrorRef.current.focus();
+        }
+      }, 500);
+      return true; // 오류가 있음
+    }
+
+    return false; // 오류가 없음
+  };
+
+  // 이메일 유효성 검사 헬퍼 함수
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const calculateTotals = () => {
     const subtotal = contractItems.reduce((sum, item) => sum + item.amount, 0);
     const taxAmount = Math.floor(subtotal * 0.1);
@@ -326,6 +525,12 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
   // 저장 및 발송 함수들
   const handleSaveAndSend = async () => {
+    // 유효성 검사 및 툴팁 표시
+    const hasErrors = validateWithTooltips();
+    if (hasErrors) {
+      return;
+    }
+
     setIsLoading(true);
     
     try {
@@ -344,7 +549,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         project_description: projectInfo.description,
         items: contractItems,
         terms: contractTerms.filter(term => term.trim()),
-        payment_terms: paymentInfo.paymentTerms,
+        payment_terms: paymentInfo.paymentTerms === 'custom' ? paymentInfo.customPaymentTerms : paymentInfo.paymentTerms,
         payment_method: paymentInfo.paymentMethod,
         additional_terms: paymentInfo.additionalTerms,
         ...calculateTotals(),
@@ -378,6 +583,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         alert(`${clientInfo.name}님께 계약서가 발송되었습니다!`);
       }
 
+      // 성공 시 처리
+
       if (isEdit) {
         setInitialFormData({
           contractBasicInfo, clientInfo, supplierInfo, projectInfo,
@@ -396,6 +603,12 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   };
 
   const handleSaveDraft = async () => {
+    // 임시저장을 위한 최소 유효성 검사 (제목과 고객명만 필수)
+    const hasErrors = validateForDraft();
+    if (hasErrors) {
+      return;
+    }
+
     setIsLoading(true);
     
     try {
@@ -414,7 +627,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         project_description: projectInfo.description,
         items: contractItems,
         terms: contractTerms.filter(term => term.trim()),
-        payment_terms: paymentInfo.paymentTerms,
+        payment_terms: paymentInfo.paymentTerms === 'custom' ? paymentInfo.customPaymentTerms : paymentInfo.paymentTerms,
         payment_method: paymentInfo.paymentMethod,
         additional_terms: paymentInfo.additionalTerms,
         ...calculateTotals(),
@@ -447,6 +660,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         
         alert('계약서가 임시저장되었습니다.');
       }
+
+      // 성공 시 처리
 
       if (isEdit) {
         setInitialFormData({
@@ -493,6 +708,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
   const { subtotal, taxAmount, total } = calculateTotals();
 
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -526,19 +742,33 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
               </p>
             </Card>
           )}
+
           {/* 1. 계약서 기본 정보 */}
           <Card className="p-6 bg-card border-border">
             <h3 className="font-medium mb-4 text-foreground">계약서 기본 정보</h3>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="contractTitle" className="text-foreground">계약서 제목 *</Label>
-                <Input
-                  id="contractTitle"
-                  value={contractBasicInfo.title}
-                  onChange={(e) => setContractBasicInfo({...contractBasicInfo, title: e.target.value})}
-                  placeholder="웹사이트 리뉴얼 프로젝트 용역계약서"
-                  className="bg-input-background border-border"
-                />
+                <div className="relative">
+                  <Input
+                    ref={titleRef}
+                    id="contractTitle"
+                    value={contractBasicInfo.title}
+                    onChange={(e) => {
+                      setContractBasicInfo({...contractBasicInfo, title: e.target.value});
+                      if (e.target.value.trim() && fieldTooltips.title) {
+                        hideFieldTooltip('title');
+                      }
+                    }}
+                    placeholder="웹사이트 리뉴얼 프로젝트 용역계약서"
+                    className="bg-input-background border-border"
+                  />
+                  {fieldTooltips.title && (
+                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                      {fieldTooltips.title}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contractDescription" className="text-foreground">계약서 설명</Label>
@@ -556,39 +786,81 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
           {/* 2. 발주처 정보 */}
           <Card className="p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">발주처 정보 (고객)</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium text-foreground">발주처 정보 (고객)</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditingClient(!isEditingClient)}
+                className="border-border"
+              >
+                <Edit3 className="w-4 h-4 mr-2" />
+                {isEditingClient ? '저장' : '수정'}
+              </Button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-foreground">고객명 *</Label>
-                <Input 
-                  value={clientInfo.name} 
-                  onChange={(e) => setClientInfo({...clientInfo, name: e.target.value})}
-                  className="bg-input-background border-border" 
-                />
+                <div className="relative">
+                  <Input
+                    ref={clientNameRef}
+                    value={clientInfo.name} 
+                    onChange={(e) => {
+                      setClientInfo({...clientInfo, name: e.target.value});
+                      if (e.target.value.trim() && fieldTooltips.clientName) {
+                        hideFieldTooltip('clientName');
+                      }
+                    }}
+                    className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                    disabled={!isEditingClient}
+                  />
+                  {fieldTooltips.clientName && (
+                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                      {fieldTooltips.clientName}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-foreground">회사명</Label>
                 <Input 
                   value={clientInfo.company} 
                   onChange={(e) => setClientInfo({...clientInfo, company: e.target.value})}
-                  className="bg-input-background border-border" 
+                  className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingClient}
                 />
               </div>
               <div className="space-y-2">
                 <Label className="text-foreground">이메일 *</Label>
-                <Input 
-                  type="email"
-                  value={clientInfo.email} 
-                  onChange={(e) => setClientInfo({...clientInfo, email: e.target.value})}
-                  className="bg-input-background border-border" 
-                />
+                <div className="relative">
+                  <Input
+                    ref={clientEmailRef}
+                    type="email"
+                    value={clientInfo.email} 
+                    onChange={(e) => {
+                      setClientInfo({...clientInfo, email: e.target.value});
+                      if (e.target.value.trim() && isValidEmail(e.target.value) && fieldTooltips.clientEmail) {
+                        hideFieldTooltip('clientEmail');
+                      }
+                    }}
+                    className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                    disabled={!isEditingClient}
+                  />
+                  {fieldTooltips.clientEmail && (
+                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                      {fieldTooltips.clientEmail}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-foreground">전화번호</Label>
                 <Input 
                   value={clientInfo.phone} 
                   onChange={(e) => setClientInfo({...clientInfo, phone: e.target.value})}
-                  className="bg-input-background border-border" 
+                  className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingClient}
                 />
               </div>
               <div className="space-y-2">
@@ -596,7 +868,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 <Input 
                   value={clientInfo.businessNumber} 
                   onChange={(e) => setClientInfo({...clientInfo, businessNumber: e.target.value})}
-                  className="bg-input-background border-border" 
+                  className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingClient}
                 />
               </div>
               <div className="space-y-2">
@@ -604,7 +877,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 <Input 
                   value={clientInfo.address} 
                   onChange={(e) => setClientInfo({...clientInfo, address: e.target.value})}
-                  className="bg-input-background border-border" 
+                  className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingClient}
                 />
               </div>
             </div>
@@ -612,15 +886,27 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
           {/* 3. 수급업체 정보 */}
           <Card className="p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">수급업체 정보 (공급자)</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium text-foreground">수급업체 정보 (공급자)</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditingSupplier(!isEditingSupplier)}
+                className="border-border"
+              >
+                <Edit3 className="w-4 h-4 mr-2" />
+                {isEditingSupplier ? '저장' : '수정'}
+              </Button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-foreground">대표자명</Label>
                 <Input 
                   value={supplierInfo.name} 
                   onChange={(e) => setSupplierInfo({...supplierInfo, name: e.target.value})}
-                  className="bg-muted text-muted-foreground" 
-                  disabled
+                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingSupplier}
                 />
               </div>
               <div className="space-y-2">
@@ -628,32 +914,35 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 <Input 
                   value={supplierInfo.companyName || supplierInfo.businessName} 
                   onChange={(e) => setSupplierInfo({...supplierInfo, companyName: e.target.value})}
-                  className="bg-muted text-muted-foreground"
-                  disabled
+                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingSupplier}
                 />
               </div>
               <div className="space-y-2">
                 <Label className="text-foreground">이메일</Label>
                 <Input 
                   value={supplierInfo.email} 
-                  className="bg-muted text-muted-foreground" 
-                  disabled
+                  onChange={(e) => setSupplierInfo({...supplierInfo, email: e.target.value})}
+                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingSupplier}
                 />
               </div>
               <div className="space-y-2">
                 <Label className="text-foreground">전화번호</Label>
                 <Input 
                   value={supplierInfo.phone} 
-                  className="bg-muted text-muted-foreground" 
-                  disabled
+                  onChange={(e) => setSupplierInfo({...supplierInfo, phone: e.target.value})}
+                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingSupplier}
                 />
               </div>
               <div className="space-y-2">
                 <Label className="text-foreground">사업자등록번호</Label>
                 <Input 
                   value={supplierInfo.businessRegistrationNumber} 
-                  className="bg-muted text-muted-foreground" 
-                  disabled
+                  onChange={(e) => setSupplierInfo({...supplierInfo, businessRegistrationNumber: e.target.value})}
+                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingSupplier}
                 />
               </div>
               <div className="space-y-2">
@@ -661,7 +950,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 <Input 
                   value={supplierInfo.businessAddress} 
                   onChange={(e) => setSupplierInfo({...supplierInfo, businessAddress: e.target.value})}
-                  className="bg-input-background border-border" 
+                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingSupplier}
                 />
               </div>
             </div>
@@ -674,23 +964,49 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="startDate" className="text-foreground">프로젝트 시작일 *</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={projectInfo.startDate}
-                    onChange={(e) => setProjectInfo({...projectInfo, startDate: e.target.value})}
-                    className="bg-input-background border-border"
-                  />
+                  <div className="relative">
+                    <Input
+                      ref={startDateRef}
+                      id="startDate"
+                      type="date"
+                      value={projectInfo.startDate}
+                      onChange={(e) => {
+                        setProjectInfo({...projectInfo, startDate: e.target.value});
+                        if (e.target.value && fieldTooltips.startDate) {
+                          hideFieldTooltip('startDate');
+                        }
+                      }}
+                      className="bg-input-background border-border"
+                    />
+                    {fieldTooltips.startDate && (
+                      <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                        {fieldTooltips.startDate}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="endDate" className="text-foreground">프로젝트 완료일 *</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={projectInfo.endDate}
-                    onChange={(e) => setProjectInfo({...projectInfo, endDate: e.target.value})}
-                    className="bg-input-background border-border"
-                  />
+                  <div className="relative">
+                    <Input
+                      ref={endDateRef}
+                      id="endDate"
+                      type="date"
+                      value={projectInfo.endDate}
+                      onChange={(e) => {
+                        setProjectInfo({...projectInfo, endDate: e.target.value});
+                        if (e.target.value && fieldTooltips.endDate) {
+                          hideFieldTooltip('endDate');
+                        }
+                      }}
+                      className="bg-input-background border-border"
+                    />
+                    {fieldTooltips.endDate && (
+                      <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                        {fieldTooltips.endDate}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="space-y-2">
@@ -708,7 +1024,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           </Card>
 
           {/* 5. 계약 내역 */}
-          <Card className="p-6 bg-card border-border">
+          <Card className="p-6 bg-card border-border" data-section="contract-items">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-medium text-foreground">계약 내역</h3>
               <Button
@@ -728,11 +1044,11 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                   <thead className="bg-muted/50 border-b border-border">
                     <tr>
                       <th className="px-2 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-1/5">항목명</th>
-                      <th className="px-2 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-2/5">설명</th>
-                      <th className="px-2 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-16 whitespace-nowrap">수량</th>
-                      <th className="px-2 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-16 whitespace-nowrap">단위</th>
-                      <th className="px-2 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider w-32">단가</th>
-                      <th className="px-2 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider w-36">금액</th>
+                      <th className="px-2 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-1/3">설명</th>
+                      <th className="px-2 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-18 whitespace-nowrap">수량</th>
+                      <th className="px-2 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider w-18 whitespace-nowrap">단위</th>
+                      <th className="px-2 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider w-36">단가</th>
+                      <th className="px-2 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider w-40">금액</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -744,6 +1060,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                             onChange={(e) => updateContractItem(item.id, 'name', e.target.value)}
                             placeholder="서비스 또는 상품명"
                             className="border-0 bg-transparent p-2 h-9 text-sm font-medium focus:ring-1 focus:ring-primary focus:bg-muted/30 hover:bg-muted/20 w-full break-words rounded-sm transition-colors"
+                            data-item-field="name"
                           />
                         </td>
                         <td className="px-2 py-3 align-top">
@@ -787,7 +1104,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                                 updateContractItem(item.id, 'unit_price', parseInt(value) || 0);
                               }}
                               onWheel={(e) => e.currentTarget.blur()}
-                              className="border-0 bg-transparent p-2 h-9 text-sm text-right focus:ring-1 focus:ring-primary focus:bg-muted/30 hover:bg-muted/20 w-20 rounded-sm transition-colors"
+                              className="border-0 bg-transparent p-2 h-9 text-sm text-right focus:ring-1 focus:ring-primary focus:bg-muted/30 hover:bg-muted/20 w-24 rounded-sm transition-colors"
                               placeholder="0"
                             />
                             <span className="text-sm text-muted-foreground ml-1 whitespace-nowrap">원</span>
@@ -887,17 +1204,41 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="paymentTerms" className="text-foreground">결제 조건 *</Label>
-                <Select value={paymentInfo.paymentTerms} onValueChange={(value) => setPaymentInfo({...paymentInfo, paymentTerms: value})}>
-                  <SelectTrigger className="bg-input-background border-border">
-                    <SelectValue placeholder="결제 조건을 선택하세요" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="immediate">계약 체결 즉시</SelectItem>
-                    <SelectItem value="50-50">착수금 50% / 완료 후 50%</SelectItem>
-                    <SelectItem value="30-70">착수금 30% / 완료 후 70%</SelectItem>
-                    <SelectItem value="milestone">마일스톤별 분할 결제</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="relative">
+                  <Select value={paymentInfo.paymentTerms} onValueChange={(value) => {
+                    setPaymentInfo({...paymentInfo, paymentTerms: value, customPaymentTerms: value === 'custom' ? paymentInfo.customPaymentTerms : ''});
+                    if (value && fieldTooltips.paymentTerms) {
+                      hideFieldTooltip('paymentTerms');
+                    }
+                  }}>
+                    <SelectTrigger ref={paymentTermsRef} className="bg-input-background border-border">
+                      <SelectValue placeholder="결제 조건을 선택하세요" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="immediate">계약 체결 즉시</SelectItem>
+                      <SelectItem value="50-50">착수금 50% / 완료 후 50%</SelectItem>
+                      <SelectItem value="30-70">착수금 30% / 완료 후 70%</SelectItem>
+                      <SelectItem value="custom">직접 입력</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {fieldTooltips.paymentTerms && (
+                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                      {fieldTooltips.paymentTerms}
+                    </div>
+                  )}
+                </div>
+                
+                {/* 직접 입력 옵션 선택시 나타나는 입력 필드 */}
+                {paymentInfo.paymentTerms === 'custom' && (
+                  <div className="mt-2">
+                    <Input
+                      placeholder="결제 조건을 직접 입력하세요"
+                      value={paymentInfo.customPaymentTerms}
+                      onChange={(e) => setPaymentInfo({...paymentInfo, customPaymentTerms: e.target.value})}
+                      className="bg-input-background border-border"
+                    />
+                  </div>
+                )}
               </div>
               
               <div className="space-y-2">
@@ -965,7 +1306,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 <Button 
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                   onClick={handleSaveAndSend}
-                  disabled={isLoading || !contractBasicInfo.title || !clientInfo.name || !clientInfo.email || !projectInfo.startDate || !projectInfo.endDate || contractItems.length === 0}
+                  disabled={isLoading}
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
                   {isLoading ? '처리중...' : (isEdit ? '수정 후 발송' : '계약서 발송')}
@@ -974,7 +1315,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                   variant="outline" 
                   className="w-full border-border"
                   onClick={handleSaveDraft}
-                  disabled={isLoading || (isEdit && !hasUnsavedChanges)}
+                  disabled={isLoading}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   {isLoading ? '저장중...' : (isEdit ? '수정사항 저장' : '임시저장')}

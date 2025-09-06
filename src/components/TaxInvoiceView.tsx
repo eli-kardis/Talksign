@@ -4,8 +4,8 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Receipt, Search, Filter, Download, Eye, Calendar, User, Building, CheckCircle, Clock, AlertCircle, Send } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Receipt, Search, Filter, Download, Eye, Calendar, User, Building, CheckCircle, Clock, AlertCircle, Send, Plus } from 'lucide-react';
 
 interface TaxInvoice {
   id: number;
@@ -62,7 +62,6 @@ interface TaxInvoiceViewProps {}
 export function TaxInvoiceView({}: TaxInvoiceViewProps = {}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [activeTab, setActiveTab] = useState('all');
 
   const getStatusBadge = (status: TaxInvoice['status']) => {
     const statusConfig = {
@@ -83,8 +82,7 @@ export function TaxInvoiceView({}: TaxInvoiceViewProps = {}) {
                          invoice.project.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'all' || invoice.status === filterStatus;
-    const matchesTab = activeTab === 'all' || invoice.status === activeTab;
-    return matchesSearch && matchesFilter && matchesTab;
+    return matchesSearch && matchesFilter;
   });
 
   const statusCounts = {
@@ -111,188 +109,167 @@ export function TaxInvoiceView({}: TaxInvoiceViewProps = {}) {
   };
 
   return (
-    <div className="space-y-6">
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6 bg-card border-border">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium text-muted-foreground">총 발행 금액</h3>
-            <Receipt className="w-5 h-5 text-primary" />
-          </div>
-          <p className="text-2xl font-medium text-foreground font-mono">{formatCurrency(totalAmount)}</p>
-        </Card>
-
-        <Card className="p-6 bg-card border-border">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium text-muted-foreground">승인 완료</h3>
-            <CheckCircle className="w-5 h-5 text-primary" />
-          </div>
-          <p className="text-2xl font-medium text-primary font-mono">{formatCurrency(confirmedAmount)}</p>
-        </Card>
-
-        <Card className="p-6 bg-card border-border">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium text-muted-foreground">발행 건수</h3>
-            <Building className="w-5 h-5 text-primary" />
-          </div>
-          <p className="text-2xl font-medium text-foreground">{mockTaxInvoices.length}건</p>
-        </Card>
+    <div className="space-y-4 md:space-y-6">
+      {/* 상단 검색 및 버튼 */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            placeholder="고객명, 프로젝트명 또는 계산서 번호로 검색..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-input-background border-border text-sm md:text-base"
+          />
+        </div>
+        
+        <div className="flex items-center gap-2 md:gap-3">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="px-4 py-2">
+                <Filter className="w-4 h-4 mr-2" />
+                필터
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 bg-card border-border" align="end">
+              <div className="space-y-4 p-2">
+                <h4 className="font-semibold text-lg">필터 옵션</h4>
+                
+                <div className="space-y-3">
+                  <label className="text-base font-medium">상태</label>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="상태 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">모든 상태</SelectItem>
+                      <SelectItem value="draft">임시저장</SelectItem>
+                      <SelectItem value="issued">발행완료</SelectItem>
+                      <SelectItem value="sent">전송완료</SelectItem>
+                      <SelectItem value="confirmed">승인완료</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+          
+          <Button
+            onClick={() => {/* TODO: 새 세금계산서 생성 로직 */}}
+            className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-primary-foreground"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            새 세금계산서
+          </Button>
+        </div>
       </div>
 
-      {/* Status Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 bg-transparent gap-2 p-0">
-          <TabsTrigger 
-            value="all" 
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            전체 ({statusCounts.all})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="draft"
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <Clock className="w-4 h-4" />
-            임시저장 ({statusCounts.draft})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="issued"
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <Receipt className="w-4 h-4" />
-            발행완료 ({statusCounts.issued})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="sent"
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <Send className="w-4 h-4" />
-            전송완료 ({statusCounts.sent})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="confirmed"
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <CheckCircle className="w-4 h-4" />
-            승인완료 ({statusCounts.confirmed})
-          </TabsTrigger>
-        </TabsList>
+      {/* 세금계산서 목록 테이블 */}
+      {filteredInvoices.length > 0 && (
+        <Card className="bg-card border-border shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left p-4 font-medium text-muted-foreground">고객 정보</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">계산서 번호</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">프로젝트</th>
+                  <th className="text-right p-4 font-medium text-muted-foreground">금액</th>
+                  <th className="text-center p-4 font-medium text-muted-foreground">상태</th>
+                  <th className="text-center p-4 font-medium text-muted-foreground">발행일</th>
+                  <th className="text-center p-4 font-medium text-muted-foreground">관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredInvoices.map((invoice) => {
+                  const statusConfig = getStatusBadge(invoice.status);
+                  const StatusIcon = statusConfig.icon;
+                  
+                  return (
+                    <tr key={invoice.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                      <td className="p-4">
+                        <div className="space-y-1">
+                          <div className="font-medium text-foreground">{invoice.client}</div>
+                          <div className="text-sm text-muted-foreground">
+                            사업자번호: {invoice.businessNumber}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="font-medium text-foreground">{invoice.invoiceNumber}</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="font-medium text-foreground">{invoice.project}</div>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="space-y-1">
+                          <div className="font-medium text-foreground font-mono">
+                            {formatCurrency(invoice.totalAmount)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            (VAT: {formatCurrency(invoice.vatAmount)})
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        <Badge className={statusConfig.className}>
+                          <StatusIcon className="w-3 h-3 mr-1" />
+                          {statusConfig.label}
+                        </Badge>
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">{invoice.issueDate}</div>
+                          {invoice.confirmedDate && (
+                            <div className="text-xs text-primary">
+                              승인: {invoice.confirmedDate}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button variant="outline" size="sm" className="border-border">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleDownload(invoice)}
+                            className="border-border"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
 
-        {/* Filters */}
-        <Card className="p-4 bg-card border-border">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="고객명, 프로젝트명 또는 계산서 번호로 검색..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-input-background border-border"
-                />
-              </div>
-            </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full sm:w-48 bg-input-background border-border">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="상태 필터" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 상태</SelectItem>
-                <SelectItem value="draft">임시저장</SelectItem>
-                <SelectItem value="issued">발행완료</SelectItem>
-                <SelectItem value="sent">전송완료</SelectItem>
-                <SelectItem value="confirmed">승인완료</SelectItem>
-              </SelectContent>
-            </Select>
+                          {invoice.status === 'draft' && (
+                            <Button 
+                              size="sm" 
+                              onClick={() => handleAutoIssue(invoice)}
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            >
+                              자동 발행
+                            </Button>
+                          )}
+
+                          {invoice.status === 'issued' && (
+                            <Button 
+                              size="sm"
+                              onClick={() => handleSendInvoice(invoice)}
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            >
+                              <Send className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </Card>
-
-        <TabsContent value={activeTab} className="space-y-4">
-          {filteredInvoices.map((invoice) => {
-            const statusConfig = getStatusBadge(invoice.status);
-            const StatusIcon = statusConfig.icon;
-            
-            return (
-              <Card key={invoice.id} className="p-6 hover:shadow-md transition-shadow bg-card border-border">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Receipt className="w-5 h-5 text-primary" />
-                      <h3 className="font-medium text-foreground">{invoice.client}</h3>
-                      <Badge className={statusConfig.className}>
-                        <StatusIcon className="w-3 h-3 mr-1" />
-                        {statusConfig.label}
-                      </Badge>
-                    </div>
-                    
-                    <p className="text-muted-foreground">{invoice.project}</p>
-                    
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                      <span className="font-medium text-lg text-foreground font-mono">
-                        {formatCurrency(invoice.totalAmount)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Receipt className="w-4 h-4" />
-                        {invoice.invoiceNumber}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        발행일: {invoice.issueDate}
-                      </span>
-                      {invoice.confirmedDate && (
-                        <span className="flex items-center gap-1 text-primary">
-                          <CheckCircle className="w-4 h-4" />
-                          승인일: {invoice.confirmedDate}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="border-border">
-                      <Eye className="w-4 h-4 mr-1" />
-                      상세
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleDownload(invoice)}
-                      className="border-border"
-                    >
-                      <Download className="w-4 h-4 mr-1" />
-                      다운로드
-                    </Button>
-
-                    {invoice.status === 'draft' && (
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleAutoIssue(invoice)}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                      >
-                        자동 발행
-                      </Button>
-                    )}
-
-                    {invoice.status === 'issued' && (
-                      <Button 
-                        size="sm"
-                        onClick={() => handleSendInvoice(invoice)}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                      >
-                        <Send className="w-4 h-4 mr-1" />
-                        발송
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </TabsContent>
-      </Tabs>
+      )}
 
       {filteredInvoices.length === 0 && (
         <Card className="p-12 text-center bg-card border-border">
@@ -304,21 +281,6 @@ export function TaxInvoiceView({}: TaxInvoiceViewProps = {}) {
           </Button>
         </Card>
       )}
-
-      {/* Auto Issue Info */}
-      <Card className="p-6 bg-accent">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-accent-foreground mt-0.5" />
-          <div>
-            <h3 className="font-medium text-accent-foreground mb-2">자동 발행 안내</h3>
-            <ul className="text-sm text-accent-foreground space-y-1">
-              <li>• 결제 완료 시 세금계산서가 자동으로 발행됩니다</li>
-              <li>• 발행된 세금계산서는 고객과 프리랜서 모두에게 카카오톡으로 발송됩니다</li>
-              <li>• 국세청 홈택스와 연동하여 전자세금계산서로 처리됩니다</li>
-            </ul>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 }

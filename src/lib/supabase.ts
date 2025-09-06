@@ -64,7 +64,7 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 // Enhanced type definitions based on database schema
 export type UserRole = 'freelancer' | 'client' | 'admin'
 export type QuoteStatus = 'draft' | 'sent' | 'approved' | 'rejected' | 'expired'
-export type ContractStatus = 'draft' | 'sent' | 'signed' | 'completed' | 'cancelled'
+export type ContractStatus = 'draft' | 'sent' | 'completed'
 export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded'
 
 export interface QuoteItem {

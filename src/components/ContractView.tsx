@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -16,7 +16,7 @@ interface Contract {
   client: string;
   project: string;
   amount: number;
-  status: 'pending' | 'sent' | 'signed' | 'completed';
+  status: 'draft' | 'sent' | 'completed';
   createdDate: string;
   signedDate?: string;
   contractUrl: string;
@@ -29,7 +29,7 @@ const mockContracts: Contract[] = [
     client: "스타트업 A",
     project: "웹사이트 리뉴얼 프로젝트",
     amount: 3000000,
-    status: "signed",
+    status: "completed",
     createdDate: "2024-01-15",
     signedDate: "2024-01-16",
     contractUrl: "#",
@@ -61,7 +61,7 @@ const mockContracts: Contract[] = [
     client: "소상공인 D",
     project: "온라인 쇼핑몰 구축",
     amount: 2500000,
-    status: "pending",
+    status: "draft",
     createdDate: "2024-01-12",
     contractUrl: "#",
     phone: "010-4567-8901"
@@ -74,7 +74,7 @@ interface ContractViewProps {
   onViewContract?: (contractId: string) => void;
 }
 
-type TabKey = "all" | "pending" | "sent" | "signed" | "completed";
+type TabKey = "all" | "draft" | "sent" | "completed";
 
 type SortField = 'client' | 'project' | 'date' | 'status' | 'amount';
 type SortDirection = 'asc' | 'desc';
@@ -126,7 +126,35 @@ function SortableHeader({
 export function ContractView({ onNewContract, onEditContract, onViewContract }: ContractViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<TabKey>('all');
-  const [contracts, setContracts] = useState<Contract[]>(mockContracts);
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load contracts from API
+  useEffect(() => {
+    const loadContracts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/contracts');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch contracts');
+        }
+        
+        const data = await response.json();
+        setContracts(data);
+      } catch (err) {
+        console.error('Error loading contracts:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load contracts');
+        // Fallback to mock data if API fails
+        setContracts(mockContracts);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadContracts();
+  }, []);
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -207,12 +235,12 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
 
   const getStatusBadge = (status: Contract['status']) => {
     const statusConfig = {
-      pending: { label: '작성중', className: 'bg-muted text-muted-foreground', icon: Clock },
-      sent: { label: '서명대기', className: 'bg-accent text-accent-foreground', icon: PenTool },
-      signed: { label: '서명완료', className: 'bg-primary/20 text-primary', icon: CheckCircle },
+      draft: { label: '임시저장', className: 'bg-muted text-muted-foreground', icon: FileText },
+      sent: { label: '발송됨', className: 'bg-accent text-accent-foreground', icon: PenTool },
       completed: { label: '계약완료', className: 'bg-primary text-primary-foreground', icon: CheckCircle }
     };
-    return statusConfig[status];
+    // Default fallback for unknown status
+    return statusConfig[status] || { label: '알 수 없음', className: 'bg-muted text-muted-foreground', icon: AlertCircle };
   };
 
   const formatCurrency = (amount: number) => {
@@ -312,9 +340,8 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
 
   const statusCounts = {
     all: contracts.length,
-    pending: contracts.filter(c => c.status === 'pending').length,
+    draft: contracts.filter(c => c.status === 'draft').length,
     sent: contracts.filter(c => c.status === 'sent').length,
-    signed: contracts.filter(c => c.status === 'signed').length,
     completed: contracts.filter(c => c.status === 'completed').length
   };
 
@@ -325,6 +352,28 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
   const sendToKakao = (contract: Contract) => {
     alert(`${contract.client}님께 카카오톡으로 계약서가 발송되었습니다!`);
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="space-y-4 md:space-y-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-muted-foreground">계약서를 불러오는 중...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state with fallback to mock data
+  if (error && contracts.length === 0) {
+    return (
+      <div className="space-y-4 md:space-y-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-destructive">오류가 발생했습니다: {error}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -360,10 +409,9 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">모든 상태</SelectItem>
-                      <SelectItem value="pending">작성중</SelectItem>
-                      <SelectItem value="sent">서명대기</SelectItem>
-                      <SelectItem value="signed">서명완료</SelectItem>
-                      <SelectItem value="completed">완료</SelectItem>
+                      <SelectItem value="draft">임시저장</SelectItem>
+                      <SelectItem value="sent">발송됨</SelectItem>
+                      <SelectItem value="completed">계약완료</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -524,18 +572,8 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
               </thead>
               <tbody>
                 {sortedAndFilteredContracts.map((contract) => {
-                  const getStatusBadge = (status: Contract['status']) => {
-                    const statusConfig = {
-                      pending: { label: '작성중', className: 'bg-muted text-muted-foreground', icon: Clock },
-                      sent: { label: '서명대기', className: 'bg-accent text-accent-foreground', icon: PenTool },
-                      signed: { label: '서명완료', className: 'bg-primary/20 text-primary', icon: CheckCircle },
-                      completed: { label: '계약완료', className: 'bg-primary text-primary-foreground', icon: CheckCircle }
-                    };
-                    return statusConfig[status];
-                  };
-
                   const statusConfig = getStatusBadge(contract.status);
-                  const StatusIcon = statusConfig.icon;
+                  const StatusIcon = statusConfig?.icon || AlertCircle;
                   
                   return (
                     <tr 

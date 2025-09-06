@@ -4,9 +4,8 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Progress } from './ui/progress';
-import { CreditCard, Clock, CheckCircle, AlertCircle, Search, Filter, MessageSquare, Eye, Calendar, User, Download, RefreshCw } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { CreditCard, Clock, CheckCircle, AlertCircle, Search, Filter, MessageSquare, Eye, Calendar, User, Download, RefreshCw, Plus } from 'lucide-react';
 
 interface Payment {
   id: number;
@@ -92,7 +91,6 @@ const mockPayments: Payment[] = [
 export function PaymentView({ onNavigate }: PaymentViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [activeTab, setActiveTab] = useState('all');
 
   const getStatusBadge = (status: Payment['status']) => {
     const statusConfig = {
@@ -120,8 +118,7 @@ export function PaymentView({ onNavigate }: PaymentViewProps) {
     const matchesSearch = payment.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          payment.project.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'all' || payment.status === filterStatus;
-    const matchesTab = activeTab === 'all' || payment.status === activeTab;
-    return matchesSearch && matchesFilter && matchesTab;
+    return matchesSearch && matchesFilter;
   });
 
   const statusCounts = {
@@ -145,208 +142,166 @@ export function PaymentView({ onNavigate }: PaymentViewProps) {
   };
 
   return (
-    <div className="space-y-6">
-
-      {/* Payment Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6 bg-card border-border">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium text-muted-foreground">총 결제 금액</h3>
-            <CreditCard className="w-5 h-5 text-primary" />
-          </div>
-          <p className="text-2xl font-medium text-foreground font-mono">{formatCurrency(totalAmount)}</p>
-        </Card>
-
-        <Card className="p-6 bg-card border-border">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium text-muted-foreground">완료된 결제</h3>
-            <CheckCircle className="w-5 h-5 text-primary" />
-          </div>
-          <p className="text-2xl font-medium text-primary font-mono">{formatCurrency(paidAmount)}</p>
-          <Progress value={(paidAmount / totalAmount) * 100} className="mt-2" />
-        </Card>
-
-        <Card className="p-6 bg-card border-border">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium text-muted-foreground">대기중 결제</h3>
-            <Clock className="w-5 h-5 text-secondary-foreground" />
-          </div>
-          <p className="text-2xl font-medium text-secondary-foreground font-mono">{formatCurrency(pendingAmount)}</p>
-        </Card>
+    <div className="space-y-4 md:space-y-6">
+      {/* 상단 검색 및 버튼 */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            placeholder="고객명 또는 프로젝트명으로 검색..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-input-background border-border text-sm md:text-base"
+          />
+        </div>
+        
+        <div className="flex items-center gap-2 md:gap-3">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="px-4 py-2">
+                <Filter className="w-4 h-4 mr-2" />
+                필터
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 bg-card border-border" align="end">
+              <div className="space-y-4 p-2">
+                <h4 className="font-semibold text-lg">필터 옵션</h4>
+                
+                <div className="space-y-3">
+                  <label className="text-base font-medium">상태</label>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="상태 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">모든 상태</SelectItem>
+                      <SelectItem value="pending">결제 준비중</SelectItem>
+                      <SelectItem value="sent">결제 대기</SelectItem>
+                      <SelectItem value="paid">결제 완료</SelectItem>
+                      <SelectItem value="overdue">연체</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+          
+          <Button
+            onClick={() => {/* TODO: 새 결제 생성 로직 */}}
+            className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-primary-foreground"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            새 결제 요청
+          </Button>
+        </div>
       </div>
 
-      {/* Status Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 bg-transparent gap-2 p-0">
-          <TabsTrigger 
-            value="all" 
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            전체 ({statusCounts.all})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="pending" 
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <Clock className="w-4 h-4" />
-            준비중 ({statusCounts.pending})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="sent" 
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <CreditCard className="w-4 h-4" />
-            대기중 ({statusCounts.sent})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="paid" 
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <CheckCircle className="w-4 h-4" />
-            완료 ({statusCounts.paid})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="overdue" 
-            className="flex items-center justify-center gap-2 bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-accent rounded-lg border border-border data-[state=active]:border-primary text-xs md:text-sm whitespace-nowrap py-2.5 px-4 transition-all"
-          >
-            <AlertCircle className="w-4 h-4" />
-            연체 ({statusCounts.overdue})
-          </TabsTrigger>
-        </TabsList>
+      {/* 결제 목록 테이블 */}
+      {filteredPayments.length > 0 && (
+        <Card className="bg-card border-border shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left p-4 font-medium text-muted-foreground">고객 정보</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">프로젝트</th>
+                  <th className="text-right p-4 font-medium text-muted-foreground">금액</th>
+                  <th className="text-center p-4 font-medium text-muted-foreground">상태</th>
+                  <th className="text-center p-4 font-medium text-muted-foreground">마감일</th>
+                  <th className="text-center p-4 font-medium text-muted-foreground">관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPayments.map((payment) => {
+                  const statusConfig = getStatusBadge(payment.status);
+                  const StatusIcon = statusConfig.icon;
+                  const daysUntilDue = getDaysUntilDue(payment.dueDate);
+                  
+                  return (
+                    <tr key={payment.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                      <td className="p-4">
+                        <div className="space-y-1">
+                          <div className="font-medium text-foreground">{payment.client}</div>
+                          <div className="text-sm text-muted-foreground flex items-center gap-1">
+                            <User className="w-3 h-3" />
+                            {payment.phone}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="space-y-1">
+                          <div className="font-medium text-foreground">{payment.project}</div>
+                          {payment.isRecurring && (
+                            <Badge className="bg-accent text-accent-foreground text-xs">
+                              <RefreshCw className="w-3 h-3 mr-1" />
+                              정기결제
+                            </Badge>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="font-medium text-foreground font-mono">
+                          {formatCurrency(payment.amount)}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        <Badge className={statusConfig.className}>
+                          <StatusIcon className="w-3 h-3 mr-1" />
+                          {statusConfig.label}
+                        </Badge>
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">{payment.dueDate}</div>
+                          {payment.status === 'sent' && daysUntilDue >= 0 && (
+                            <div className={`text-xs ${daysUntilDue <= 3 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                              {daysUntilDue}일 남음
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button variant="outline" size="sm" className="border-border">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          
+                          {payment.status === 'pending' && (
+                            <Button 
+                              size="sm" 
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                              onClick={() => sendPaymentLink(payment)}
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </Button>
+                          )}
 
-        {/* Filters */}
-        <Card className="p-4 bg-card border-border">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="고객명 또는 프로젝트명으로 검색..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-input-background border-border"
-                />
-              </div>
-            </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full sm:w-48 bg-input-background border-border">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="상태 필터" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 상태</SelectItem>
-                <SelectItem value="pending">준비중</SelectItem>
-                <SelectItem value="sent">대기중</SelectItem>
-                <SelectItem value="paid">완료</SelectItem>
-                <SelectItem value="overdue">연체</SelectItem>
-              </SelectContent>
-            </Select>
+                          {(payment.status === 'sent' || payment.status === 'overdue') && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => sendPaymentReminder(payment)}
+                              className="border-border"
+                            >
+                              <AlertCircle className="w-4 h-4" />
+                            </Button>
+                          )}
+
+                          {payment.status === 'paid' && payment.invoiceUrl && (
+                            <Button variant="outline" size="sm" className="border-border">
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </Card>
-
-        <TabsContent value={activeTab} className="space-y-4">
-          {filteredPayments.map((payment) => {
-            const statusConfig = getStatusBadge(payment.status);
-            const StatusIcon = statusConfig.icon;
-            const daysUntilDue = getDaysUntilDue(payment.dueDate);
-            
-            return (
-              <Card key={payment.id} className="p-6 hover:shadow-md transition-shadow bg-card border-border">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <CreditCard className="w-5 h-5 text-primary" />
-                      <h3 className="font-medium text-foreground">{payment.client}</h3>
-                      <Badge className={statusConfig.className}>
-                        <StatusIcon className="w-3 h-3 mr-1" />
-                        {statusConfig.label}
-                      </Badge>
-                      {payment.isRecurring && (
-                        <Badge className="bg-accent text-accent-foreground">
-                          <RefreshCw className="w-3 h-3 mr-1" />
-                          정기결제
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <p className="text-muted-foreground">{payment.project}</p>
-                    
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                      <span className="font-medium text-lg text-foreground font-mono">
-                        {formatCurrency(payment.amount)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        마감일: {payment.dueDate}
-                      </span>
-                      {payment.status === 'sent' && daysUntilDue >= 0 && (
-                        <span className={`flex items-center gap-1 ${daysUntilDue <= 3 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                          {daysUntilDue}일 남음
-                        </span>
-                      )}
-                      {payment.paidDate && (
-                        <span className="flex items-center gap-1 text-primary">
-                          <CheckCircle className="w-4 h-4" />
-                          결제일: {payment.paidDate}
-                        </span>
-                      )}
-                      {payment.paymentMethod && (
-                        <span>결제수단: {payment.paymentMethod}</span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <User className="w-4 h-4" />
-                        {payment.phone}
-                      </span>
-                      {payment.nextPaymentDate && (
-                        <span className="text-accent-foreground">
-                          다음 결제: {payment.nextPaymentDate}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="border-border">
-                      <Eye className="w-4 h-4 mr-1" />
-                      상세
-                    </Button>
-                    
-                    {payment.status === 'pending' && (
-                      <Button 
-                        size="sm" 
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                        onClick={() => sendPaymentLink(payment)}
-                      >
-                        <MessageSquare className="w-4 h-4 mr-1" />
-                        결제링크 발송
-                      </Button>
-                    )}
-
-                    {(payment.status === 'sent' || payment.status === 'overdue') && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => sendPaymentReminder(payment)}
-                        className="border-border"
-                      >
-                        <AlertCircle className="w-4 h-4 mr-1" />
-                        리마인드
-                      </Button>
-                    )}
-
-                    {payment.status === 'paid' && payment.invoiceUrl && (
-                      <Button variant="outline" size="sm" className="border-border">
-                        <Download className="w-4 h-4 mr-1" />
-                        영수증
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </TabsContent>
-      </Tabs>
+      )}
 
       {filteredPayments.length === 0 && (
         <Card className="p-12 text-center bg-card border-border">
