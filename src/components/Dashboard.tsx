@@ -20,10 +20,10 @@ interface ScheduleItem {
 }
 
 interface DashboardStats {
-  totalQuotes: number;
-  activeContracts: number;
-  completedPayments: number;
+  lastMonthRevenue: number;
   monthlyRevenue: number;
+  unpaidAmount: number;
+  contractConversionRate: number;
 }
 
 interface ApiResponse<T> {
@@ -65,10 +65,10 @@ interface DashboardProps {
 export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: DashboardProps) {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
-    totalQuotes: 0,
-    activeContracts: 0,
-    completedPayments: 0,
-    monthlyRevenue: 0
+    lastMonthRevenue: 0,
+    monthlyRevenue: 0,
+    unpaidAmount: 0,
+    contractConversionRate: 0
   });
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,16 +134,16 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
         console.log('No authenticated user found');
         // 로그인되지 않은 상태라면 기본값으로 표시
         setStats({
-          totalQuotes: 0,
-          activeContracts: 0,
-          completedPayments: 0,
-          monthlyRevenue: 0
+          lastMonthRevenue: 0,
+          monthlyRevenue: 0,
+          unpaidAmount: 0,
+          contractConversionRate: 0
         });
         setWorkflowSteps([
-          { step: "견적서 발송", count: 0, color: "bg-blue-50 text-blue-700 border-blue-200" },
-          { step: "견적서 승인", count: 0, color: "bg-green-50 text-green-700 border-green-200" },
-          { step: "계약서 발송", count: 0, color: "bg-amber-50 text-amber-700 border-amber-200" },
-          { step: "계약 완료", count: 0, color: "bg-primary text-primary-foreground" }
+          { step: "견적서 발송", count: 0, color: "bg-accent text-accent-foreground" },
+          { step: "견적서 승인", count: 0, color: "bg-accent text-accent-foreground" },
+          { step: "계약서 발송", count: 0, color: "bg-accent text-accent-foreground" },
+          { step: "계약 완료", count: 0, color: "bg-accent text-accent-foreground" }
         ]);
         setLoading(false);
         return;
@@ -153,6 +153,10 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      
+      // 지난 달 시작/끝 날짜
+      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
       // 병렬로 데이터 가져오기 (성능 향상) with timeout - 필요한 필드만 선택해서 성능 개선
       const dataPromises = [
@@ -186,12 +190,19 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
         console.warn('Failed to fetch payments:', paymentsResult.reason);
       }
 
-      // 통계 계산 - 실제 상태값에 맞게 수정
-      const totalQuotes = quotes.length;
-      const activeContracts = contracts.filter((c: Contract) => c.status === 'sent' || c.status === 'draft').length; // 진행중인 계약 (발송됨 + 작성중)
-      const completedPayments = payments.filter((p: Payment) => p.status === 'completed').length;
+      // 새로운 통계 계산
       
-      // 이번 달 매출 계산
+      // 1. 지난달 매출 계산
+      const lastMonthRevenue = payments
+        .filter((p: Payment) => 
+          p.created_at &&
+          p.status === 'completed' && 
+          new Date(p.created_at) >= startOfLastMonth && 
+          new Date(p.created_at) <= endOfLastMonth
+        )
+        .reduce((sum: number, p: Payment) => sum + (p.amount || 0), 0);
+      
+      // 2. 이번달 매출 계산
       const monthlyRevenue = payments
         .filter((p: Payment) => 
           p.created_at &&
@@ -200,12 +211,24 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
           new Date(p.created_at) <= endOfMonth
         )
         .reduce((sum: number, p: Payment) => sum + (p.amount || 0), 0);
+      
+      // 3. 미결제 금액 계산 (pending, processing 상태의 결제)
+      const unpaidAmount = payments
+        .filter((p: Payment) => p.status === 'pending' || p.status === 'processing')
+        .reduce((sum: number, p: Payment) => sum + (p.amount || 0), 0);
+      
+      // 4. 계약 전환율 계산 (승인된 견적서 중에서 계약서로 전환된 비율)
+      const approvedQuotesCount = quotes.filter((q: any) => q.status === 'approved').length;
+      const contractsFromQuotesCount = contracts.length; // 모든 계약서는 견적서에서 나온 것으로 가정
+      const contractConversionRate = approvedQuotesCount > 0 
+        ? Math.round((contractsFromQuotesCount / approvedQuotesCount) * 100) 
+        : 0;
 
       setStats({
-        totalQuotes,
-        activeContracts,
-        completedPayments,
-        monthlyRevenue
+        lastMonthRevenue,
+        monthlyRevenue,
+        unpaidAmount,
+        contractConversionRate
       });
 
       // 워크플로우 단계별 계산 - 실제 비즈니스 플로우에 맞게 정밀하게 수정
@@ -235,10 +258,10 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
       });
 
       setWorkflowSteps([
-        { step: "견적서 발송", count: sentQuotes, color: "bg-blue-50 text-blue-700 border-blue-200" },
-        { step: "견적서 승인", count: approvedQuotes, color: "bg-green-50 text-green-700 border-green-200" },
-        { step: "계약서 발송", count: sentContracts, color: "bg-amber-50 text-amber-700 border-amber-200" },
-        { step: "계약 완료", count: completedContracts, color: "bg-primary text-primary-foreground" }
+        { step: "견적서 발송", count: sentQuotes, color: "bg-accent text-accent-foreground" },
+        { step: "견적서 승인", count: approvedQuotes, color: "bg-accent text-accent-foreground" },
+        { step: "계약서 발송", count: sentContracts, color: "bg-accent text-accent-foreground" },
+        { step: "계약 완료", count: completedContracts, color: "bg-accent text-accent-foreground" }
       ]);
 
     } catch (error) {
@@ -246,16 +269,16 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
       
       // 오류 발생시 기본 데이터 설정
       setStats({
-        totalQuotes: 0,
-        activeContracts: 0,
-        completedPayments: 0,
-        monthlyRevenue: 0
+        lastMonthRevenue: 0,
+        monthlyRevenue: 0,
+        unpaidAmount: 0,
+        contractConversionRate: 0
       });
       setWorkflowSteps([
-        { step: "견적서 발송", count: 0, color: "bg-blue-50 text-blue-700 border-blue-200" },
-        { step: "견적서 승인", count: 0, color: "bg-green-50 text-green-700 border-green-200" },
-        { step: "계약서 발송", count: 0, color: "bg-amber-50 text-amber-700 border-amber-200" },
-        { step: "계약 완료", count: 0, color: "bg-primary text-primary-foreground" }
+        { step: "견적서 발송", count: 0, color: "bg-accent text-accent-foreground" },
+        { step: "견적서 승인", count: 0, color: "bg-accent text-accent-foreground" },
+        { step: "계약서 발송", count: 0, color: "bg-accent text-accent-foreground" },
+        { step: "계약 완료", count: 0, color: "bg-accent text-accent-foreground" }
       ]);
     } finally {
       setLoading(false);
@@ -403,18 +426,28 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
         <Card className="p-4 md:p-6 bg-card border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs md:text-sm text-muted-foreground">총 견적서</p>
-              <p className="text-xl md:text-2xl font-medium text-foreground">{stats.totalQuotes}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">지난달 매출</p>
+              <p className="text-xl md:text-2xl font-medium text-foreground">{formatCurrency(stats.lastMonthRevenue)}</p>
             </div>
-            <FileText className="w-6 h-6 md:w-8 md:h-8 text-primary" />
+            <TrendingUp className="w-6 h-6 md:w-8 md:h-8 text-muted-foreground" />
           </div>
         </Card>
 
         <Card className="p-4 md:p-6 bg-card border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs md:text-sm text-muted-foreground">활성 계약서</p>
-              <p className="text-xl md:text-2xl font-medium text-foreground">{stats.activeContracts}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">이번달 매출</p>
+              <p className="text-xl md:text-2xl font-medium text-foreground">{formatCurrency(stats.monthlyRevenue)}</p>
+            </div>
+            <TrendingUp className="w-6 h-6 md:w-8 md:h-8 text-primary" />
+          </div>
+        </Card>
+
+        <Card className="p-4 md:p-6 bg-card border-border">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs md:text-sm text-muted-foreground">미결제금액</p>
+              <p className="text-xl md:text-2xl font-medium text-foreground">{formatCurrency(stats.unpaidAmount)}</p>
             </div>
             <Clock className="w-6 h-6 md:w-8 md:h-8 text-amber-500" />
           </div>
@@ -423,20 +456,10 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
         <Card className="p-4 md:p-6 bg-card border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs md:text-sm text-muted-foreground">완료된 결제</p>
-              <p className="text-xl md:text-2xl font-medium text-foreground">{stats.completedPayments}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">계약 전환율</p>
+              <p className="text-xl md:text-2xl font-medium text-foreground">{stats.contractConversionRate}%</p>
             </div>
             <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-primary" />
-          </div>
-        </Card>
-
-        <Card className="p-4 md:p-6 bg-card border-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs md:text-sm text-muted-foreground">이번 달 매출</p>
-              <p className="text-lg md:text-2xl font-medium text-foreground break-all">{formatCurrency(stats.monthlyRevenue)}</p>
-            </div>
-            <TrendingUp className="w-6 h-6 md:w-8 md:h-8 text-primary" />
           </div>
         </Card>
       </div>
@@ -455,36 +478,16 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
               const percentage = totalItems > 0 ? (item.count / totalItems) * 100 : 0;
               
               return (
-                <div key={index} className={`p-2 md:p-3 rounded-lg border ${item.color}`}>
-                  <div className="flex items-center justify-between mb-1">
+                <div key={index} className="p-2 md:p-3 bg-secondary rounded-lg border border-border">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 md:gap-3">
-                      <div className={`w-2 h-2 rounded-full ${
-                        index === 0 ? 'bg-blue-500' :
-                        index === 1 ? 'bg-green-500' :
-                        index === 2 ? 'bg-amber-500' : 'bg-primary'
-                      }`}></div>
-                      <span className="text-sm font-medium">{item.step}</span>
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
+                      <span className="text-sm text-foreground">{item.step}</span>
                     </div>
-                    <Badge className="text-xs bg-white/80 text-current border-current">
+                    <Badge className="text-xs bg-accent text-accent-foreground">
                       {item.count}건
                     </Badge>
                   </div>
-                  {totalItems > 0 && (
-                    <div className="mt-2">
-                      <div className="flex items-center justify-between text-xs opacity-80 mb-1">
-                        <span>비율</span>
-                        <span>{percentage.toFixed(1)}%</span>
-                      </div>
-                      <Progress 
-                        value={percentage} 
-                        className={`h-1.5 ${
-                          index === 0 ? '[&_[data-progress]]:bg-blue-500' :
-                          index === 1 ? '[&_[data-progress]]:bg-green-500' :
-                          index === 2 ? '[&_[data-progress]]:bg-amber-500' : '[&_[data-progress]]:bg-primary'
-                        }`} 
-                      />
-                    </div>
-                  )}
                 </div>
               );
             })}
