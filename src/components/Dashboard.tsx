@@ -140,11 +140,10 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
           monthlyRevenue: 0
         });
         setWorkflowSteps([
-          { step: "견적서 발송", count: 0, color: "bg-accent text-accent-foreground" },
-          { step: "계약 대기", count: 0, color: "bg-accent text-accent-foreground" },
-          { step: "서명 대기", count: 0, color: "bg-accent text-accent-foreground" },
-          { step: "결제 대기", count: 0, color: "bg-accent text-accent-foreground" },
-          { step: "완료", count: 0, color: "bg-accent text-accent-foreground" }
+          { step: "견적서 발송", count: 0, color: "bg-blue-50 text-blue-700 border-blue-200" },
+          { step: "견적서 승인", count: 0, color: "bg-green-50 text-green-700 border-green-200" },
+          { step: "계약서 발송", count: 0, color: "bg-amber-50 text-amber-700 border-amber-200" },
+          { step: "계약 완료", count: 0, color: "bg-primary text-primary-foreground" }
         ]);
         setLoading(false);
         return;
@@ -155,11 +154,11 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-      // 병렬로 데이터 가져오기 (성능 향상) with timeout
+      // 병렬로 데이터 가져오기 (성능 향상) with timeout - 필요한 필드만 선택해서 성능 개선
       const dataPromises = [
-        supabase.from('quotes').select('*').eq('user_id', user.id),
-        supabase.from('contracts').select('*').eq('user_id', user.id),
-        supabase.from('payments').select('*').eq('user_id', user.id)
+        supabase.from('quotes').select('id, status, total_amount, created_at').eq('user_id', user.id),
+        supabase.from('contracts').select('id, status, created_at').eq('user_id', user.id),
+        supabase.from('payments').select('id, amount, status, created_at').eq('user_id', user.id)
       ];
 
       // 5초 타임아웃으로 데이터 가져오기
@@ -187,9 +186,9 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
         console.warn('Failed to fetch payments:', paymentsResult.reason);
       }
 
-      // 통계 계산
+      // 통계 계산 - 실제 상태값에 맞게 수정
       const totalQuotes = quotes.length;
-      const activeContracts = contracts.filter((c: Contract) => c.status === 'sent' || c.status === 'signed').length;
+      const activeContracts = contracts.filter((c: Contract) => c.status === 'sent' || c.status === 'draft').length; // 진행중인 계약 (발송됨 + 작성중)
       const completedPayments = payments.filter((p: Payment) => p.status === 'completed').length;
       
       // 이번 달 매출 계산
@@ -209,19 +208,37 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
         monthlyRevenue
       });
 
-      // 워크플로우 단계별 계산
+      // 워크플로우 단계별 계산 - 실제 비즈니스 플로우에 맞게 정밀하게 수정
+      
+      // 1. 견적서 발송: 고객에게 발송된 견적서 (sent 상태)
       const sentQuotes = quotes.filter((q: any) => q.status === 'sent').length;
-      const pendingContracts = contracts.filter((c: any) => c.status === 'draft').length;
-      const awaitingSignature = contracts.filter((c: any) => c.status === 'sent').length;
-      const pendingPayments = payments.filter((p: any) => p.status === 'pending').length;
-      const completedTasks = contracts.filter((c: any) => c.status === 'completed').length;
+      
+      // 2. 견적서 승인: 고객이 승인한 견적서 (approved 상태)
+      const approvedQuotes = quotes.filter((q: any) => q.status === 'approved').length;
+      
+      // 3. 계약서 발송: 견적서 승인 후 발송된 계약서 (sent 상태)
+      const sentContracts = contracts.filter((c: any) => c.status === 'sent').length;
+      
+      // 4. 계약 완료: 서명 및 모든 절차가 완료된 계약 (completed 상태)
+      const completedContracts = contracts.filter((c: any) => c.status === 'completed').length;
+      
+      console.log('Dashboard workflow data:', {
+        sentQuotes,
+        approvedQuotes, 
+        sentContracts,
+        completedContracts,
+        totalQuotes: quotes.length,
+        totalContracts: contracts.length,
+        quoteStatuses: quotes.map(q => q.status),
+        contractStatuses: contracts.map(c => c.status),
+        paymentStatuses: payments.map(p => p.status)
+      });
 
       setWorkflowSteps([
-        { step: "견적서 발송", count: sentQuotes, color: "bg-accent text-accent-foreground" },
-        { step: "계약 대기", count: pendingContracts, color: "bg-accent text-accent-foreground" },
-        { step: "서명 대기", count: awaitingSignature, color: "bg-accent text-accent-foreground" },
-        { step: "결제 대기", count: pendingPayments, color: "bg-accent text-accent-foreground" },
-        { step: "완료", count: completedTasks, color: "bg-accent text-accent-foreground" }
+        { step: "견적서 발송", count: sentQuotes, color: "bg-blue-50 text-blue-700 border-blue-200" },
+        { step: "견적서 승인", count: approvedQuotes, color: "bg-green-50 text-green-700 border-green-200" },
+        { step: "계약서 발송", count: sentContracts, color: "bg-amber-50 text-amber-700 border-amber-200" },
+        { step: "계약 완료", count: completedContracts, color: "bg-primary text-primary-foreground" }
       ]);
 
     } catch (error) {
@@ -235,11 +252,10 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
         monthlyRevenue: 0
       });
       setWorkflowSteps([
-        { step: "견적서 발송", count: 0, color: "bg-accent text-accent-foreground" },
-        { step: "계약 대기", count: 0, color: "bg-accent text-accent-foreground" },
-        { step: "서명 대기", count: 0, color: "bg-accent text-accent-foreground" },
-        { step: "결제 대기", count: 0, color: "bg-accent text-accent-foreground" },
-        { step: "완료", count: 0, color: "bg-accent text-accent-foreground" }
+        { step: "견적서 발송", count: 0, color: "bg-blue-50 text-blue-700 border-blue-200" },
+        { step: "견적서 승인", count: 0, color: "bg-green-50 text-green-700 border-green-200" },
+        { step: "계약서 발송", count: 0, color: "bg-amber-50 text-amber-700 border-amber-200" },
+        { step: "계약 완료", count: 0, color: "bg-primary text-primary-foreground" }
       ]);
     } finally {
       setLoading(false);
@@ -397,10 +413,10 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
         <Card className="p-4 md:p-6 bg-card border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs md:text-sm text-muted-foreground">진행중 계약</p>
+              <p className="text-xs md:text-sm text-muted-foreground">활성 계약서</p>
               <p className="text-xl md:text-2xl font-medium text-foreground">{stats.activeContracts}</p>
             </div>
-            <Clock className="w-6 h-6 md:w-8 md:h-8 text-secondary-foreground" />
+            <Clock className="w-6 h-6 md:w-8 md:h-8 text-amber-500" />
           </div>
         </Card>
 
@@ -439,23 +455,34 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
               const percentage = totalItems > 0 ? (item.count / totalItems) * 100 : 0;
               
               return (
-                <div key={index} className="p-2 md:p-3 bg-secondary rounded-lg border border-border">
+                <div key={index} className={`p-2 md:p-3 rounded-lg border ${item.color}`}>
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2 md:gap-3">
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      <span className="text-sm text-foreground">{item.step}</span>
+                      <div className={`w-2 h-2 rounded-full ${
+                        index === 0 ? 'bg-blue-500' :
+                        index === 1 ? 'bg-green-500' :
+                        index === 2 ? 'bg-amber-500' : 'bg-primary'
+                      }`}></div>
+                      <span className="text-sm font-medium">{item.step}</span>
                     </div>
-                    <Badge className={`text-xs ${item.color}`}>
+                    <Badge className="text-xs bg-white/80 text-current border-current">
                       {item.count}건
                     </Badge>
                   </div>
                   {totalItems > 0 && (
                     <div className="mt-2">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                        <span>진행률</span>
+                      <div className="flex items-center justify-between text-xs opacity-80 mb-1">
+                        <span>비율</span>
                         <span>{percentage.toFixed(1)}%</span>
                       </div>
-                      <Progress value={percentage} className="h-1.5" />
+                      <Progress 
+                        value={percentage} 
+                        className={`h-1.5 ${
+                          index === 0 ? '[&_[data-progress]]:bg-blue-500' :
+                          index === 1 ? '[&_[data-progress]]:bg-green-500' :
+                          index === 2 ? '[&_[data-progress]]:bg-amber-500' : '[&_[data-progress]]:bg-primary'
+                        }`} 
+                      />
                     </div>
                   )}
                 </div>
