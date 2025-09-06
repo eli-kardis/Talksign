@@ -50,19 +50,48 @@ FROM public.contracts
 GROUP BY status 
 ORDER BY status;
 
--- STEP 5: Create new enum type with only the values we want
+-- STEP 5: Store the current default value
+DO $$
+DECLARE
+    current_default text;
+BEGIN
+    SELECT column_default INTO current_default
+    FROM information_schema.columns 
+    WHERE table_name = 'contracts' 
+    AND column_name = 'status' 
+    AND table_schema = 'public';
+    
+    -- Store it in a temporary variable for later use
+    PERFORM set_config('myapp.old_default', COALESCE(current_default, ''), false);
+END $$;
+
+-- STEP 6: Remove the default value temporarily
+ALTER TABLE public.contracts ALTER COLUMN status DROP DEFAULT;
+
+-- STEP 7: Create new enum type with only the values we want
 CREATE TYPE contract_status_new AS ENUM ('draft', 'sent', 'completed');
 
--- STEP 6: Update the table to use the new enum type
+-- STEP 8: Update the table to use the new enum type
 ALTER TABLE public.contracts 
 ALTER COLUMN status TYPE contract_status_new 
 USING status::text::contract_status_new;
 
--- STEP 7: Drop the old enum type and rename the new one
+-- STEP 9: Drop the old enum type and rename the new one
 DROP TYPE contract_status;
 ALTER TYPE contract_status_new RENAME TO contract_status;
 
--- STEP 8: Final verification
+-- STEP 10: Restore the default value if it was 'draft' (or set a new appropriate default)
+DO $$
+DECLARE
+    old_default text;
+BEGIN
+    old_default := current_setting('myapp.old_default', true);
+    
+    -- Set default to 'draft' (most appropriate for new contracts)
+    ALTER TABLE public.contracts ALTER COLUMN status SET DEFAULT 'draft'::contract_status;
+END $$;
+
+-- STEP 11: Final verification
 SELECT DISTINCT status, COUNT(*) as count 
 FROM public.contracts 
 GROUP BY status 
@@ -72,3 +101,10 @@ ORDER BY status;
 SELECT enumlabel FROM pg_enum WHERE enumtypid = (
     SELECT oid FROM pg_type WHERE typname = 'contract_status'
 );
+
+-- Verify default value is set correctly
+SELECT column_default 
+FROM information_schema.columns 
+WHERE table_name = 'contracts' 
+AND column_name = 'status' 
+AND table_schema = 'public';
