@@ -5,7 +5,9 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Receipt, Search, Filter, Download, Eye, Calendar, User, Building, CheckCircle, Clock, AlertCircle, Send, Plus } from 'lucide-react';
+import { Receipt, Search, Filter, Download, Eye, Calendar, User, Building, CheckCircle, Clock, AlertCircle, Send, Plus, Trash2 } from 'lucide-react';
+import { Checkbox } from './ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 
 interface TaxInvoice {
   id: number;
@@ -62,6 +64,50 @@ interface TaxInvoiceViewProps {}
 export function TaxInvoiceView({}: TaxInvoiceViewProps = {}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedInvoices, setSelectedInvoices] = useState<number[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Selection handlers
+  const handleSelectInvoice = (invoiceId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedInvoices(prev => [...prev, invoiceId]);
+    } else {
+      setSelectedInvoices(prev => prev.filter(id => id !== invoiceId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedInvoices(filteredInvoices.map(invoice => invoice.id));
+    } else {
+      setSelectedInvoices([]);
+    }
+  };
+
+  // Delete functionality
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      for (const invoiceId of selectedInvoices) {
+        const response = await fetch(`/api/tax-invoices/${invoiceId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to delete tax invoice ${invoiceId}`);
+        }
+      }
+      // Mock 데이터이므로 실제로는 삭제되지 않지만 성공 메시지 표시
+      console.log(`${selectedInvoices.length}개의 세금계산서가 삭제되었습니다.`);
+      setSelectedInvoices([]);
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error('Error deleting tax invoices:', error);
+      alert('세금계산서 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const getStatusBadge = (status: TaxInvoice['status']) => {
     const statusConfig = {
@@ -123,6 +169,17 @@ export function TaxInvoiceView({}: TaxInvoiceViewProps = {}) {
         </div>
         
         <div className="flex items-center gap-2 md:gap-3">
+          {selectedInvoices.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+              className="px-4 py-2"
+              disabled={isDeleting}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {isDeleting ? "삭제 중..." : `${selectedInvoices.length}개 삭제`}
+            </Button>
+          )}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="px-4 py-2">
@@ -170,6 +227,12 @@ export function TaxInvoiceView({}: TaxInvoiceViewProps = {}) {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left p-4 font-medium text-muted-foreground w-12">
+                    <Checkbox
+                      checked={selectedInvoices.length === filteredInvoices.length && filteredInvoices.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </th>
                   <th className="text-left p-4 font-medium text-muted-foreground">고객 정보</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">계산서 번호</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">프로젝트</th>
@@ -186,6 +249,13 @@ export function TaxInvoiceView({}: TaxInvoiceViewProps = {}) {
                   
                   return (
                     <tr key={invoice.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                      <td className="p-4 w-12">
+                        <Checkbox
+                          checked={selectedInvoices.includes(invoice.id)}
+                          onCheckedChange={(checked) => handleSelectInvoice(invoice.id, checked as boolean)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </td>
                       <td className="p-4">
                         <div className="space-y-1">
                           <div className="font-medium text-foreground">{invoice.client}</div>
@@ -281,6 +351,45 @@ export function TaxInvoiceView({}: TaxInvoiceViewProps = {}) {
           </Button>
         </Card>
       )}
+
+      {/* 삭제 확인 다이얼로그 */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-md">
+          <div className="text-center py-6">
+            <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-destructive/10 mb-4">
+              <Trash2 className="w-6 h-6 text-destructive" />
+            </div>
+            <DialogHeader className="space-y-2">
+              <DialogTitle className="text-lg font-semibold text-foreground">
+                세금계산서 삭제
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground px-2">
+                선택한 <span className="font-medium text-foreground">{selectedInvoices.length}개</span>의 세금계산서를 삭제합니다.
+                <br />
+                삭제된 데이터는 복구할 수 없습니다.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <DialogFooter className="flex-row gap-3 pt-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+              className="flex-1"
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="flex-1"
+            >
+              {isDeleting ? "삭제 중..." : "삭제"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

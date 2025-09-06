@@ -9,7 +9,9 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar as CalendarComponent } from './ui/calendar';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { PenTool, FileText, Clock, CheckCircle, AlertCircle, Search, MessageSquare, Eye, Edit, Calendar, User, Plus, ChevronUp, ChevronDown, Filter } from 'lucide-react';
+import { PenTool, FileText, Clock, CheckCircle, AlertCircle, Search, MessageSquare, Eye, Edit, Calendar, User, Plus, ChevronUp, ChevronDown, Filter, Trash2 } from 'lucide-react';
+import { Checkbox } from './ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 
 interface Contract {
   id: string;
@@ -129,6 +131,9 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedContracts, setSelectedContracts] = useState<string[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Load contracts from API
   useEffect(() => {
@@ -155,6 +160,46 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
 
     loadContracts();
   }, []);
+
+  // Selection handlers
+  const handleSelectContract = (contractId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedContracts(prev => [...prev, contractId]);
+    } else {
+      setSelectedContracts(prev => prev.filter(id => id !== contractId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedContracts(sortedAndFilteredContracts.map(contract => contract.id));
+    } else {
+      setSelectedContracts([]);
+    }
+  };
+
+  // Delete functionality
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      for (const contractId of selectedContracts) {
+        const response = await fetch(`/api/contracts/${contractId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to delete contract ${contractId}`);
+        }
+      }
+      setContracts(prev => prev.filter(contract => !selectedContracts.includes(contract.id)));
+      setSelectedContracts([]);
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error('Error deleting contracts:', error);
+      alert('계약서 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -390,6 +435,17 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
         </div>
         
         <div className="flex items-center gap-2 md:gap-3">
+          {selectedContracts.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+              className="px-4 py-2"
+              disabled={isDeleting}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {isDeleting ? "삭제 중..." : `${selectedContracts.length}개 삭제`}
+            </Button>
+          )}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="px-4 py-2">
@@ -528,6 +584,12 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
             <table className="w-full min-w-[900px]">
               <thead className="bg-muted/50 border-b border-border">
                 <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-12">
+                    <Checkbox
+                      checked={selectedContracts.length === sortedAndFilteredContracts.length && sortedAndFilteredContracts.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </th>
                   <SortableHeader 
                     field="client" 
                     currentSort={sortField} 
@@ -578,10 +640,16 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                   return (
                     <tr 
                       key={contract.id} 
-                      className="hover:bg-muted/30 hover:shadow-sm transition-all duration-200 border-b border-border/50 cursor-pointer group"
-                      onClick={() => onViewContract?.(contract.id)}
+                      className="hover:bg-muted/30 hover:shadow-sm transition-all duration-200 border-b border-border/50 group"
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 w-12">
+                        <Checkbox
+                          checked={selectedContracts.includes(contract.id)}
+                          onCheckedChange={(checked) => handleSelectContract(contract.id, checked as boolean)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </td>
+                      <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
                         <div className="flex items-center gap-3">
                           <div>
                             <p className="font-medium text-foreground text-sm">{contract.client}</p>
@@ -589,10 +657,10 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
                         <p className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">{contract.project}</p>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
                         <div className="text-sm">
                           <p className="text-foreground">작성: {contract.createdDate}</p>
                           {contract.signedDate && (
@@ -600,13 +668,13 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
                         <Badge className={statusConfig.className}>
                           <StatusIcon className="w-3 h-3 mr-1" />
                           {statusConfig.label}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
                         <span className="font-mono font-semibold text-foreground text-sm">
                           {formatCurrency(contract.amount)}
                         </span>
@@ -631,6 +699,45 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
           </Button>
         </Card>
       )}
+
+      {/* 삭제 확인 다이얼로그 */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-md">
+          <div className="text-center py-6">
+            <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-destructive/10 mb-4">
+              <Trash2 className="w-6 h-6 text-destructive" />
+            </div>
+            <DialogHeader className="space-y-2">
+              <DialogTitle className="text-lg font-semibold text-foreground">
+                계약서 삭제
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground px-2">
+                선택한 <span className="font-medium text-foreground">{selectedContracts.length}개</span>의 계약서를 삭제합니다.
+                <br />
+                삭제된 데이터는 복구할 수 없습니다.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <DialogFooter className="flex-row gap-3 pt-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+              className="flex-1"
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="flex-1"
+            >
+              {isDeleting ? "삭제 중..." : "삭제"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -5,7 +5,9 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { CreditCard, Clock, CheckCircle, AlertCircle, Search, Filter, MessageSquare, Eye, Calendar, User, Download, RefreshCw, Plus } from 'lucide-react';
+import { CreditCard, Clock, CheckCircle, AlertCircle, Search, Filter, MessageSquare, Eye, Calendar, User, Download, RefreshCw, Plus, Trash2 } from 'lucide-react';
+import { Checkbox } from './ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 
 interface Payment {
   id: number;
@@ -91,6 +93,50 @@ const mockPayments: Payment[] = [
 export function PaymentView({ onNavigate }: PaymentViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedPayments, setSelectedPayments] = useState<number[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Selection handlers
+  const handleSelectPayment = (paymentId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedPayments(prev => [...prev, paymentId]);
+    } else {
+      setSelectedPayments(prev => prev.filter(id => id !== paymentId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedPayments(filteredPayments.map(payment => payment.id));
+    } else {
+      setSelectedPayments([]);
+    }
+  };
+
+  // Delete functionality
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      for (const paymentId of selectedPayments) {
+        const response = await fetch(`/api/payments/${paymentId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to delete payment ${paymentId}`);
+        }
+      }
+      // Mock 데이터이므로 실제로는 삭제되지 않지만 성공 메시지 표시
+      console.log(`${selectedPayments.length}개의 결제 요청이 삭제되었습니다.`);
+      setSelectedPayments([]);
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error('Error deleting payments:', error);
+      alert('결제 요청 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const getStatusBadge = (status: Payment['status']) => {
     const statusConfig = {
@@ -156,6 +202,17 @@ export function PaymentView({ onNavigate }: PaymentViewProps) {
         </div>
         
         <div className="flex items-center gap-2 md:gap-3">
+          {selectedPayments.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+              className="px-4 py-2"
+              disabled={isDeleting}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {isDeleting ? "삭제 중..." : `${selectedPayments.length}개 삭제`}
+            </Button>
+          )}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="px-4 py-2">
@@ -203,6 +260,12 @@ export function PaymentView({ onNavigate }: PaymentViewProps) {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left p-4 font-medium text-muted-foreground w-12">
+                    <Checkbox
+                      checked={selectedPayments.length === filteredPayments.length && filteredPayments.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </th>
                   <th className="text-left p-4 font-medium text-muted-foreground">고객 정보</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">프로젝트</th>
                   <th className="text-right p-4 font-medium text-muted-foreground">금액</th>
@@ -219,6 +282,13 @@ export function PaymentView({ onNavigate }: PaymentViewProps) {
                   
                   return (
                     <tr key={payment.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                      <td className="p-4 w-12">
+                        <Checkbox
+                          checked={selectedPayments.includes(payment.id)}
+                          onCheckedChange={(checked) => handleSelectPayment(payment.id, checked as boolean)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </td>
                       <td className="p-4">
                         <div className="space-y-1">
                           <div className="font-medium text-foreground">{payment.client}</div>
@@ -313,6 +383,45 @@ export function PaymentView({ onNavigate }: PaymentViewProps) {
           </Button>
         </Card>
       )}
+
+      {/* 삭제 확인 다이얼로그 */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-md">
+          <div className="text-center py-6">
+            <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-destructive/10 mb-4">
+              <Trash2 className="w-6 h-6 text-destructive" />
+            </div>
+            <DialogHeader className="space-y-2">
+              <DialogTitle className="text-lg font-semibold text-foreground">
+                결제 요청 삭제
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground px-2">
+                선택한 <span className="font-medium text-foreground">{selectedPayments.length}개</span>의 결제 요청을 삭제합니다.
+                <br />
+                삭제된 데이터는 복구할 수 없습니다.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <DialogFooter className="flex-row gap-3 pt-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+              className="flex-1"
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="flex-1"
+            >
+              {isDeleting ? "삭제 중..." : "삭제"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -323,3 +323,44 @@ export async function PUT(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ contractId: string }> }
+) {
+  try {
+    const { contractId } = await params;
+    
+    if (!contractId) {
+      return NextResponse.json({ error: 'Contract ID is required' }, { status: 400 })
+    }
+
+    console.log('API Route: DELETE /api/contracts/[contractId] called')
+    console.log('Contract ID:', contractId)
+
+    const supabase = createServerSupabaseClient()
+    
+    // 계약서 삭제
+    const { error } = await supabase
+      .from('contracts')
+      .delete()
+      .eq('id', contractId)
+
+    if (error) {
+      console.error('Error deleting contract:', error)
+      
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
+      }
+      
+      return NextResponse.json({ error: 'Failed to delete contract' }, { status: 500 })
+    }
+
+    console.log('Contract deleted successfully:', contractId)
+
+    return NextResponse.json({ message: 'Contract deleted successfully' }, { status: 200 })
+  } catch (error) {
+    console.error('Unexpected error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

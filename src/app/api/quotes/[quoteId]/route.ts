@@ -140,3 +140,44 @@ export async function PUT(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ quoteId: string }> }
+) {
+  try {
+    const { quoteId } = await params;
+    
+    if (!quoteId) {
+      return NextResponse.json({ error: 'Quote ID is required' }, { status: 400 })
+    }
+
+    console.log('API Route: DELETE /api/quotes/[quoteId] called')
+    console.log('Quote ID:', quoteId)
+
+    const supabase = createServerSupabaseClient()
+    
+    // 견적서 삭제
+    const { error } = await supabase
+      .from('quotes')
+      .delete()
+      .eq('id', quoteId)
+
+    if (error) {
+      console.error('Error deleting quote:', error)
+      
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
+      }
+      
+      return NextResponse.json({ error: 'Failed to delete quote' }, { status: 500 })
+    }
+
+    console.log('Quote deleted successfully:', quoteId)
+
+    return NextResponse.json({ message: 'Quote deleted successfully' }, { status: 200 })
+  } catch (error) {
+    console.error('Unexpected error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

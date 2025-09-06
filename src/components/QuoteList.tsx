@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar as CalendarComponent } from "./ui/calendar";
+import { Checkbox } from "./ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { ImageWithFallback } from "./ui/ImageWithFallback";
@@ -28,6 +30,7 @@ import {
   ChevronUp,
   ChevronDown,
   Filter,
+  Trash2,
 } from "lucide-react";
 
 // Database Quote 타입 (API에서 받는 데이터)
@@ -148,6 +151,11 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
   const [filterAmountMin, setFilterAmountMin] = useState<string>('');
   const [filterAmountMax, setFilterAmountMax] = useState<string>('');
   const [filterDateStart, setFilterDateStart] = useState<Date | undefined>(undefined);
+  
+  // 선택 및 삭제 관련 상태
+  const [selectedQuotes, setSelectedQuotes] = useState<string[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [filterDateEnd, setFilterDateEnd] = useState<Date | undefined>(undefined);
 
   // 숫자를 3자리마다 콤마를 넣어 포맷팅하는 함수
@@ -270,6 +278,49 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
     }
   };
 
+  // 선택 관련 함수들
+  const handleSelectQuote = (quoteId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedQuotes(prev => [...prev, quoteId]);
+    } else {
+      setSelectedQuotes(prev => prev.filter(id => id !== quoteId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedQuotes(sortedAndFilteredQuotes.map(quote => quote.id));
+    } else {
+      setSelectedQuotes([]);
+    }
+  };
+
+  // 삭제 관련 함수들
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      // API 호출하여 견적서 삭제
+      for (const quoteId of selectedQuotes) {
+        const response = await fetch(`/api/quotes/${quoteId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to delete quote ${quoteId}`);
+        }
+      }
+      
+      // 로컬 상태에서 삭제된 견적서 제거
+      setQuotes(prev => prev.filter(quote => !selectedQuotes.includes(quote.id)));
+      setSelectedQuotes([]);
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error('Error deleting quotes:', error);
+      alert('견적서 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const sortedAndFilteredQuotes = useMemo(() => {
     // 먼저 필터링
     let list = active === "all" ? quotes : quotes.filter((q) => q.status === active);
@@ -367,6 +418,17 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
         </div>
         
         <div className="flex items-center gap-2 md:gap-3">
+          {selectedQuotes.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+              className="px-4 py-2"
+              disabled={isDeleting}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {isDeleting ? "삭제 중..." : `${selectedQuotes.length}개 삭제`}
+            </Button>
+          )}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="px-4 py-2">
@@ -531,6 +593,12 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
             <table className="w-full min-w-[900px]">
               <thead className="bg-muted/50 border-b border-border">
                 <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-12">
+                    <Checkbox
+                      checked={selectedQuotes.length === sortedAndFilteredQuotes.length && sortedAndFilteredQuotes.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </th>
                   <SortableHeader 
                     field="client" 
                     currentSort={sortField} 
@@ -577,10 +645,16 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                 {sortedAndFilteredQuotes.map((quote) => (
                   <tr 
                     key={quote.id} 
-                    className="hover:bg-muted/30 hover:shadow-sm transition-all duration-200 border-b border-border/50 cursor-pointer group" 
-                    onClick={() => onViewQuote(quote.id)}
+                    className="hover:bg-muted/30 hover:shadow-sm transition-all duration-200 border-b border-border/50 group"
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 w-12">
+                      <Checkbox
+                        checked={selectedQuotes.includes(quote.id)}
+                        onCheckedChange={(checked) => handleSelectQuote(quote.id, checked as boolean)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </td>
+                    <td className="px-4 py-3 cursor-pointer" onClick={() => onViewQuote(quote.id)}>
                       <div className="flex items-center gap-3">
                         <div>
                           <p className="font-medium text-foreground text-sm">{quote.client}</p>
@@ -590,10 +664,10 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 cursor-pointer" onClick={() => onViewQuote(quote.id)}>
                       <p className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">{quote.project}</p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 cursor-pointer" onClick={() => onViewQuote(quote.id)}>
                       <div className="text-sm">
                         <p className="text-foreground">{quote.date}</p>
                         {quote.dueDate && quote.dueDate !== quote.date && (
@@ -601,7 +675,7 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 cursor-pointer" onClick={() => onViewQuote(quote.id)}>
                       <Badge 
                         variant={quote.status === 'approved' ? 'default' : quote.status === 'rejected' ? 'destructive' : 'secondary'}
                         className="text-xs"
@@ -612,7 +686,7 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                          quote.status === 'rejected' ? '거절됨' : '만료됨'}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 cursor-pointer" onClick={() => onViewQuote(quote.id)}>
                       <span className="font-mono font-semibold text-foreground text-sm">
                         ₩{new Intl.NumberFormat('ko-KR').format(quote.amount)}
                       </span>
@@ -640,6 +714,45 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
           </Button>
         </Card>
       )}
+
+      {/* 삭제 확인 다이얼로그 */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-md">
+          <div className="text-center py-6">
+            <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-destructive/10 mb-4">
+              <Trash2 className="w-6 h-6 text-destructive" />
+            </div>
+            <DialogHeader className="space-y-2">
+              <DialogTitle className="text-lg font-semibold text-foreground">
+                견적서 삭제
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground px-2">
+                선택한 <span className="font-medium text-foreground">{selectedQuotes.length}개</span>의 견적서를 삭제합니다.
+                <br />
+                삭제된 데이터는 복구할 수 없습니다.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <DialogFooter className="flex-row gap-3 pt-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+              className="flex-1"
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="flex-1"
+            >
+              {isDeleting ? "삭제 중..." : "삭제"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
