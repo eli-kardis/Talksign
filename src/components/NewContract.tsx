@@ -7,6 +7,7 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ArrowLeft, MessageSquare, Save, User, Building, AlertTriangle, Plus, X, Edit3 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import { CustomerSelector } from './CustomerSelector';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters';
 
@@ -478,6 +479,17 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     return { subtotal, taxAmount, total };
   };
 
+  const handleCustomerSelect = (customer: any) => {
+    setClientInfo({
+      name: customer.representative_name || '',
+      company: customer.company_name || '',
+      phone: customer.phone || '',
+      email: customer.email || '',
+      businessNumber: '',
+      address: customer.address || ''
+    });
+  };
+
   // 계약 항목 관련 함수들
   const addContractItem = () => {
     const newItem: ContractItem = {
@@ -788,16 +800,19 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           <Card className="p-6 bg-card border-border">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-medium text-foreground">발주처 정보 (고객)</h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditingClient(!isEditingClient)}
-                className="border-border"
-              >
-                <Edit3 className="w-4 h-4 mr-2" />
-                {isEditingClient ? '저장' : '수정'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <CustomerSelector onCustomerSelect={handleCustomerSelect} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditingClient(!isEditingClient)}
+                  className="border-border"
+                >
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  {isEditingClient ? '저장' : '수정'}
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">

@@ -10,6 +10,7 @@ import { Separator } from './ui/separator'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
 import { ArrowLeft, MessageSquare, Save, AlertTriangle } from 'lucide-react'
 import { QuoteItemsTable } from './QuoteItemsTable'
+import { CustomerSelector } from './CustomerSelector'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatPhoneNumber, formatBusinessNumber, formatNumber } from '@/lib/formatters'
 
@@ -248,6 +249,19 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
   const vatAmount = Math.floor(totalAmount * 0.1)
   const finalAmount = totalAmount + vatAmount
+
+  const handleCustomerSelect = (customer: any) => {
+    setClientInfo({
+      name: customer.representative_name || '',
+      company: customer.company_name || '',
+      businessNumber: '',
+      phone: customer.phone || '',
+      email: customer.email || '',
+      address: customer.address || '',
+      logoUrl: '',
+    })
+    setHasUnsavedChanges(true)
+  }
 
   const formatCurrency = (amount: number) => new Intl.NumberFormat('ko-KR').format(amount)
 
@@ -526,7 +540,10 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
 
           {/* 고객 정보 */}
           <Card className="p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">고객 정보</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-medium text-foreground">고객 정보</h3>
+              <CustomerSelector onCustomerSelect={handleCustomerSelect} />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">

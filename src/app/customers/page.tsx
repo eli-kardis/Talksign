@@ -16,6 +16,7 @@ interface Customer {
   company_name: string;
   representative_name: string;
   contact_person?: string;
+  business_registration_number?: string;
   email: string;
   phone: string;
   address?: string;
@@ -27,6 +28,7 @@ interface CustomerFormData {
   company_name: string;
   representative_name: string;
   contact_person: string;
+  business_registration_number: string;
   email: string;
   phone: string;
   address: string;
@@ -41,6 +43,7 @@ export default function CustomersPage() {
     company_name: '',
     representative_name: '',
     contact_person: '',
+    business_registration_number: '',
     email: '',
     phone: '',
     address: ''
@@ -56,6 +59,7 @@ export default function CustomersPage() {
     company_name: '',
     representative_name: '',
     contact_person: '',
+    business_registration_number: '',
     email: '',
     phone: '',
     address: ''
@@ -126,6 +130,7 @@ export default function CustomersPage() {
           company_name: '',
           representative_name: '',
           contact_person: '',
+          business_registration_number: '',
           email: '',
           phone: '',
           address: ''
@@ -199,6 +204,7 @@ export default function CustomersPage() {
       company_name: customer.company_name,
       representative_name: customer.representative_name,
       contact_person: customer.contact_person || '',
+      business_registration_number: customer.business_registration_number || '',
       email: customer.email,
       phone: customer.phone,
       address: customer.address || ''
@@ -306,7 +312,7 @@ export default function CustomersPage() {
                   선택 삭제 ({selectedCustomers.length})
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <AlertTriangle className="w-5 h-5 text-destructive" />
@@ -348,7 +354,7 @@ export default function CustomersPage() {
               추가
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>새 고객 추가</DialogTitle>
             </DialogHeader>
@@ -388,6 +394,16 @@ export default function CustomersPage() {
                   value={formData.contact_person}
                   onChange={(e) => handleInputChange('contact_person', e.target.value)}
                   placeholder="담당자명을 입력하세요"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="business_registration_number" className="text-sm font-medium">사업자등록번호</Label>
+                <Input
+                  id="business_registration_number"
+                  value={formData.business_registration_number}
+                  onChange={(e) => handleInputChange('business_registration_number', e.target.value)}
+                  placeholder="123-45-67890"
                 />
               </div>
               
@@ -495,6 +511,16 @@ export default function CustomersPage() {
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="edit_business_registration_number" className="text-sm font-medium">사업자등록번호</Label>
+              <Input
+                id="edit_business_registration_number"
+                value={editFormData.business_registration_number}
+                onChange={(e) => handleEditInputChange('business_registration_number', e.target.value)}
+                placeholder="123-45-67890"
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="edit_email" className="text-sm font-medium">이메일 *</Label>
               <Input
                 id="edit_email"
@@ -580,6 +606,7 @@ export default function CustomersPage() {
                 <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">회사명</th>
                 <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">대표자</th>
                 <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">담당자</th>
+                <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">사업자등록번호</th>
                 <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">연락처</th>
                 <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">이메일</th>
                 <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">등록일</th>
@@ -619,6 +646,11 @@ export default function CustomersPage() {
                       </span>
                     </td>
                     <td className="p-3 md:p-4">
+                      <span className="text-muted-foreground">
+                        {customer.business_registration_number || '-'}
+                      </span>
+                    </td>
+                    <td className="p-3 md:p-4">
                       <div className="flex items-center gap-2">
                         <Phone className="w-4 h-4 text-muted-foreground" />
                         <span className="text-foreground">{customer.phone}</span>
@@ -639,7 +671,7 @@ export default function CustomersPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
                     {searchTerm ? '검색 결과가 없습니다.' : '등록된 고객이 없습니다.'}
                   </td>
                 </tr>
