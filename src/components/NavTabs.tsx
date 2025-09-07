@@ -15,7 +15,8 @@ import {
   ChevronRight,
   FileSignature,
   CreditCard,
-  Receipt
+  Receipt,
+  Users
 } from "lucide-react";
 
 interface SubItem {
@@ -41,6 +42,11 @@ export function NavTabs() {
       href: `${basePath}/dashboard`, 
       label: "대시보드", 
       icon: LayoutDashboard 
+    },
+    { 
+      href: `${basePath}/customers`, 
+      label: "고객", 
+      icon: Users 
     },
     { 
       href: `${basePath}/documents`, 

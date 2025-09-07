@@ -263,16 +263,79 @@ export async function GET(
     console.log('API Route: GET /api/contracts/[contractId] called')
     console.log('Contract ID:', contractId)
 
-    // Find contract in mock data
-    const contract = mockContracts.find(c => c.id === contractId)
+    const supabase = createServerSupabaseClient()
+    
+    // Get contract from Supabase
+    const { data: contract, error } = await supabase
+      .from('contracts')
+      .select(`
+        id,
+        title,
+        status,
+        client_name,
+        client_email,
+        client_phone,
+        client_company,
+        client_business_number,
+        client_address,
+        supplier_info,
+        items,
+        subtotal,
+        tax_amount,
+        tax_rate,
+        total_amount,
+        project_description,
+        project_start_date,
+        project_end_date,
+        contract_terms,
+        created_at,
+        signed_at
+      `)
+      .eq('id', contractId)
+      .single()
+
+    if (error) {
+      console.error('Error fetching contract:', error)
+      
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
+      }
+      
+      return NextResponse.json({ error: 'Failed to fetch contract' }, { status: 500 })
+    }
 
     if (!contract) {
       return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
     }
 
-    console.log('Contract found:', contract)
+    // Transform the contract data to match the expected format
+    const transformedContract = {
+      id: contract.id,
+      title: contract.title,
+      status: contract.status,
+      client_name: contract.client_name,
+      client_email: contract.client_email,
+      client_phone: contract.client_phone,
+      client_company: contract.client_company,
+      client_business_number: contract.client_business_number,
+      client_address: contract.client_address,
+      supplier: contract.supplier_info || null,
+      items: contract.items || [],
+      subtotal: contract.subtotal || 0,
+      tax_amount: contract.tax_amount || 0,
+      tax_rate: (contract.tax_rate || 10) / 100, // Convert percentage to decimal
+      total_amount: contract.total_amount || 0,
+      description: contract.project_description,
+      project_start_date: contract.project_start_date,
+      project_end_date: contract.project_end_date,
+      terms: contract.contract_terms || [],
+      created_at: contract.created_at,
+      signed_date: contract.signed_at
+    }
 
-    return NextResponse.json(contract)
+    console.log('Contract found:', transformedContract)
+
+    return NextResponse.json(transformedContract)
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
