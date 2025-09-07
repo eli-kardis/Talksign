@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Building2, User, Mail, Phone, MapPin, Search } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, Building2, User, Mail, Phone, MapPin, Search, Trash2, AlertTriangle } from 'lucide-react';
 
 interface Customer {
   id: string;
@@ -46,6 +47,21 @@ export default function CustomersPage() {
   });
   const [errors, setErrors] = useState<Partial<CustomerFormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [editFormData, setEditFormData] = useState<CustomerFormData>({
+    company_name: '',
+    representative_name: '',
+    contact_person: '',
+    email: '',
+    phone: '',
+    address: ''
+  });
+  const [editErrors, setEditErrors] = useState<Partial<CustomerFormData>>({});
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     fetchCustomers();
@@ -132,6 +148,128 @@ export default function CustomersPage() {
     }
   };
 
+  const handleSelectCustomer = (customerId: string) => {
+    setSelectedCustomers(prev => 
+      prev.includes(customerId) 
+        ? prev.filter(id => id !== customerId)
+        : [...prev, customerId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedCustomers.length === filteredCustomers.length) {
+      setSelectedCustomers([]);
+    } else {
+      setSelectedCustomers(filteredCustomers.map(customer => customer.id));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedCustomers.length === 0) return;
+    
+    try {
+      setIsDeleting(true);
+      
+      const response = await fetch('/api/customers', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ customerIds: selectedCustomers }),
+      });
+
+      if (response.ok) {
+        // Remove deleted customers from the local state
+        setCustomers(prev => prev.filter(customer => !selectedCustomers.includes(customer.id)));
+        setSelectedCustomers([]);
+        setIsDeleteModalOpen(false);
+      } else {
+        console.error('Failed to delete customers');
+      }
+    } catch (error) {
+      console.error('Error deleting customers:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleEditCustomer = (customer: Customer) => {
+    setEditingCustomer(customer);
+    setEditFormData({
+      company_name: customer.company_name,
+      representative_name: customer.representative_name,
+      contact_person: customer.contact_person || '',
+      email: customer.email,
+      phone: customer.phone,
+      address: customer.address || ''
+    });
+    setEditErrors({});
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditInputChange = (field: keyof CustomerFormData, value: string) => {
+    setEditFormData(prev => ({ ...prev, [field]: value }));
+    if (editErrors[field]) {
+      setEditErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const validateEditForm = () => {
+    const newErrors: Partial<CustomerFormData> = {};
+
+    if (!editFormData.company_name.trim()) {
+      newErrors.company_name = '회사명은 필수 입력 항목입니다.';
+    }
+    if (!editFormData.representative_name.trim()) {
+      newErrors.representative_name = '대표자는 필수 입력 항목입니다.';
+    }
+    if (!editFormData.email.trim()) {
+      newErrors.email = '이메일은 필수 입력 항목입니다.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editFormData.email)) {
+      newErrors.email = '올바른 이메일 형식이 아닙니다.';
+    }
+    if (!editFormData.phone.trim()) {
+      newErrors.phone = '연락처는 필수 입력 항목입니다.';
+    }
+
+    setEditErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleUpdateCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateEditForm() || !editingCustomer) return;
+
+    try {
+      setIsUpdating(true);
+      const response = await fetch(`/api/customers/${editingCustomer.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editFormData),
+      });
+
+      if (response.ok) {
+        const updatedCustomer = await response.json();
+        setCustomers(prev => 
+          prev.map(customer => 
+            customer.id === editingCustomer.id ? updatedCustomer : customer
+          )
+        );
+        setIsEditModalOpen(false);
+        setEditingCustomer(null);
+      } else {
+        console.error('Failed to update customer');
+      }
+    } catch (error) {
+      console.error('Error updating customer:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const filteredCustomers = customers.filter(customer =>
     customer.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.representative_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -159,7 +297,51 @@ export default function CustomersPage() {
           <p className="text-sm text-muted-foreground">고객 정보를 등록하고 관리할 수 있습니다.</p>
         </div>
         
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <div className="flex items-center gap-2">
+          {selectedCustomers.length > 0 && (
+            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+              <DialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  선택 삭제 ({selectedCustomers.length})
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-destructive" />
+                    고객 삭제 확인
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    선택한 {selectedCustomers.length}개의 고객을 삭제하시겠습니까?
+                  </p>
+                  <p className="text-sm text-destructive">
+                    이 작업은 되돌릴 수 없습니다.
+                  </p>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsDeleteModalOpen(false)}
+                    disabled={isDeleting}
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteSelected}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? '삭제 중...' : '삭제'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+          
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
           <DialogTrigger asChild>
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <Plus className="w-4 h-4 mr-2" />
@@ -263,8 +445,111 @@ export default function CustomersPage() {
               </div>
             </form>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
+
+      {/* Edit Customer Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>고객 정보 수정</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdateCustomer} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="edit_company_name" className="text-sm font-medium">회사명 *</Label>
+              <Input
+                id="edit_company_name"
+                value={editFormData.company_name}
+                onChange={(e) => handleEditInputChange('company_name', e.target.value)}
+                placeholder="회사명을 입력하세요"
+                className={editErrors.company_name ? 'border-red-500' : ''}
+              />
+              {editErrors.company_name && (
+                <p className="text-sm text-red-500 mt-1">{editErrors.company_name}</p>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit_representative_name" className="text-sm font-medium">대표자 *</Label>
+              <Input
+                id="edit_representative_name"
+                value={editFormData.representative_name}
+                onChange={(e) => handleEditInputChange('representative_name', e.target.value)}
+                placeholder="대표자명을 입력하세요"
+                className={editErrors.representative_name ? 'border-red-500' : ''}
+              />
+              {editErrors.representative_name && (
+                <p className="text-sm text-red-500 mt-1">{editErrors.representative_name}</p>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit_contact_person" className="text-sm font-medium">담당자</Label>
+              <Input
+                id="edit_contact_person"
+                value={editFormData.contact_person}
+                onChange={(e) => handleEditInputChange('contact_person', e.target.value)}
+                placeholder="담당자명을 입력하세요"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit_email" className="text-sm font-medium">이메일 *</Label>
+              <Input
+                id="edit_email"
+                type="email"
+                value={editFormData.email}
+                onChange={(e) => handleEditInputChange('email', e.target.value)}
+                placeholder="이메일을 입력하세요"
+                className={editErrors.email ? 'border-red-500' : ''}
+              />
+              {editErrors.email && (
+                <p className="text-sm text-red-500 mt-1">{editErrors.email}</p>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit_phone" className="text-sm font-medium">연락처 *</Label>
+              <Input
+                id="edit_phone"
+                value={editFormData.phone}
+                onChange={(e) => handleEditInputChange('phone', e.target.value)}
+                placeholder="연락처를 입력하세요"
+                className={editErrors.phone ? 'border-red-500' : ''}
+              />
+              {editErrors.phone && (
+                <p className="text-sm text-red-500 mt-1">{editErrors.phone}</p>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit_address" className="text-sm font-medium">소재지</Label>
+              <Textarea
+                id="edit_address"
+                value={editFormData.address}
+                onChange={(e) => handleEditInputChange('address', e.target.value)}
+                placeholder="주소를 입력하세요"
+                rows={3}
+              />
+            </div>
+            
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditModalOpen(false)}
+                disabled={isUpdating}
+              >
+                취소
+              </Button>
+              <Button type="submit" disabled={isUpdating}>
+                {isUpdating ? '수정 중...' : '수정'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Search */}
       <Card className="p-4">
@@ -285,6 +570,13 @@ export default function CustomersPage() {
           <table className="w-full">
             <thead className="border-b border-border">
               <tr>
+                <th className="w-12 p-3 md:p-4">
+                  <Checkbox
+                    checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
+                    onCheckedChange={handleSelectAll}
+                    {...(selectedCustomers.length > 0 && selectedCustomers.length < filteredCustomers.length && { indeterminate: true })}
+                  />
+                </th>
                 <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">회사명</th>
                 <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">대표자</th>
                 <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">담당자</th>
@@ -296,12 +588,24 @@ export default function CustomersPage() {
             <tbody>
               {filteredCustomers.length > 0 ? (
                 filteredCustomers.map((customer) => (
-                  <tr key={customer.id} className="border-b border-border hover:bg-muted/50">
+                  <tr 
+                    key={customer.id} 
+                    className="border-b border-border hover:bg-muted/50 cursor-pointer"
+                    onClick={() => handleEditCustomer(customer)}
+                  >
+                    <td 
+                      className="p-3 md:p-4"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Checkbox
+                        checked={selectedCustomers.includes(customer.id)}
+                        onCheckedChange={() => handleSelectCustomer(customer.id)}
+                      />
+                    </td>
                     <td className="p-3 md:p-4">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium text-foreground">{customer.company_name}</span>
-                      </div>
+                      <span className="font-medium text-foreground">
+                        {customer.company_name}
+                      </span>
                     </td>
                     <td className="p-3 md:p-4">
                       <div className="flex items-center gap-2">
@@ -335,7 +639,7 @@ export default function CustomersPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
                     {searchTerm ? '검색 결과가 없습니다.' : '등록된 고객이 없습니다.'}
                   </td>
                 </tr>

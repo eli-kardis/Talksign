@@ -21,7 +21,7 @@ function createServerSupabaseClient() {
   return client
 }
 
-// Mock 데이터 (개발용)
+// Mock 데이터 참조 (실제 구현에서는 부모 파일의 mockCustomers를 import)
 const mockCustomers = [
   {
     id: '550e8400-e29b-41d4-a716-446655440001',
@@ -80,29 +80,21 @@ const mockCustomers = [
   }
 ]
 
-export async function GET(request: NextRequest) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ customerId: string }> }
+) {
   try {
-    console.log('API Route: GET /api/customers called')
-    
-    // Mock 데이터 반환 (실제 구현에서는 Supabase에서 데이터를 가져옴)
-    const customers = mockCustomers.sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )
-    
-    console.log('Fetched customers:', customers.length)
-    
-    return NextResponse.json(customers)
-  } catch (error) {
-    console.error('Unexpected error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
+    const { customerId } = await params;
     const body = await request.json()
-    console.log('API Route: POST /api/customers called')
+    
+    console.log('API Route: PUT /api/customers/[customerId] called')
+    console.log('Customer ID:', customerId)
     console.log('Request body:', body)
+
+    if (!customerId) {
+      return NextResponse.json({ error: 'Customer ID is required' }, { status: 400 })
+    }
 
     // 입력값 검증
     const requiredFields = ['company_name', 'representative_name', 'email', 'phone']
@@ -124,66 +116,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 새 고객 데이터 생성
-    const newCustomer = {
-      id: `550e8400-e29b-41d4-a716-${Date.now()}`,
+    // 고객 찾기
+    const customerIndex = mockCustomers.findIndex(customer => customer.id === customerId)
+    
+    if (customerIndex === -1) {
+      return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
+    }
+
+    // 고객 정보 업데이트
+    const updatedCustomer = {
+      ...mockCustomers[customerIndex],
       company_name: body.company_name.trim(),
       representative_name: body.representative_name.trim(),
       contact_person: body.contact_person?.trim() || null,
       email: body.email.trim(),
       phone: body.phone.trim(),
       address: body.address?.trim() || null,
-      created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
 
-    // Mock 데이터에 추가 (실제 구현에서는 Supabase에 저장)
-    mockCustomers.unshift(newCustomer)
+    // Mock 데이터 업데이트
+    mockCustomers[customerIndex] = updatedCustomer
     
-    console.log('Customer created successfully:', newCustomer)
+    console.log('Customer updated successfully:', updatedCustomer)
 
-    return NextResponse.json(newCustomer, { status: 201 })
-  } catch (error) {
-    console.error('Unexpected error:', error)
-    return NextResponse.json({ 
-      error: 'Internal server error', 
-      details: error instanceof Error ? error.message : 'Unknown error' 
-    }, { status: 500 })
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { customerIds } = body
-    
-    console.log('API Route: DELETE /api/customers called')
-    console.log('Customer IDs to delete:', customerIds)
-
-    if (!customerIds || !Array.isArray(customerIds) || customerIds.length === 0) {
-      return NextResponse.json(
-        { error: 'Customer IDs array is required' },
-        { status: 400 }
-      )
-    }
-
-    // Mock deletion - remove customers from mock array
-    const deletedCustomers = mockCustomers.filter(customer => customerIds.includes(customer.id))
-    
-    // Remove from mock data
-    customerIds.forEach(id => {
-      const index = mockCustomers.findIndex(customer => customer.id === id)
-      if (index !== -1) {
-        mockCustomers.splice(index, 1)
-      }
-    })
-    
-    console.log('Customers deleted successfully:', deletedCustomers.length)
-
-    return NextResponse.json({ 
-      message: `${deletedCustomers.length} customers deleted successfully`,
-      deletedCount: deletedCustomers.length 
-    }, { status: 200 })
+    return NextResponse.json(updatedCustomer, { status: 200 })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json({ 
