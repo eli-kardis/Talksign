@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Building2, User, Mail, Phone, MapPin, Search, Trash2, AlertTriangle } from 'lucide-react';
+import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters';
 
 interface Customer {
   id: string;
@@ -147,7 +148,15 @@ export default function CustomersPage() {
   };
 
   const handleInputChange = (field: keyof CustomerFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    let formattedValue = value;
+    
+    if (field === 'phone') {
+      formattedValue = formatPhoneNumber(value);
+    } else if (field === 'business_registration_number') {
+      formattedValue = formatBusinessNumber(value);
+    }
+    
+    setFormData(prev => ({ ...prev, [field]: formattedValue }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
@@ -214,7 +223,15 @@ export default function CustomersPage() {
   };
 
   const handleEditInputChange = (field: keyof CustomerFormData, value: string) => {
-    setEditFormData(prev => ({ ...prev, [field]: value }));
+    let formattedValue = value;
+    
+    if (field === 'phone') {
+      formattedValue = formatPhoneNumber(value);
+    } else if (field === 'business_registration_number') {
+      formattedValue = formatBusinessNumber(value);
+    }
+    
+    setEditFormData(prev => ({ ...prev, [field]: formattedValue }));
     if (editErrors[field]) {
       setEditErrors(prev => ({ ...prev, [field]: undefined }));
     }
