@@ -380,6 +380,44 @@ export type Database = {
           used_at?: string
         }
       }
+      customers: {
+        Row: {
+          id: string
+          user_id: string
+          company_name: string
+          representative_name: string
+          contact_person?: string
+          business_registration_number?: string
+          email: string
+          phone: string
+          address?: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          company_name: string
+          representative_name: string
+          contact_person?: string
+          business_registration_number?: string
+          email: string
+          phone: string
+          address?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string
+          representative_name?: string
+          contact_person?: string
+          business_registration_number?: string
+          email?: string
+          phone?: string
+          address?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }

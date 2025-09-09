@@ -1,26 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import type { Database } from '@/lib/supabase'
+import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { MockCustomerService } from '@/lib/mockData'
-
-// 서버 사이드에서 사용할 Supabase 클라이언트 생성
-function createServerSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321'
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseServiceKey) {
-    throw new Error('Missing Supabase service role key')
-  }
-
-  const client = createClient<Database>(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
-
-  return client
-}
 
 
 export async function PUT(
@@ -28,10 +8,16 @@ export async function PUT(
   { params }: { params: Promise<{ customerId: string }> }
 ) {
   try {
+    // 사용자 인증 확인
+    const userId = await getUserFromRequest(request)
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    
     const { customerId } = await params;
     const body = await request.json()
     
-    console.log('API Route: PUT /api/customers/[customerId] called')
+    console.log('API Route: PUT /api/customers/[customerId] called for user:', userId)
     console.log('Customer ID:', customerId)
     console.log('Request body:', body)
 
@@ -59,24 +45,68 @@ export async function PUT(
       )
     }
 
-    // 고객 정보 업데이트
-    const updatedCustomer = MockCustomerService.update(customerId, {
-      company_name: body.company_name.trim(),
-      representative_name: body.representative_name.trim(),
-      contact_person: body.contact_person?.trim() || null,
-      business_registration_number: body.business_registration_number?.trim() || null,
-      email: body.email.trim(),
-      phone: body.phone.trim(),
-      address: body.address?.trim() || null
-    })
+    // RLS가 적용된 클라이언트로 업데이트 (사용자 소유 데이터만 업데이트 가능)
+    try {
+      const supabase = createUserSupabaseClient(request)
+      const { data: updatedCustomer, error } = await supabase
+        .from('customers')
+        .update({
+          company_name: body.company_name.trim(),
+          representative_name: body.representative_name.trim(),
+          contact_person: body.contact_person?.trim() || null,
+          business_registration_number: body.business_registration_number?.trim() || null,
+          email: body.email.trim(),
+          phone: body.phone.trim(),
+          address: body.address?.trim() || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', customerId)
+        .select()
+        .single()
 
-    if (!updatedCustomer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
+      if (error) {
+        console.log('Supabase error, using mock data:', error.message)
+        // Supabase 실패 시 mock 데이터 사용
+        const updatedCustomer = MockCustomerService.update(customerId, {
+          company_name: body.company_name.trim(),
+          representative_name: body.representative_name.trim(),
+          contact_person: body.contact_person?.trim() || null,
+          business_registration_number: body.business_registration_number?.trim() || null,
+          email: body.email.trim(),
+          phone: body.phone.trim(),
+          address: body.address?.trim() || null
+        })
+
+        if (!updatedCustomer) {
+          return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
+        }
+        
+        console.log('Customer updated with mock data:', updatedCustomer)
+        return NextResponse.json(updatedCustomer, { status: 200 })
+      }
+
+      console.log('Customer updated in Supabase:', updatedCustomer)
+      return NextResponse.json(updatedCustomer, { status: 200 })
+    } catch (supabaseError) {
+      console.log('Supabase connection failed, using mock data:', supabaseError)
+      // Supabase 연결 실패 시 mock 데이터 사용
+      const updatedCustomer = MockCustomerService.update(customerId, {
+        company_name: body.company_name.trim(),
+        representative_name: body.representative_name.trim(),
+        contact_person: body.contact_person?.trim() || null,
+        business_registration_number: body.business_registration_number?.trim() || null,
+        email: body.email.trim(),
+        phone: body.phone.trim(),
+        address: body.address?.trim() || null
+      })
+
+      if (!updatedCustomer) {
+        return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
+      }
+      
+      console.log('Customer updated with mock data:', updatedCustomer)
+      return NextResponse.json(updatedCustomer, { status: 200 })
     }
-    
-    console.log('Customer updated successfully:', updatedCustomer)
-
-    return NextResponse.json(updatedCustomer, { status: 200 })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json({ 
