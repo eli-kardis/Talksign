@@ -106,3 +106,22 @@ export function createUserSupabaseClient(request: NextRequest) {
 
   return client
 }
+
+// 서버 사이드에서 사용할 Supabase 클라이언트 생성 (service role key 사용)
+export function createServerSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321'
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseServiceKey) {
+    throw new Error('Missing Supabase service role key')
+  }
+
+  const client = createClient<Database>(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  })
+
+  return client
+}

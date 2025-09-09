@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { ImageWithFallback } from "./ui/ImageWithFallback";
 import { useAuth } from "@/contexts/AuthContext";
+import { AuthenticatedApiClient } from "@/lib/api-client";
 import {
   FileText,
   Search,
@@ -235,13 +236,7 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
         setLoading(true);
         setError(null);
 
-        const response = await fetch('/api/quotes');
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch quotes');
-        }
-
-        const dbQuotes: DatabaseQuote[] = await response.json();
+        const dbQuotes: DatabaseQuote[] = await AuthenticatedApiClient.get('/api/quotes');
         const transformedQuotes = dbQuotes.map(transformQuote);
         setQuotes(transformedQuotes);
       } catch (err) {
@@ -301,12 +296,7 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
     try {
       // API 호출하여 견적서 삭제
       for (const quoteId of selectedQuotes) {
-        const response = await fetch(`/api/quotes/${quoteId}`, {
-          method: 'DELETE',
-        });
-        if (!response.ok) {
-          throw new Error(`Failed to delete quote ${quoteId}`);
-        }
+        await AuthenticatedApiClient.delete(`/api/quotes/${quoteId}`);
       }
       
       // 로컬 상태에서 삭제된 견적서 제거
