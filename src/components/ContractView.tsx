@@ -12,6 +12,7 @@ import { ko } from 'date-fns/locale';
 import { PenTool, FileText, Clock, CheckCircle, AlertCircle, Search, MessageSquare, Eye, Edit, Calendar, User, Plus, ChevronUp, ChevronDown, Filter, Trash2 } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import { AuthenticatedApiClient } from '@/lib/api-client';
 
 interface Contract {
   id: string;
@@ -140,10 +141,10 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
     const loadContracts = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/contracts');
+        const response = await AuthenticatedApiClient.get('/api/contracts');
         
         if (!response.ok) {
-          throw new Error('Failed to fetch contracts');
+          throw new Error(`Failed to fetch contracts: ${response.status}`);
         }
         
         const data = await response.json();
@@ -183,11 +184,9 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
     setIsDeleting(true);
     try {
       for (const contractId of selectedContracts) {
-        const response = await fetch(`/api/contracts/${contractId}`, {
-          method: 'DELETE',
-        });
+        const response = await AuthenticatedApiClient.delete(`/api/contracts/${contractId}`);
         if (!response.ok) {
-          throw new Error(`Failed to delete contract ${contractId}`);
+          throw new Error(`Failed to delete contract ${contractId}: ${response.status}`);
         }
       }
       setContracts(prev => prev.filter(contract => !selectedContracts.includes(contract.id)));
