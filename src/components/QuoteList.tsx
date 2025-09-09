@@ -236,7 +236,13 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
         setLoading(true);
         setError(null);
 
-        const dbQuotes: DatabaseQuote[] = await AuthenticatedApiClient.get('/api/quotes');
+        const response = await AuthenticatedApiClient.get('/api/quotes');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch quotes: ${response.status}`);
+        }
+        
+        const dbQuotes: DatabaseQuote[] = await response.json();
         const transformedQuotes = dbQuotes.map(transformQuote);
         setQuotes(transformedQuotes);
       } catch (err) {
@@ -296,7 +302,10 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
     try {
       // API 호출하여 견적서 삭제
       for (const quoteId of selectedQuotes) {
-        await AuthenticatedApiClient.delete(`/api/quotes/${quoteId}`);
+        const response = await AuthenticatedApiClient.delete(`/api/quotes/${quoteId}`);
+        if (!response.ok) {
+          throw new Error(`Failed to delete quote ${quoteId}: ${response.status}`);
+        }
       }
       
       // 로컬 상태에서 삭제된 견적서 제거
