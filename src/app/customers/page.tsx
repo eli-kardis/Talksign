@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Building2, User, Mail, Phone, MapPin, Search, Trash2, AlertTriangle } from 'lucide-react';
 import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiClient } from '@/lib/api-client';
 
 interface Customer {
   id: string;
@@ -36,6 +38,7 @@ interface CustomerFormData {
 }
 
 export default function CustomersPage() {
+  const { user, isLoading: authLoading } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,16 +72,23 @@ export default function CustomersPage() {
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    fetchCustomers();
-  }, []);
+    if (!authLoading && user) {
+      fetchCustomers();
+    }
+  }, [user, authLoading]);
 
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/customers');
+      const response = await apiClient.get('/api/customers');
       if (response.ok) {
         const data = await response.json();
         setCustomers(data);
+      } else {
+        console.error('Failed to fetch customers:', response.statusText);
+        if (response.status === 401) {
+          console.error('Unauthorized: Please log in');
+        }
       }
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -116,13 +126,7 @@ export default function CustomersPage() {
 
     try {
       setIsSubmitting(true);
-      const response = await fetch('/api/customers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await apiClient.post('/api/customers', formData);
 
       if (response.ok) {
         const newCustomer = await response.json();
@@ -184,13 +188,7 @@ export default function CustomersPage() {
     try {
       setIsDeleting(true);
       
-      const response = await fetch('/api/customers', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ customerIds: selectedCustomers }),
-      });
+      const response = await apiClient.delete('/api/customers', { customerIds: selectedCustomers });
 
       if (response.ok) {
         // Remove deleted customers from the local state
@@ -266,13 +264,7 @@ export default function CustomersPage() {
 
     try {
       setIsUpdating(true);
-      const response = await fetch(`/api/customers/${editingCustomer.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editFormData),
-      });
+      const response = await apiClient.put(`/api/customers/${editingCustomer.id}`, editFormData);
 
       if (response.ok) {
         const updatedCustomer = await response.json();
@@ -306,6 +298,32 @@ export default function CustomersPage() {
         <div className="animate-pulse">
           <div className="h-8 bg-muted rounded w-64 mb-4"></div>
           <div className="h-96 bg-muted rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // 인증 로딩 중이거나 로그인하지 않은 경우
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p>로그인 확인 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-xl font-medium mb-2">로그인이 필요합니다</h2>
+          <p className="text-muted-foreground mb-4">고객 관리를 이용하려면 로그인해주세요.</p>
+          <Button onClick={() => window.location.href = '/auth/signin'}>
+            로그인하기
+          </Button>
         </div>
       </div>
     );
@@ -615,9 +633,14 @@ export default function CustomersPage() {
               <tr>
                 <th className="w-12 p-3 md:p-4">
                   <Checkbox
-                    checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
+                    checked={
+                      selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0 
+                        ? true
+                        : selectedCustomers.length > 0 && selectedCustomers.length < filteredCustomers.length
+                        ? "indeterminate"
+                        : false
+                    }
                     onCheckedChange={handleSelectAll}
-                    {...(selectedCustomers.length > 0 && selectedCustomers.length < filteredCustomers.length && { indeterminate: true })}
                   />
                 </th>
                 <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">회사명</th>

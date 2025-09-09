@@ -33,15 +33,45 @@ export function createAuthenticatedSupabaseClient(request: NextRequest) {
 // 사용자 인증 확인 및 user_id 반환
 export async function getUserFromRequest(request: NextRequest): Promise<string | null> {
   try {
-    const supabase = createAuthenticatedSupabaseClient(request)
-    
-    // 현재 인증된 사용자 가져오기
-    const { data: { user }, error } = await supabase.auth.getUser()
-    
-    if (error || !user) {
+    // 개발 환경에서는 첫 번째 사용자를 기본으로 사용
+    // 실제 운영에서는 아래 주석 해제하고 개발용 코드는 제거해야 함
+    if (process.env.NODE_ENV === 'development') {
+      const supabase = createAuthenticatedSupabaseClient(request)
+      const { data: users } = await supabase
+        .from('users')
+        .select('id')
+        .order('created_at', { ascending: true })
+        .limit(1)
+      
+      if (users && users.length > 0) {
+        console.log('Development mode: Using first user:', users[0].id)
+        return users[0].id
+      }
+      
+      // 사용자가 없으면 임시 사용자 생성
+      console.log('No users found, this is expected for first run')
       return null
     }
     
+    // 운영 환경에서의 실제 인증 로직
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.replace('Bearer ', '')
+    
+    if (!token) {
+      console.log('No authorization token found')
+      return null
+    }
+    
+    // Supabase에서 토큰 검증
+    const supabase = createUserSupabaseClient(request)
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+    
+    if (error || !user) {
+      console.error('Token validation failed:', error)
+      return null
+    }
+    
+    console.log('Authenticated user:', user.id)
     return user.id
   } catch (error) {
     console.error('Error getting user from request:', error)

@@ -1,31 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import type { Database } from '@/lib/supabase'
-
-// 서버 사이드에서 사용할 Supabase 클라이언트 생성
-function createServerSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321'
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseServiceKey) {
-    throw new Error('Missing Supabase service role key')
-  }
-
-  const client = createClient<Database>(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
-
-  return client
-}
+import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient()
+    // 사용자 인증 확인
+    const userId = await getUserFromRequest(request)
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     
-    console.log('API Route: GET /api/contracts called')
+    console.log('API Route: GET /api/contracts called for user:', userId)
+    
+    // RLS가 적용된 클라이언트로 사용자 소유 계약서만 조회
+    const supabase = createUserSupabaseClient(request)
     
     // Get contracts from Supabase
     const { data: contracts, error } = await supabase

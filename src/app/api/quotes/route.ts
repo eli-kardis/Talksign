@@ -1,41 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import type { Database } from '@/lib/supabase'
-
-// 서버 사이드에서 사용할 Supabase 클라이언트 생성
-function createServerSupabaseClient(authToken?: string) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321'
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseServiceKey) {
-    throw new Error('Missing Supabase service role key')
-  }
-
-  const client = createClient<Database>(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
-
-  // 사용자 토큰이 있으면 설정
-  if (authToken) {
-    // 토큰 설정은 생략하고 간단히 진행
-    // client.auth.setSession() 은 복잡하므로 차후 구현
-  }
-
-  return client
-}
+import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 
 type QuoteInsert = Database['public']['Tables']['quotes']['Insert']
 
 export async function GET(request: NextRequest) {
   try {
-    // 일단 간단히 모든 데이터 반환 (개발용)
-    // TODO: 실제 사용자 인증 구현 필요
-    const supabase = createServerSupabaseClient()
+    // 사용자 인증 확인
+    const userId = await getUserFromRequest(request)
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     
-    // 모든 견적서 조회 (임시)
+    console.log('Fetching quotes for user:', userId)
+    
+    // RLS가 적용된 클라이언트로 사용자 소유 견적서만 조회
+    const supabase = createUserSupabaseClient(request)
+    
     const { data: quotes, error } = await supabase
       .from('quotes')
       .select('*')
@@ -48,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(quotes || [])
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('Error in GET /api/quotes:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
