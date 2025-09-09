@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Search, User, Mail, Phone, MapPin, Download, Building } from 'lucide-react';
+import { AuthenticatedApiClient } from '@/lib/api-client';
 
 interface Customer {
   id: string;
@@ -42,10 +43,13 @@ export function CustomerSelector({
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/customers');
+      const response = await AuthenticatedApiClient.get('/api/customers');
+      
       if (response.ok) {
         const data = await response.json();
         setCustomers(data);
+      } else {
+        console.error('Failed to fetch customers:', response.status);
       }
     } catch (error) {
       console.error('Error fetching customers:', error);
