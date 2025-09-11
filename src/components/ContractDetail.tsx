@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
+import { ContractItemsTable } from './ContractItemsTable';
 import { ArrowLeft, Edit, Download, FileText, Calendar, User, Building, Phone, Mail, MapPin, PenTool, CheckCircle } from 'lucide-react';
 
 interface ContractDetailProps {
@@ -40,9 +41,9 @@ const mockContract = {
     dueDate: '2024-03-31'
   },
   items: [
-    { id: 1, description: '웹사이트 디자인 (PC/모바일)', quantity: 1, unitPrice: 1500000, amount: 1500000 },
-    { id: 2, description: '퍼블리싱 및 프론트엔드 개발', quantity: 1, unitPrice: 1200000, amount: 1200000 },
-    { id: 3, description: 'SEO 최적화', quantity: 1, unitPrice: 300000, amount: 300000 }
+    { id: 1, name: '웹사이트 디자인', description: '웹사이트 디자인 (PC/모바일)', quantity: 1, unitPrice: 1500000, unit: '개', amount: 1500000 },
+    { id: 2, name: '프론트엔드 개발', description: '퍼블리싱 및 프론트엔드 개발', quantity: 1, unitPrice: 1200000, unit: '개', amount: 1200000 },
+    { id: 3, name: 'SEO 최적화', description: 'SEO 최적화', quantity: 1, unitPrice: 300000, unit: '개', amount: 300000 }
   ],
   createdDate: '2024-01-15',
   signedDate: '2024-01-18',
@@ -57,6 +58,10 @@ const mockContract = {
 
 export function ContractDetail({ contractId, onBack, onEdit }: ContractDetailProps) {
   const router = useRouter();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editableItems, setEditableItems] = useState(mockContract.items);
+  const [editableStartDate, setEditableStartDate] = useState(mockContract.project.startDate);
+  const [editableDueDate, setEditableDueDate] = useState(mockContract.project.dueDate);
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -99,6 +104,24 @@ export function ContractDetail({ contractId, onBack, onEdit }: ContractDetailPro
     alert('계약서 PDF 다운로드 기능은 실제 서비스에서 구현됩니다.');
   };
 
+  const handleEditItems = () => {
+    setIsEditMode(true);
+  };
+
+  const handleSaveItems = () => {
+    setIsEditMode(false);
+    // Here you would save the changes to the backend
+    alert('계약 항목이 저장되었습니다.');
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    // Reset to original values
+    setEditableItems(mockContract.items);
+    setEditableStartDate(mockContract.project.startDate);
+    setEditableDueDate(mockContract.project.dueDate);
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
@@ -126,13 +149,41 @@ export function ContractDetail({ contractId, onBack, onEdit }: ContractDetailPro
             <Download className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">PDF 다운로드</span>
           </Button>
-          {mockContract.status === 'pending' && (
+          {!isEditMode && (
             <Button 
-              onClick={() => router.push(`/documents/contracts/${contractId}/edit`)}
+              onClick={handleEditItems}
               className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs md:text-sm"
             >
               <Edit className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">수정</span>
+              <span className="hidden md:inline">항목 수정</span>
+            </Button>
+          )}
+          {isEditMode && (
+            <>
+              <Button 
+                onClick={handleSaveItems}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs md:text-sm"
+              >
+                <CheckCircle className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">저장</span>
+              </Button>
+              <Button 
+                onClick={handleCancelEdit}
+                variant="outline"
+                className="border-border text-xs md:text-sm"
+              >
+                취소
+              </Button>
+            </>
+          )}
+          {mockContract.status === 'pending' && !isEditMode && (
+            <Button 
+              onClick={() => router.push(`/documents/contracts/${contractId}/edit`)}
+              variant="outline"
+              className="border-border text-xs md:text-sm"
+            >
+              <FileText className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">전체 수정</span>
             </Button>
           )}
         </div>
@@ -224,54 +275,73 @@ export function ContractDetail({ contractId, onBack, onEdit }: ContractDetailPro
           </div>
 
           {/* Contract Details */}
-          <div className="space-y-4">
-            <div className="mb-3">
-              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">계약 내역</h3>
+          {isEditMode ? (
+            <div className="space-y-4">
+              <div className="mb-3">
+                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">계약 내역 수정</h3>
+              </div>
+              <ContractItemsTable 
+                items={editableItems}
+                onItemsChange={setEditableItems}
+                startDate={editableStartDate}
+                dueDate={editableDueDate}
+                onStartDateChange={setEditableStartDate}
+                onDueDateChange={setEditableDueDate}
+              />
             </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-300">
-                    <th className="text-left py-3 px-2 text-sm font-medium text-gray-700">항목</th>
-                    <th className="text-center py-3 px-2 text-sm font-medium text-gray-700 w-20">수량</th>
-                    <th className="text-right py-3 px-2 text-sm font-medium text-gray-700 w-32">단가</th>
-                    <th className="text-right py-3 px-2 text-sm font-medium text-gray-700 w-32">금액</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockContract.items.map((item, index) => (
-                    <tr key={item.id} className={index < mockContract.items.length - 1 ? "border-b border-border/50" : ""}>
-                      <td className="py-4 px-2">
-                        <span className="text-black font-medium">{item.description}</span>
-                      </td>
-                      <td className="py-4 px-2 text-center text-black">{item.quantity}</td>
-                      <td className="py-4 px-2 text-right text-black">
-                        {formatCurrency(item.unitPrice)}
-                      </td>
-                      <td className="py-4 px-2 text-right text-black font-medium">
-                        {formatCurrency(item.amount)}
-                      </td>
+          ) : (
+            <div className="space-y-4">
+              <div className="mb-3">
+                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">계약 내역</h3>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-300">
+                      <th className="text-left py-3 px-2 text-sm font-medium text-gray-700">항목</th>
+                      <th className="text-center py-3 px-2 text-sm font-medium text-gray-700 w-20">수량</th>
+                      <th className="text-right py-3 px-2 text-sm font-medium text-gray-700 w-32">단가</th>
+                      <th className="text-right py-3 px-2 text-sm font-medium text-gray-700 w-32">금액</th>
                     </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-gray-300">
-                    <td colSpan={3} className="py-3 px-2 text-right font-medium text-gray-700">소계:</td>
-                    <td className="py-3 px-2 text-right font-medium text-black">{formatCurrency(totalAmount)}</td>
-                  </tr>
-                  <tr>
-                    <td colSpan={3} className="py-2 px-2 text-right text-gray-700">부가세 (10%):</td>
-                    <td className="py-2 px-2 text-right text-black">{formatCurrency(vatAmount)}</td>
-                  </tr>
-                  <tr className="border-t border-gray-300">
-                    <td colSpan={3} className="py-3 px-2 text-right text-lg font-semibold text-black">총 계약 금액:</td>
-                    <td className="py-3 px-2 text-right text-lg font-bold text-black">{formatCurrency(finalAmount)}</td>
-                  </tr>
-                </tfoot>
-              </table>
+                  </thead>
+                  <tbody>
+                    {mockContract.items.map((item, index) => (
+                      <tr key={item.id} className={index < mockContract.items.length - 1 ? "border-b border-border/50" : ""}>
+                        <td className="py-4 px-2">
+                          <span className="text-black font-medium">{item.name}</span>
+                          {item.description && (
+                            <div className="text-xs text-gray-600 mt-1">{item.description}</div>
+                          )}
+                        </td>
+                        <td className="py-4 px-2 text-center text-black">{item.quantity}</td>
+                        <td className="py-4 px-2 text-right text-black">
+                          {formatCurrency(item.unitPrice)}
+                        </td>
+                        <td className="py-4 px-2 text-right text-black font-medium">
+                          {formatCurrency(item.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-gray-300">
+                      <td colSpan={3} className="py-3 px-2 text-right font-medium text-gray-700">소계:</td>
+                      <td className="py-3 px-2 text-right font-medium text-black">{formatCurrency(totalAmount)}</td>
+                    </tr>
+                    <tr>
+                      <td colSpan={3} className="py-2 px-2 text-right text-gray-700">부가세 (10%):</td>
+                      <td className="py-2 px-2 text-right text-black">{formatCurrency(vatAmount)}</td>
+                    </tr>
+                    <tr className="border-t border-gray-300">
+                      <td colSpan={3} className="py-3 px-2 text-right text-lg font-semibold text-black">총 계약 금액:</td>
+                      <td className="py-3 px-2 text-right text-lg font-bold text-black">{formatCurrency(finalAmount)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
 
           <Separator className="my-6" />
 

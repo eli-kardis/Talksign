@@ -22,6 +22,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 // public.users 테이블에 사용자 레코드가 있는지 확인하고 없으면 생성
 async function ensureUserExists(authUser: any) {
   try {
+    console.log('Checking user existence for:', authUser.id)
+    
     // 기존 사용자 확인
     const { data: existingUser, error: checkError } = await supabase
       .from('users')
@@ -29,32 +31,45 @@ async function ensureUserExists(authUser: any) {
       .eq('id', authUser.id)
       .single()
 
+    console.log('User check result:', { existingUser, checkError })
+
     if (checkError && checkError.code === 'PGRST116') {
       // 사용자가 없으면 생성
       console.log('Creating user record in public.users table')
-      const { error: insertError } = await supabase
+      const userData = {
+        id: authUser.id,
+        email: authUser.email || '',
+        name: authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'Unknown User',
+        phone: authUser.user_metadata?.phone || null,
+        business_name: authUser.user_metadata?.business_name || null,
+        business_registration_number: authUser.user_metadata?.business_registration_number || null,
+        company_name: authUser.user_metadata?.company_name || null,
+        role: 'freelancer'
+      }
+      
+      console.log('Inserting user data:', userData)
+      
+      const { data: insertedUser, error: insertError } = await supabase
         .from('users')
-        .insert([{
-          id: authUser.id,
-          email: authUser.email || '',
-          name: authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'Unknown User',
-          phone: authUser.user_metadata?.phone || null,
-          business_name: authUser.user_metadata?.business_name || null,
-          business_registration_number: authUser.user_metadata?.business_registration_number || null,
-          company_name: authUser.user_metadata?.company_name || null,
-          role: 'freelancer'
-        }])
+        .insert([userData])
+        .select()
+        .single()
 
       if (insertError) {
         console.error('Error creating user record:', insertError)
+        throw insertError
       } else {
-        console.log('User record created successfully')
+        console.log('User record created successfully:', insertedUser)
       }
     } else if (checkError) {
       console.error('Error checking user existence:', checkError)
+      throw checkError
+    } else {
+      console.log('User already exists:', existingUser)
     }
   } catch (error) {
-    console.error('Error in ensureUserExists:', error)
+    console.error('Error in ensureUserExists:', error instanceof Error ? error.message : error)
+    // 사용자 생성 실패해도 앱이 중단되지 않도록 함
   }
 }
 

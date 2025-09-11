@@ -208,15 +208,13 @@ export default function ContractDetailPage({ params }: { params: Promise<{ contr
             <Download className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">PDF 다운로드</span>
           </Button>
-          {contract.status === 'draft' && (
-            <Button 
-              onClick={() => router.push(`/documents/contracts/${contractId}/edit`)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs md:text-sm"
-            >
-              <Edit className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">수정</span>
-            </Button>
-          )}
+          <Button 
+            onClick={() => router.push(`/documents/contracts/${contractId}/edit`)}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs md:text-sm"
+          >
+            <Edit className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">수정</span>
+          </Button>
         </div>
       </div>
 
