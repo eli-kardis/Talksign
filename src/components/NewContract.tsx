@@ -485,7 +485,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       company: customer.company_name || '',
       phone: customer.phone || '',
       email: customer.email || '',
-      businessNumber: '',
+      businessNumber: customer.business_registration_number || '',
       address: customer.address || ''
     });
   };

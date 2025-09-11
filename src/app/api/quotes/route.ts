@@ -38,6 +38,14 @@ export async function POST(request: NextRequest) {
   try {
     console.log('API Route: POST /api/quotes called')
     
+    // 사용자 인증 확인 - 개발 환경에서는 현재 사용자 사용
+    const userId = await getUserFromRequest(request)
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    
+    console.log('Creating quote for user:', userId)
+    
     const supabase = createServerSupabaseClient()
     console.log('Supabase client created')
     
@@ -58,54 +66,7 @@ export async function POST(request: NextRequest) {
     const subtotal = items.reduce((sum: number, item: { amount?: number }) => sum + (item.amount || 0), 0)
     console.log('Calculated subtotal:', subtotal)
 
-    // Supabase Auth를 사용해서 임시 사용자 생성
-    console.log('Creating temporary user via Supabase Auth...')
-    
-    const randomId = Math.random().toString(36).substring(2, 15)
-    const tempUserEmail = `temp-${randomId}@example.com`
-    const tempPassword = 'TempPassword123!'
-
-    // 1. Auth 사용자 생성
-    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-      email: tempUserEmail,
-      password: tempPassword,
-      email_confirm: true, // 이메일 확인 건너뛰기
-    })
-
-    if (authError) {
-      console.error('Failed to create auth user:', authError)
-      return NextResponse.json({ 
-        error: 'Failed to create auth user', 
-        details: authError.message 
-      }, { status: 500 })
-    }
-
-    console.log('Auth user created:', authUser.user?.id)
-
-    // 2. Public users 테이블에 추가 정보 저장
-    const { data: publicUser, error: publicUserError } = await supabase
-      .from('users')
-      .insert({
-        id: authUser.user.id,
-        email: tempUserEmail,
-        name: 'Temp User',
-        role: 'freelancer'
-      })
-      .select()
-      .single()
-
-    if (publicUserError) {
-      console.error('Failed to create public user:', publicUserError)
-      return NextResponse.json({ 
-        error: 'Failed to create public user', 
-        details: publicUserError.message,
-        code: publicUserError.code 
-      }, { status: 500 })
-    }
-
-    console.log('Public user created:', publicUser)
-
-    // 3. 공급자 정보로 사용자 프로필 업데이트 (필요시)
+    // 공급자 정보로 사용자 프로필 업데이트 (필요시)
     if (body.supplier_info) {
       const { error: updateError } = await supabase
         .from('users')
@@ -117,7 +78,7 @@ export async function POST(request: NextRequest) {
           business_name: body.supplier_info.business_name,
           updated_at: new Date().toISOString()
         })
-        .eq('id', authUser.user.id)
+        .eq('id', userId)
 
       if (updateError) {
         console.warn('Failed to update user profile:', updateError)
@@ -125,11 +86,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. 견적서 생성
+    // 견적서 생성
     const expiresAt = body.valid_until ? new Date(body.valid_until).toISOString() : (body.expires_at ? new Date(body.expires_at).toISOString() : null)
     
     const quoteData: any = {
-      user_id: authUser.user.id,
+      user_id: userId,
       client_name: body.client_name,
       client_email: body.client_email,
       client_phone: body.client_phone || null,

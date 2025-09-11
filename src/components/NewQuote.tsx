@@ -8,7 +8,7 @@ import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
 import { Separator } from './ui/separator'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
-import { ArrowLeft, MessageSquare, Save, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, MessageSquare, Save, AlertTriangle, Edit3 } from 'lucide-react'
 import { QuoteItemsTable } from './QuoteItemsTable'
 import { CustomerSelector } from './CustomerSelector'
 import { useAuth } from '@/contexts/AuthContext'
@@ -61,6 +61,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [initialFormData, setInitialFormData] = useState<any>(null)
+  const [isEditingSupplier, setIsEditingSupplier] = useState(false)
   const [supplierInfo, setSupplierInfo] = useState({
     name: '',
     email: '',
@@ -254,7 +255,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
     setClientInfo({
       name: customer.representative_name || '',
       company: customer.company_name || '',
-      businessNumber: '',
+      businessNumber: customer.business_registration_number || '',
       phone: customer.phone || '',
       email: customer.email || '',
       address: customer.address || '',
@@ -469,7 +470,19 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
           </Card>
           {/* 공급자 정보 */}
           <Card className="p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">공급자 정보 (본인)</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium text-foreground">공급자 정보 (본인)</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditingSupplier(!isEditingSupplier)}
+                className="border-border"
+              >
+                <Edit3 className="w-4 h-4 mr-2" />
+                {isEditingSupplier ? '저장' : '수정'}
+              </Button>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -479,7 +492,8 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                   value={supplierInfo.name}
                   onChange={(e) => setSupplierInfo({ ...supplierInfo, name: e.target.value })}
                   placeholder="홍길동"
-                  className="bg-input-background border-border"
+                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingSupplier}
                 />
               </div>
 
@@ -491,7 +505,8 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                   value={supplierInfo.email}
                   onChange={(e) => setSupplierInfo({ ...supplierInfo, email: e.target.value })}
                   placeholder="supplier@example.com"
-                  className="bg-input-background border-border"
+                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingSupplier}
                 />
               </div>
 
@@ -502,7 +517,8 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                   value={supplierInfo.phone}
                   onChange={(e) => setSupplierInfo({ ...supplierInfo, phone: formatPhoneNumber(e.target.value) })}
                   placeholder="010-1234-5678"
-                  className="bg-input-background border-border"
+                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingSupplier}
                 />
               </div>
 
@@ -513,7 +529,8 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                   value={supplierInfo.businessRegistrationNumber}
                   onChange={(e) => setSupplierInfo({ ...supplierInfo, businessRegistrationNumber: formatBusinessNumber(e.target.value) })}
                   placeholder="123-12-12345"
-                  className="bg-input-background border-border"
+                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                  disabled={!isEditingSupplier}
                 />
               </div>
 
@@ -525,7 +542,8 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                     value={supplierInfo.companyName}
                     onChange={(e) => setSupplierInfo({ ...supplierInfo, companyName: e.target.value })}
                     placeholder="(주)회사명 또는 개인사업자명"
-                    className="bg-input-background border-border"
+                    className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                    disabled={!isEditingSupplier}
                   />
                 </div>
               )}
@@ -627,39 +645,37 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
 
         {/* Action Sidebar - Sticky */}
         <div className="sticky top-6 self-start">
-          <div className="space-y-6">
-            <Card className="p-6 bg-card border-border shadow-lg">
-              <h3 className="font-medium mb-4 text-foreground">발송 옵션</h3>
-              <div className="space-y-3">
-                <Button
-                  type="button"
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                  onClick={handleSaveAndSend}
-                  disabled={isLoading || !supplierInfo.name || !supplierInfo.email || !supplierInfo.phone || !clientInfo.name || !clientInfo.email || !quoteTitle.trim() || (supplierInfo.businessRegistrationNumber && !supplierInfo.companyName)}
-                >
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  {isLoading ? '발송 중...' : '카카오톡으로 발송'}
-                </Button>
+          <Card className="p-4 bg-card border-border shadow-lg">
+            <h3 className="font-medium mb-3 text-foreground">발송 옵션</h3>
+            <div className="space-y-2">
+              <Button
+                type="button"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm"
+                onClick={handleSaveAndSend}
+                disabled={isLoading || !supplierInfo.name || !supplierInfo.email || !supplierInfo.phone || !clientInfo.name || !clientInfo.company || !clientInfo.phone || !clientInfo.email || !quoteTitle.trim() || !validUntil.trim() || (supplierInfo.businessRegistrationNumber && !supplierInfo.companyName)}
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                {isLoading ? '발송 중...' : '카카오톡으로 발송'}
+              </Button>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full border-border"
-                  onClick={handleSaveDraft}
-                  disabled={isLoading || (isEdit && !hasUnsavedChanges)}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {isLoading ? '저장 중...' : '임시저장'}
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-border text-sm"
+                onClick={handleSaveDraft}
+                disabled={isLoading || (isEdit && !hasUnsavedChanges)}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {isLoading ? '저장 중...' : '임시저장'}
+              </Button>
+            </div>
 
-              <div className="mt-4 p-3 bg-accent rounded-lg">
-                <p className="text-sm text-accent-foreground">
-                  💡 견적서가 카카오톡으로 발송되면 고객이 바로 확인하고 승인할 수 있습니다.
-                </p>
-              </div>
-            </Card>
-          </div>
+            <div className="mt-3 p-2 bg-accent rounded-lg">
+              <p className="text-xs text-accent-foreground">
+                💡 견적서가 카카오톡으로 발송되면 고객이 바로 확인하고 승인할 수 있습니다.
+              </p>
+            </div>
+          </Card>
         </div>
       </div>
 

@@ -36,8 +36,8 @@ export async function getUserFromRequest(request: NextRequest): Promise<string |
     // 개발 환경에서는 첫 번째 사용자를 기본으로 사용
     // 실제 운영에서는 아래 주석 해제하고 개발용 코드는 제거해야 함
     if (process.env.NODE_ENV === 'development') {
-      const supabase = createAuthenticatedSupabaseClient(request)
-      const { data: users } = await supabase
+      const supabase = createServerSupabaseClient()
+      const { data: users, error } = await supabase
         .from('users')
         .select('id')
         .order('created_at', { ascending: true })
@@ -48,9 +48,9 @@ export async function getUserFromRequest(request: NextRequest): Promise<string |
         return users[0].id
       }
       
-      // 사용자가 없으면 임시 사용자 생성
-      console.log('No users found, this is expected for first run')
-      return null
+      // 사용자가 없으면 기본 개발 사용자 ID 반환
+      console.log('No users found, using default dev user')
+      return '80d20e48-7189-4874-b792-9e514aaa0572'
     }
     
     // 운영 환경에서의 실제 인증 로직

@@ -125,29 +125,29 @@ export function CustomerSelector({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <User className="w-3 h-3" />
-                        <span>{customer.representative_name}</span>
+                        <span><strong>대표자:</strong> {customer.representative_name}</span>
                         {customer.contact_person && (
                           <span className="text-xs">({customer.contact_person})</span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Phone className="w-3 h-3" />
-                        <span>{customer.phone}</span>
+                        <span><strong>연락처:</strong> {customer.phone}</span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground sm:col-span-2">
                         <Mail className="w-3 h-3" />
-                        <span>{customer.email}</span>
+                        <span><strong>이메일:</strong> {customer.email}</span>
                       </div>
                       {customer.business_registration_number && (
                         <div className="flex items-center gap-2 text-muted-foreground sm:col-span-2">
                           <Building className="w-3 h-3" />
-                          <span className="text-xs">{customer.business_registration_number}</span>
+                          <span className="text-xs"><strong>사업자번호:</strong> {customer.business_registration_number}</span>
                         </div>
                       )}
                       {customer.address && (
                         <div className="flex items-center gap-2 text-muted-foreground sm:col-span-2">
                           <MapPin className="w-3 h-3" />
-                          <span className="text-xs">{customer.address}</span>
+                          <span className="text-xs"><strong>주소:</strong> {customer.address}</span>
                         </div>
                       )}
                     </div>

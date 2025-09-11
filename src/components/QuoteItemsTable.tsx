@@ -262,9 +262,9 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
             <TableHead className="w-8"></TableHead>
             <TableHead className="min-w-[120px]">항목명</TableHead>
             <TableHead className="min-w-[200px]">설명</TableHead>
-            <TableHead className="w-[100px] text-right">단가</TableHead>
-            <TableHead className="w-[80px] text-center">수량</TableHead>
-            <TableHead className="w-[80px] text-center">단위</TableHead>
+            <TableHead className="min-w-[140px] text-right">단가</TableHead>
+            <TableHead className="min-w-[100px] text-center">수량</TableHead>
+            <TableHead className="min-w-[100px] text-center">단위</TableHead>
             <TableHead className="w-[120px] text-right">금액</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
@@ -314,16 +314,16 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
               </TableCell>
               <TableCell>
                 <Input
-                  type="number"
-                  min="0"
+                  type="text"
                   placeholder="0"
-                  value={item.unitPrice === 0 ? '' : item.unitPrice}
+                  value={item.unitPrice === 0 ? '' : new Intl.NumberFormat('ko-KR').format(item.unitPrice)}
                   onChange={(e) => {
-                    const value = e.target.value === '' ? 0 : Math.max(0, parseInt(e.target.value) || 0)
+                    const numericValue = e.target.value.replace(/[^0-9]/g, '')
+                    const value = numericValue === '' ? 0 : Math.max(0, parseInt(numericValue) || 0)
                     updateItem(item.id, 'unitPrice', value)
                   }}
                   onWheel={(e) => e.currentTarget.blur()}
-                  className="bg-input-background/50 border border-border/50 p-2 h-9 text-right focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors"
+                  className="bg-input-background/50 border border-border/50 p-2 h-9 text-right focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors min-w-[120px] w-full"
                 />
               </TableCell>
               <TableCell>
@@ -337,7 +337,7 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
                     updateItem(item.id, 'quantity', value)
                   }}
                   onWheel={(e) => e.currentTarget.blur()}
-                  className="bg-input-background/50 border border-border/50 p-2 h-9 text-center focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors"
+                  className="bg-input-background/50 border border-border/50 p-2 h-9 text-center focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors min-w-[80px] w-full"
                 />
               </TableCell>
               <TableCell>
@@ -345,7 +345,7 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
                   placeholder="개"
                   value={item.unit}
                   onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                  className="bg-input-background/50 border border-border/50 p-2 h-9 text-center focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors"
+                  className="bg-input-background/50 border border-border/50 p-2 h-9 text-center focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors min-w-[80px] w-full"
                 />
               </TableCell>
               <TableCell>
