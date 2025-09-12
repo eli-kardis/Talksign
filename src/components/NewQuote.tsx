@@ -305,6 +305,11 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
       return
     }
 
+    if (!validUntil.trim()) {
+      alert('견적 유효기간을 입력해주세요.')
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -576,7 +581,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="company" className="text-foreground">회사명</Label>
+                <Label htmlFor="company" className="text-foreground">회사명 *</Label>
                 <Input
                   id="company"
                   value={clientInfo.company}
@@ -609,7 +614,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-foreground">이메일</Label>
+                <Label htmlFor="email" className="text-foreground">이메일 *</Label>
                 <Input
                   id="email"
                   type="email"

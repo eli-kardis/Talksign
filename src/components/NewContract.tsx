@@ -18,6 +18,7 @@ interface ContractItem {
   quantity: number;
   unit_price: number;
   amount: number;
+  unit: string;
 }
 
 interface NewContractProps {
@@ -75,9 +76,15 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   const startDateRef = useRef<HTMLInputElement>(null);
   const endDateRef = useRef<HTMLInputElement>(null);
   const paymentTermsRef = useRef<HTMLButtonElement>(null);
+  const customPaymentTermsRef = useRef<HTMLInputElement>(null);
 
   // 툴팁 상태 관리
   const [fieldTooltips, setFieldTooltips] = useState<{[key: string]: string}>({});
+
+  // 견적서 불러오기 관련 상태
+  const [showQuoteDialog, setShowQuoteDialog] = useState(false);
+  const [quotes, setQuotes] = useState<any[]>([]);
+  const [loadingQuotes, setLoadingQuotes] = useState(false);
 
   // 1. 계약서 기본 정보
   const [contractBasicInfo, setContractBasicInfo] = useState({
@@ -122,7 +129,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           description: item.description || '',
           quantity: item.quantity || 1,
           unit_price: item.unit_price || item.amount,
-          amount: item.amount
+          amount: item.amount,
+          unit: item.unit || '개'
         }))
       : [{
           id: Date.now().toString(),
@@ -130,7 +138,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           description: '',
           quantity: 1,
           unit_price: 0,
-          amount: 0
+          amount: 0,
+          unit: '개'
         }]
   );
 
@@ -273,7 +282,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           description: item.description || '',
           quantity: item.quantity || 1,
           unit_price: item.unit_price || item.amount,
-          amount: item.amount
+          amount: item.amount,
+          unit: item.unit || '개'
         })));
       }
 
@@ -340,6 +350,46 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       }
     }
     
+    if (!clientInfo.company.trim()) {
+      showFieldTooltip('clientCompany', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorKey = 'clientCompany';
+      }
+    }
+    
+    if (!clientInfo.phone.trim()) {
+      showFieldTooltip('clientPhone', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorKey = 'clientPhone';
+      }
+    }
+    
+    if (!supplierInfo.name.trim()) {
+      showFieldTooltip('supplierName', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorKey = 'supplierName';
+      }
+    }
+    
+    if (!supplierInfo.email.trim()) {
+      showFieldTooltip('supplierEmail', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorKey = 'supplierEmail';
+      }
+    } else if (supplierInfo.email.trim() && !isValidEmail(supplierInfo.email)) {
+      showFieldTooltip('supplierEmail', '올바른 이메일 형식을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorKey = 'supplierEmail';
+      }
+    }
+    
+    if (!supplierInfo.phone.trim()) {
+      showFieldTooltip('supplierPhone', '해당 항목을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorKey = 'supplierPhone';
+      }
+    }
+    
     if (!projectInfo.startDate) {
       showFieldTooltip('startDate', '해당 항목을 입력해주세요');
       if (!firstErrorRef) {
@@ -367,6 +417,15 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       if (!firstErrorRef) {
         firstErrorRef = paymentTermsRef;
         firstErrorKey = 'paymentTerms';
+      }
+    }
+    
+    // 직접 입력 선택시 customPaymentTerms 필수 검증
+    if (paymentInfo.paymentTerms === 'custom' && !paymentInfo.customPaymentTerms.trim()) {
+      showFieldTooltip('customPaymentTerms', '결제 조건을 입력해주세요');
+      if (!firstErrorRef) {
+        firstErrorRef = customPaymentTermsRef;
+        firstErrorKey = 'customPaymentTerms';
       }
     }
     
@@ -417,54 +476,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     return false; // 오류가 없음
   };
 
-  // 임시저장을 위한 유효성 검사 (기본 필수 항목들)
-  const validateForDraft = () => {
-    // 모든 이전 툴팁 제거
-    setFieldTooltips({});
-    
-    let firstErrorRef = null;
-
-    if (!contractBasicInfo.title.trim()) {
-      showFieldTooltip('title', '해당 항목을 입력해주세요');
-      if (!firstErrorRef) {
-        firstErrorRef = titleRef;
-      }
-    }
-    
-    if (!clientInfo.name.trim()) {
-      showFieldTooltip('clientName', '해당 항목을 입력해주세요');
-      if (!firstErrorRef) {
-        firstErrorRef = clientNameRef;
-      }
-    }
-    
-    if (!projectInfo.startDate) {
-      showFieldTooltip('startDate', '해당 항목을 입력해주세요');
-      if (!firstErrorRef) {
-        firstErrorRef = startDateRef;
-      }
-    }
-    
-    if (!projectInfo.endDate) {
-      showFieldTooltip('endDate', '해당 항목을 입력해주세요');
-      if (!firstErrorRef) {
-        firstErrorRef = endDateRef;
-      }
-    }
-
-    // 첫 번째 오류 필드로 스크롤
-    if (firstErrorRef && firstErrorRef.current) {
-      firstErrorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => {
-        if (firstErrorRef && firstErrorRef.current) {
-          firstErrorRef.current.focus();
-        }
-      }, 500);
-      return true; // 오류가 있음
-    }
-
-    return false; // 오류가 없음
-  };
 
   // 이메일 유효성 검사 헬퍼 함수
   const isValidEmail = (email: string) => {
@@ -490,6 +501,75 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     });
   };
 
+  // 견적서 목록 조회
+  const fetchQuotes = async () => {
+    setLoadingQuotes(true);
+    try {
+      const response = await fetch('/api/quotes');
+      if (!response.ok) {
+        throw new Error('견적서를 불러오는데 실패했습니다.');
+      }
+      const data = await response.json();
+      setQuotes(data);
+    } catch (error) {
+      console.error('Error fetching quotes:', error);
+      alert('견적서를 불러오는데 실패했습니다.');
+    } finally {
+      setLoadingQuotes(false);
+    }
+  };
+
+  // 견적서 불러오기 버튼 클릭
+  const handleLoadQuote = () => {
+    setShowQuoteDialog(true);
+    fetchQuotes();
+  };
+
+  // 견적서 선택시 데이터 입력
+  const handleQuoteSelect = (quote: any) => {
+    console.log('Selected quote:', quote);
+    console.log('Quote items:', quote.items);
+    
+    // 발주처 정보 설정
+    setClientInfo({
+      name: quote.client_name || '',
+      company: quote.client_company || '',
+      phone: quote.client_phone || '',
+      email: quote.client_email || '',
+      businessNumber: quote.client_business_number || '',
+      address: quote.client_address || ''
+    });
+
+    // 계약서 제목을 견적서 제목으로 설정
+    setContractBasicInfo(prev => ({
+      ...prev,
+      title: quote.title || '',
+      description: quote.description || ''
+    }));
+
+    // 계약 항목들 설정
+    if (quote.items && Array.isArray(quote.items)) {
+      const items = quote.items.map((item: any, index: number) => {
+        console.log(`Item ${index}:`, item);
+        console.log(`Item unit:`, item.unit);
+        return {
+          id: `item-${Date.now()}-${index}`,
+          name: item.name || '',
+          description: item.description || '',
+          quantity: item.quantity || 1,
+          unit_price: item.unit_price || 0,
+          amount: item.amount || 0,
+          unit: item.unit
+        };
+      });
+      console.log('Mapped items:', items);
+      setContractItems(items);
+    }
+
+    setShowQuoteDialog(false);
+    alert('견적서 정보가 불러와졌습니다.');
+  };
+
   // 계약 항목 관련 함수들
   const addContractItem = () => {
     const newItem: ContractItem = {
@@ -498,7 +578,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       description: '',
       quantity: 1,
       unit_price: 0,
-      amount: 0
+      amount: 0,
+      unit: '개'
     };
     setContractItems([...contractItems, newItem]);
   };
@@ -615,8 +696,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   };
 
   const handleSaveDraft = async () => {
-    // 임시저장을 위한 최소 유효성 검사 (제목과 고객명만 필수)
-    const hasErrors = validateForDraft();
+    // 임시저장시에도 모든 필수항목 검증 적용
+    const hasErrors = validateWithTooltips();
     if (hasErrors) {
       return;
     }
@@ -724,7 +805,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between">
         <Button variant="outline" onClick={handleBackClick} className="border-border">
           <ArrowLeft className="w-4 h-4 mr-2" />
           돌아가기
@@ -757,7 +838,14 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
           {/* 1. 계약서 기본 정보 */}
           <Card className="p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">계약서 기본 정보</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium text-foreground">계약서 기본 정보</h3>
+              {!isEdit && (
+                <Button variant="outline" size="sm" onClick={handleLoadQuote} className="border-border">
+                  견적서 불러오기
+                </Button>
+              )}
+            </div>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="contractTitle" className="text-foreground">계약서 제목 *</Label>
@@ -838,13 +926,20 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-foreground">회사명</Label>
-                <Input 
-                  value={clientInfo.company} 
-                  onChange={(e) => setClientInfo({...clientInfo, company: e.target.value})}
-                  className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingClient}
-                />
+                <Label className="text-foreground">회사명 *</Label>
+                <div className="relative">
+                  <Input 
+                    value={clientInfo.company} 
+                    onChange={(e) => setClientInfo({...clientInfo, company: e.target.value})}
+                    className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                    disabled={!isEditingClient}
+                  />
+                  {fieldTooltips.clientCompany && (
+                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap">
+                      {fieldTooltips.clientCompany}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-foreground">이메일 *</Label>
@@ -870,13 +965,20 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-foreground">전화번호</Label>
-                <Input 
-                  value={clientInfo.phone} 
-                  onChange={(e) => setClientInfo({...clientInfo, phone: e.target.value})}
-                  className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingClient}
-                />
+                <Label className="text-foreground">전화번호 *</Label>
+                <div className="relative">
+                  <Input 
+                    value={clientInfo.phone} 
+                    onChange={(e) => setClientInfo({...clientInfo, phone: e.target.value})}
+                    className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                    disabled={!isEditingClient}
+                  />
+                  {fieldTooltips.clientPhone && (
+                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap">
+                      {fieldTooltips.clientPhone}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-foreground">사업자등록번호</Label>
@@ -916,13 +1018,20 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-foreground">대표자명</Label>
-                <Input 
-                  value={supplierInfo.name} 
-                  onChange={(e) => setSupplierInfo({...supplierInfo, name: e.target.value})}
-                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingSupplier}
-                />
+                <Label className="text-foreground">대표자명 *</Label>
+                <div className="relative">
+                  <Input 
+                    value={supplierInfo.name} 
+                    onChange={(e) => setSupplierInfo({...supplierInfo, name: e.target.value})}
+                    className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                    disabled={!isEditingSupplier}
+                  />
+                  {fieldTooltips.supplierName && (
+                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap">
+                      {fieldTooltips.supplierName}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-foreground">회사명</Label>
@@ -934,22 +1043,36 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-foreground">이메일</Label>
-                <Input 
-                  value={supplierInfo.email} 
-                  onChange={(e) => setSupplierInfo({...supplierInfo, email: e.target.value})}
-                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingSupplier}
-                />
+                <Label className="text-foreground">이메일 *</Label>
+                <div className="relative">
+                  <Input 
+                    value={supplierInfo.email} 
+                    onChange={(e) => setSupplierInfo({...supplierInfo, email: e.target.value})}
+                    className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                    disabled={!isEditingSupplier}
+                  />
+                  {fieldTooltips.supplierEmail && (
+                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap">
+                      {fieldTooltips.supplierEmail}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-foreground">전화번호</Label>
-                <Input 
-                  value={supplierInfo.phone} 
-                  onChange={(e) => setSupplierInfo({...supplierInfo, phone: e.target.value})}
-                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingSupplier}
-                />
+                <Label className="text-foreground">전화번호 *</Label>
+                <div className="relative">
+                  <Input 
+                    value={supplierInfo.phone} 
+                    onChange={(e) => setSupplierInfo({...supplierInfo, phone: e.target.value})}
+                    className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
+                    disabled={!isEditingSupplier}
+                  />
+                  {fieldTooltips.supplierPhone && (
+                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap">
+                      {fieldTooltips.supplierPhone}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-foreground">사업자등록번호</Label>
@@ -1245,13 +1368,24 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 
                 {/* 직접 입력 옵션 선택시 나타나는 입력 필드 */}
                 {paymentInfo.paymentTerms === 'custom' && (
-                  <div className="mt-2">
+                  <div className="mt-2 relative">
                     <Input
+                      ref={customPaymentTermsRef}
                       placeholder="결제 조건을 직접 입력하세요"
                       value={paymentInfo.customPaymentTerms}
-                      onChange={(e) => setPaymentInfo({...paymentInfo, customPaymentTerms: e.target.value})}
+                      onChange={(e) => {
+                        setPaymentInfo({...paymentInfo, customPaymentTerms: e.target.value});
+                        if (e.target.value.trim() && fieldTooltips.customPaymentTerms) {
+                          hideFieldTooltip('customPaymentTerms');
+                        }
+                      }}
                       className="bg-input-background border-border"
                     />
+                    {fieldTooltips.customPaymentTerms && (
+                      <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                        {fieldTooltips.customPaymentTerms}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1384,6 +1518,81 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
               className="flex-1 bg-primary hover:bg-primary/90"
             >
               {isLoading ? '저장 중...' : '저장하고 나가기'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 견적서 선택 대화상자 */}
+      <Dialog open={showQuoteDialog} onOpenChange={setShowQuoteDialog}>
+        <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>견적서 불러오기</DialogTitle>
+            <DialogDescription>
+              계약서에 적용할 견적서를 선택하세요. 발주처 정보와 계약 항목이 자동으로 입력됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            {loadingQuotes ? (
+              <div className="flex justify-center py-8">
+                <div className="text-muted-foreground">견적서를 불러오는 중...</div>
+              </div>
+            ) : quotes.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                저장된 견적서가 없습니다.
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {quotes.map((quote) => (
+                  <Card 
+                    key={quote.id} 
+                    className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
+                    onClick={() => handleQuoteSelect(quote)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-foreground">견적서 제목: {quote.title}</h3>
+                        <div className="mt-1 space-y-1 text-sm text-muted-foreground">
+                          <p>고객명: {quote.client_name} ({quote.client_company || '개인'})</p>
+                          <p>이메일: {quote.client_email}</p>
+                          {quote.description && <p>설명: {quote.description}</p>}
+                          <p>항목 수: {quote.items?.length || 0}개</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-medium text-foreground">
+                          ₩{quote.subtotal?.toLocaleString() || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {quote.created_at && new Date(quote.created_at).toLocaleDateString()}
+                        </div>
+                        {quote.status && (
+                          <div className={`text-xs px-2 py-1 rounded mt-1 ${
+                            quote.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            quote.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {quote.status === 'approved' ? '승인됨' :
+                             quote.status === 'sent' ? '전송됨' :
+                             '임시저장'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowQuoteDialog(false)}
+            >
+              취소
             </Button>
           </DialogFooter>
         </DialogContent>

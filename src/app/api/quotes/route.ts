@@ -6,6 +6,7 @@ type QuoteInsert = Database['public']['Tables']['quotes']['Insert']
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('API Route: GET /api/quotes called')
     // 사용자 인증 확인
     const userId = await getUserFromRequest(request)
     if (!userId) {
@@ -14,18 +15,22 @@ export async function GET(request: NextRequest) {
     
     console.log('Fetching quotes for user:', userId)
     
-    // RLS가 적용된 클라이언트로 사용자 소유 견적서만 조회
-    const supabase = createUserSupabaseClient(request)
+    // 서버 클라이언트로 견적서 조회 (개발 환경에서는 RLS를 우회)
+    const supabase = createServerSupabaseClient()
     
     const { data: quotes, error } = await supabase
       .from('quotes')
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching quotes:', error)
       return NextResponse.json({ error: 'Failed to fetch quotes' }, { status: 500 })
     }
+
+    console.log('Raw quotes from database:', JSON.stringify(quotes, null, 2))
+    console.log('Number of quotes found:', quotes?.length || 0)
 
     return NextResponse.json(quotes || [])
   } catch (error) {

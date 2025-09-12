@@ -34,7 +34,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-// Database Quote 타입 (API에서 받는 데이터)
+// Database Quote 타입 (API에서 받는 데이터 - supabase 스키마와 일치)
 interface DatabaseQuote {
   id: string;
   user_id: string;
@@ -44,7 +44,15 @@ interface DatabaseQuote {
   client_company?: string;
   title: string;
   description?: string;
-  items: Array<{ id: string; name: string; amount: number; }>;
+  items: Array<{
+    id: number;
+    name: string;
+    description: string;
+    quantity: number;
+    unit_price: number;
+    unit: string;
+    amount: number;
+  }>;
   subtotal: number;
   tax_rate: number;
   tax_amount: number;

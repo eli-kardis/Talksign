@@ -16,6 +16,7 @@ interface ContractItem {
   description?: string;
   quantity: number;
   unit_price: number;
+  unit?: string;
   amount: number;
 }
 
@@ -370,7 +371,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ contr
                           <p className="text-sm text-black">{item.quantity}</p>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <p className="text-sm text-black">개</p>
+                          <p className="text-sm text-black">{item.unit || '개'}</p>
                         </td>
                         <td className="px-4 py-3 text-right">
                           <span className="text-sm text-black">

@@ -28,6 +28,7 @@ interface QuoteItem {
   description?: string;
   quantity?: number;
   unit_price?: number;
+  unit?: string;
   amount: number;
 }
 
@@ -359,7 +360,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
                           <p className="text-sm text-black">{item.quantity || 1}</p>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <p className="text-sm text-black">개</p>
+                          <p className="text-sm text-black">{item.unit || '개'}</p>
                         </td>
                         <td className="px-4 py-3 text-right">
                           <span className="text-sm text-black">
