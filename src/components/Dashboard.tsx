@@ -365,7 +365,7 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
           ))}
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
           {/* 워크플로우 스켈레톤 */}
           <Card className="p-4 md:p-6 bg-card border-border">
             <div className="flex items-center justify-between mb-4">
@@ -419,8 +419,7 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
   }
 
   return (
-    <div className="h-full max-h-[calc(100vh-120px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <div className="space-y-4 md:space-y-6 p-1">
+    <div className="space-y-4 md:space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card className="p-4 md:p-6 bg-card border-border">
@@ -464,7 +463,7 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
         {/* Workflow Status */}
         <Card className="p-4 md:p-6 bg-card border-border h-fit max-h-[400px]">
           <div className="flex items-center justify-between mb-3">
@@ -578,7 +577,6 @@ export function Dashboard({ onNavigate, schedules, schedulesLoading = false }: D
             setSelectedSchedule(null);
           }}
         />
-      </div>
     </div>
   );
 }

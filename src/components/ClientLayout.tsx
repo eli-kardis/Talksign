@@ -62,29 +62,48 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       // 모바일에서는 SidebarProvider 사용, 데스크톱에서는 전통적 레이아웃
       if (isMobile) {
         return (
-          <SidebarProvider defaultOpen={false}>
-            <MobileSidebarEventHandler />
-            <div className="min-h-screen bg-background">
-              {/* 공통 헤더 */}
-              <HeaderClient />
+          <div className="min-h-screen bg-background">
+            {/* 공통 헤더 */}
+            <HeaderClient />
 
-              <div className="flex">
-                {/* 모바일 사이드바 */}
-                <Sidebar collapsible="offcanvas" className="bg-background border-r border-border">
-                  <div className="p-4 bg-background">
+            <SidebarProvider defaultOpen={false}>
+              <MobileSidebarEventHandler />
+              {/* 모바일 사이드바 */}
+              <Sidebar 
+                collapsible="offcanvas" 
+                className="bg-sidebar border-r border-sidebar-border [&>*]:bg-sidebar [&_*]:bg-sidebar" 
+                style={{ 
+                  backgroundColor: 'var(--sidebar)',
+                  borderColor: 'var(--sidebar-border)'
+                }}
+              >
+                <div 
+                  className="bg-sidebar h-full w-full flex flex-col" 
+                  style={{ 
+                    backgroundColor: 'var(--sidebar)',
+                    color: 'var(--sidebar-foreground)'
+                  }}
+                >
+                  {/* 모바일 사이드바 헤더 */}
+                  <div className="p-4 border-b border-sidebar-border">
+                    <h1 className="text-lg font-medium text-sidebar-foreground">Link Flow</h1>
+                  </div>
+                  
+                  {/* 네비게이션 탭들 */}
+                  <div className="p-4 flex-1">
                     <NavTabs />
                   </div>
-                </Sidebar>
+                </div>
+              </Sidebar>
+            </SidebarProvider>
 
-                {/* 페이지 컨텐츠 */}
-                <main className="flex-1 p-6">
-                  <div className="max-w-6xl mx-auto">
-                    {children}
-                  </div>
-                </main>
+            {/* 페이지 컨텐츠 - 모바일에서는 전체 너비 사용 */}
+            <main className="w-full">
+              <div className="px-4 py-6 mx-auto md:px-10 md:py-12 lg:max-w-[1440px]">
+                {children}
               </div>
-            </div>
-          </SidebarProvider>
+            </main>
+          </div>
         )
       } else {
         // 데스크톱 전통적 레이아웃
@@ -102,8 +121,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
               </aside>
 
               {/* 페이지 컨텐츠 */}
-              <main className="flex-1 p-6">
-                <div className="max-w-6xl mx-auto">
+              <main className="flex-1">
+                <div className="px-4 py-6 mx-auto md:px-10 md:py-12 lg:max-w-[1440px]">
                   {children}
                 </div>
               </main>

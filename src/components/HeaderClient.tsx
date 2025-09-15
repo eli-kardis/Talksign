@@ -36,7 +36,8 @@ export default function HeaderClient() {
 
   return (
     <header className="bg-background border-b border-border px-4 sm:px-6 py-2 sm:py-4">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className={`lg:max-w-7xl mx-auto ${isMobile ? 'grid grid-cols-3 items-center' : 'flex items-center justify-between'}`}>
+        {/* 왼쪽 영역 */}
         <div className="flex items-center gap-2 sm:gap-4">
           {isMobile && (
             <Button 
@@ -49,9 +50,20 @@ export default function HeaderClient() {
               <span className="sr-only">메뉴 열기</span>
             </Button>
           )}
-          <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-foreground">Link Flow</h1>
+          {!isMobile && (
+            <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-foreground">Link Flow</h1>
+          )}
         </div>
-        <div className="flex items-center gap-1 sm:gap-2">
+
+        {/* 중앙 영역 (모바일에서만 로고 표시) */}
+        {isMobile && (
+          <div className="flex justify-center">
+            <h1 className="text-lg font-medium text-foreground">Link Flow</h1>
+          </div>
+        )}
+
+        {/* 오른쪽 영역 */}
+        <div className={`flex items-center gap-1 sm:gap-2 ${isMobile ? 'justify-end' : ''}`}>
           <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

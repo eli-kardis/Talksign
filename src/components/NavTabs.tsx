@@ -131,12 +131,12 @@ export function NavTabs() {
             <div
               className={cn(
                 "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer",
-                "hover:bg-accent hover:text-accent-foreground",
+                "hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground",
                 isMainActive || (isChildActive && !item.subItems)
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground border border-sidebar-border"
                   : isChildActive
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground"
+                  ? "bg-sidebar-accent/50 text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:text-sidebar-accent-foreground"
               )}
               onClick={() => {
                 if (item.subItems) {
@@ -172,10 +172,10 @@ export function NavTabs() {
                       href={subItem.href}
                       className={cn(
                         "flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors",
-                        "hover:bg-accent hover:text-accent-foreground",
+                        "hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground",
                         isSubActive
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground"
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground border border-sidebar-border"
+                          : "text-sidebar-foreground hover:text-sidebar-accent-foreground"
                       )}
                       onClick={() => {
                         // 모바일에서 서브 네비게이션 클릭시 사이드바 자동 닫기
