@@ -1,8 +1,90 @@
 /* Tailwind v4 */
 @import "tailwindcss";
 
-/* Tailwind v4 테마 설정 - 다크 모드 기본 */
+/* 라이트 모드 기본 테마 */
 @theme {
+  --color-background: #ffffff;
+  --color-foreground: #0f172a;
+  --color-card: #ffffff;
+  --color-card-foreground: #0f172a;
+  --color-primary: #0f172a;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: #0f172a;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-accent: #f1f5f9;
+  --color-accent-foreground: #0f172a;
+  --color-border: #e2e8f0;
+  --color-input-background: #ffffff;
+  --color-ring: #94a3b8;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+}
+
+/* 라이트 모드가 기본 테마 */
+:root {
+  --font-size: 14px;
+
+  --background: #ffffff;
+  --foreground: #0f172a;
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --primary: #0f172a;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --border: #e2e8f0;
+  --input: transparent;
+  --input-background: #ffffff;
+  --switch-background: #e2e8f0;
+  --ring: #94a3b8;
+
+  --chart-1: #0f172a;
+  --chart-2: #475569;
+  --chart-3: #64748b;
+  --chart-4: #94a3b8;
+  --chart-5: #cbd5e1;
+
+  --radius: 0.75rem;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #0f172a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #94a3b8;
+
+  /* 커스텀 라이트 테마 색상 */
+  --toss-blue: #3b82f6;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --surface: #f8fafc;
+  --success: #22c55e;
+  --error: #dc2626;
+}
+
+/* 다크 모드 색상 변수 */
+.dark {
   --color-background: #000000;
   --color-foreground: #ffffff;
   --color-card: #111111;
@@ -20,11 +102,6 @@
   --color-ring: #ffffff;
   --color-destructive: #dc2626;
   --color-destructive-foreground: #ffffff;
-}
-
-/* ✅ 다크 테마가 기본 테마 */
-:root {
-  --font-size: 14px;
 
   --background: #000000;
   --foreground: #ffffff;
@@ -62,8 +139,6 @@
   --chart-4: #737373;
   --chart-5: #525252;
 
-  --radius: 0.75rem;
-
   --sidebar: #111111;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #ffffff;
@@ -74,13 +149,10 @@
   --sidebar-ring: #ffffff;
 
   /* 커스텀 다크 테마 색상 */
-  --toss-blue: #3b82f6;
   --text-primary: #ffffff;
   --text-secondary: #a3a3a3;
   --text-muted: #737373;
   --surface: #1a1a1a;
-  --success: #22c55e;
-  --error: #dc2626;
 }
 
 /* ✅ base: @apply 대신 직접 변수 참조 (빌드 오류 회피용) */

@@ -803,45 +803,45 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={handleBackClick} className="border-border">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Button variant="outline" onClick={handleBackClick} className="border-border w-fit">
           <ArrowLeft className="w-4 h-4 mr-2" />
           돌아가기
         </Button>
-        <div>
-          <h2 className="text-2xl font-medium text-foreground">
+        <div className="sm:text-right">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-medium text-foreground">
             {isEdit ? '계약서 수정' : '새 계약서 작성'}
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             {isEdit ? '계약서 정보를 수정하세요' : (fromQuote ? '견적서 데이터가 자동으로 입력되었습니다. 필요한 정보를 추가 입력하세요.' : '승인된 견적서를 바탕으로 계약서를 작성하세요')}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
         {/* Main Form */}
-        <div className="lg:col-span-3 space-y-6">
+        <div className="lg:col-span-3 space-y-4 md:space-y-6">
           {/* 견적서에서 온 경우 안내 문구 */}
           {fromQuote && (
-            <Card className="p-4 bg-accent border-accent">
+            <Card className="p-3 md:p-4 bg-accent border-accent">
               <div className="flex items-center gap-2 text-accent-foreground">
                 <div className="w-2 h-2 rounded-full bg-primary"></div>
                 <span className="text-sm font-medium">견적서에서 가져온 정보</span>
               </div>
-              <p className="text-sm text-accent-foreground mt-1">
+              <p className="text-xs sm:text-sm text-accent-foreground mt-1">
                 견적서 데이터가 자동으로 입력되었습니다. 필요한 항목을 수정하거나 추가 정보를 입력하세요.
               </p>
             </Card>
           )}
 
           {/* 1. 계약서 기본 정보 */}
-          <Card className="p-6 bg-card border-border">
-            <div className="flex items-center justify-between mb-4">
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
               <h3 className="font-medium text-foreground">계약서 기본 정보</h3>
               {!isEdit && (
-                <Button variant="outline" size="sm" onClick={handleLoadQuote} className="border-border">
+                <Button variant="outline" size="sm" onClick={handleLoadQuote} className="border-border w-fit">
                   견적서 불러오기
                 </Button>
               )}
@@ -885,24 +885,24 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           </Card>
 
           {/* 2. 발주처 정보 */}
-          <Card className="p-6 bg-card border-border">
-            <div className="flex items-center justify-between mb-4">
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
               <h3 className="font-medium text-foreground">발주처 정보 (고객)</h3>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
                 <CustomerSelector onCustomerSelect={handleCustomerSelect} />
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setIsEditingClient(!isEditingClient)}
-                  className="border-border"
+                  className="border-border w-fit"
                 >
                   <Edit3 className="w-4 h-4 mr-2" />
                   {isEditingClient ? '저장' : '수정'}
                 </Button>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <div className="space-y-2">
                 <Label className="text-foreground">고객명 *</Label>
                 <div className="relative">
@@ -1002,21 +1002,21 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           </Card>
 
           {/* 3. 수급업체 정보 */}
-          <Card className="p-6 bg-card border-border">
-            <div className="flex items-center justify-between mb-4">
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
               <h3 className="font-medium text-foreground">수급업체 정보 (공급자)</h3>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setIsEditingSupplier(!isEditingSupplier)}
-                className="border-border"
+                className="border-border w-fit"
               >
                 <Edit3 className="w-4 h-4 mr-2" />
                 {isEditingSupplier ? '저장' : '수정'}
               </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <div className="space-y-2">
                 <Label className="text-foreground">대표자명 *</Label>
                 <div className="relative">
@@ -1096,10 +1096,10 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           </Card>
 
           {/* 4. 프로젝트 정보 */}
-          <Card className="p-6 bg-card border-border">
+          <Card className="p-4 md:p-6 bg-card border-border">
             <h3 className="font-medium mb-4 text-foreground">프로젝트 정보</h3>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="startDate" className="text-foreground">프로젝트 시작일 *</Label>
                   <div className="relative">
@@ -1162,22 +1162,23 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           </Card>
 
           {/* 5. 계약 내역 */}
-          <Card className="p-6 bg-card border-border" data-section="contract-items">
-            <div className="flex items-center justify-between mb-4">
+          <Card className="p-4 md:p-6 bg-card border-border" data-section="contract-items">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
               <h3 className="font-medium text-foreground">계약 내역</h3>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={addContractItem}
-                className="border-border"
+                className="border-border w-fit"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 항목 추가
               </Button>
             </div>
             
-            <div className="overflow-hidden">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-hidden">
                 <table className="w-full table-auto">
                   <thead className="bg-muted/50 border-b border-border">
                     <tr>
@@ -1272,6 +1273,103 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 </table>
             </div>
 
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+              {contractItems.map((item, index) => (
+                <Card key={item.id} className="p-4 border-border">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start">
+                      <span className="text-sm font-medium text-muted-foreground">항목 {index + 1}</span>
+                      {contractItems.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeContractItem(item.id)}
+                          className="text-destructive hover:text-destructive p-1 h-6 w-6"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">항목명</Label>
+                        <Input
+                          value={item.name}
+                          onChange={(e) => updateContractItem(item.id, 'name', e.target.value)}
+                          placeholder="서비스 또는 상품명"
+                          className="mt-1"
+                          data-item-field="name"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs text-muted-foreground">설명</Label>
+                        <Textarea
+                          value={item.description}
+                          onChange={(e) => updateContractItem(item.id, 'description', e.target.value)}
+                          placeholder="항목에 대한 상세한 설명"
+                          rows={2}
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">수량</Label>
+                          <Input
+                            type="text"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '');
+                              updateContractItem(item.id, 'quantity', parseInt(value) || 1);
+                            }}
+                            className="mt-1 text-center"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">단위</Label>
+                          <Input
+                            type="text"
+                            value="개"
+                            className="mt-1 text-center"
+                            disabled
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">단가</Label>
+                          <div className="flex items-center mt-1">
+                            <Input
+                              type="text"
+                              value={item.unit_price ? new Intl.NumberFormat('ko-KR').format(item.unit_price) : ''}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[^0-9]/g, '');
+                                updateContractItem(item.id, 'unit_price', parseInt(value) || 0);
+                              }}
+                              className="text-right pr-8"
+                              placeholder="0"
+                            />
+                            <span className="text-xs text-muted-foreground ml-1">원</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-2 border-t border-border">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">금액</span>
+                          <span className="font-semibold text-primary text-lg">
+                            {new Intl.NumberFormat('ko-KR').format(item.amount)}원
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
             {/* 합계 */}
             <div className="mt-6 pt-4 border-t border-border">
               <div className="flex flex-col gap-2 max-w-xs ml-auto">
@@ -1292,15 +1390,15 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           </Card>
 
           {/* 6. 계약 조건 */}
-          <Card className="p-6 bg-card border-border">
-            <div className="flex items-center justify-between mb-4">
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
               <h3 className="font-medium text-foreground">계약 조건</h3>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={addTerm}
-                className="border-border"
+                className="border-border w-fit"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 조건 추가
@@ -1337,7 +1435,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           </Card>
 
           {/* 7. 결제 정보 */}
-          <Card className="p-6 bg-card border-border">
+          <Card className="p-4 md:p-6 bg-card border-border">
             <h3 className="font-medium mb-4 text-foreground">결제 정보</h3>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -1421,9 +1519,9 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         </div>
 
         {/* Summary Sidebar - Sticky */}
-        <div className="sticky top-6 self-start">
-          <div className="space-y-6">
-            <Card className="p-6 bg-card border-border shadow-lg">
+        <div className="lg:sticky lg:top-6 lg:self-start">
+          <div className="space-y-4 md:space-y-6">
+            <Card className="p-4 md:p-6 bg-card border-border shadow-lg">
               <div className="flex items-center gap-2 mb-4">
                 <User className="w-5 h-5 text-primary" />
                 <h3 className="font-medium text-foreground">고객 정보</h3>
@@ -1449,11 +1547,11 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
               </div>
             </Card>
 
-            <Card className="p-6 bg-card border-border shadow-lg">
+            <Card className="p-4 md:p-6 bg-card border-border shadow-lg">
               <h3 className="font-medium mb-4 text-foreground">계약서 발송</h3>
               <div className="space-y-3">
                 <Button 
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 text-sm sm:text-base"
                   onClick={handleSaveAndSend}
                   disabled={isLoading}
                 >
@@ -1462,7 +1560,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="w-full border-border"
+                  className="w-full border-border h-11 text-sm sm:text-base"
                   onClick={handleSaveDraft}
                   disabled={isLoading}
                 >
@@ -1472,7 +1570,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
               </div>
               
               <div className="mt-4 p-3 bg-accent rounded-lg">
-                <p className="text-sm text-accent-foreground">
+                <p className="text-xs sm:text-sm text-accent-foreground">
                   💡 계약서가 발송되면 고객이 모바일에서 바로 확인하고 전자서명할 수 있습니다.
                 </p>
               </div>
@@ -1525,7 +1623,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
       {/* 견적서 선택 대화상자 */}
       <Dialog open={showQuoteDialog} onOpenChange={setShowQuoteDialog}>
-        <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>견적서 불러오기</DialogTitle>
             <DialogDescription>
@@ -1533,7 +1631,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 max-h-96 overflow-y-auto">
+          <div className="space-y-4 max-h-[50vh] overflow-y-auto">
             {loadingQuotes ? (
               <div className="flex justify-center py-8">
                 <div className="text-muted-foreground">견적서를 불러오는 중...</div>
@@ -1547,28 +1645,28 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 {quotes.map((quote) => (
                   <Card 
                     key={quote.id} 
-                    className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
+                    className="p-3 md:p-4 cursor-pointer hover:bg-accent/50 transition-colors"
                     onClick={() => handleQuoteSelect(quote)}
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-foreground">견적서 제목: {quote.title}</h3>
-                        <div className="mt-1 space-y-1 text-sm text-muted-foreground">
-                          <p>고객명: {quote.client_name} ({quote.client_company || '개인'})</p>
-                          <p>이메일: {quote.client_email}</p>
-                          {quote.description && <p>설명: {quote.description}</p>}
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-foreground text-sm sm:text-base truncate">견적서 제목: {quote.title}</h3>
+                        <div className="mt-1 space-y-1 text-xs sm:text-sm text-muted-foreground">
+                          <p className="truncate">고객명: {quote.client_name} ({quote.client_company || '개인'})</p>
+                          <p className="truncate">이메일: {quote.client_email}</p>
+                          {quote.description && <p className="line-clamp-2">설명: {quote.description}</p>}
                           <p>항목 수: {quote.items?.length || 0}개</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-lg font-medium text-foreground">
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-base sm:text-lg font-medium text-foreground">
                           ₩{quote.subtotal?.toLocaleString() || 0}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {quote.created_at && new Date(quote.created_at).toLocaleDateString()}
                         </div>
                         {quote.status && (
-                          <div className={`text-xs px-2 py-1 rounded mt-1 ${
+                          <div className={`text-xs px-2 py-1 rounded mt-1 inline-block ${
                             quote.status === 'approved' ? 'bg-green-100 text-green-800' :
                             quote.status === 'sent' ? 'bg-blue-100 text-blue-800' :
                             'bg-gray-100 text-gray-800'

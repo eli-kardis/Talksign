@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useTenant } from "@/contexts/TenantContext";
+import { useSidebar } from "@/components/ui/sidebar";
+import { useIsMobile } from "@/components/ui/use-mobile";
 import React, { useState } from "react";
 import { 
   LayoutDashboard, 
@@ -35,7 +37,18 @@ interface NavItem {
 export function NavTabs() {
   const pathname = usePathname();
   const { basePath } = useTenant();
+  const isMobile = useIsMobile();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+  // SidebarProvider가 있는 경우에만 useSidebar 사용
+  let setOpenMobile: ((open: boolean) => void) | null = null;
+  try {
+    const sidebarContext = useSidebar();
+    setOpenMobile = sidebarContext.setOpenMobile;
+  } catch (error) {
+    // SidebarProvider가 없는 경우 (데스크톱)
+    setOpenMobile = null;
+  }
 
   const items: NavItem[] = [
     { 
@@ -96,6 +109,14 @@ export function NavTabs() {
     });
   };
 
+  const handleNavigation = (href: string) => {
+    // 모바일에서 네비게이션 클릭시 사이드바 자동 닫기
+    if (isMobile && setOpenMobile) {
+      setOpenMobile(false);
+    }
+    window.location.href = href;
+  };
+
   return (
     <nav className="space-y-1">
       {items.map((item) => {
@@ -121,7 +142,7 @@ export function NavTabs() {
                 if (item.subItems) {
                   toggleExpanded(item.href);
                 } else {
-                  window.location.href = item.href;
+                  handleNavigation(item.href);
                 }
               }}
             >
@@ -156,6 +177,12 @@ export function NavTabs() {
                           ? "bg-primary text-primary-foreground shadow-sm"
                           : "text-muted-foreground"
                       )}
+                      onClick={() => {
+                        // 모바일에서 서브 네비게이션 클릭시 사이드바 자동 닫기
+                        if (isMobile && setOpenMobile) {
+                          setOpenMobile(false);
+                        }
+                      }}
                     >
                       <SubIcon className="w-4 h-4" />
                       {subItem.label}

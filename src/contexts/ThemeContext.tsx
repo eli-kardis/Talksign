@@ -2,52 +2,73 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-type Theme = 'dark'
+type Theme = 'light' | 'dark'
 
 interface ThemeContextType {
   theme: Theme
-  toggleTheme?: () => void // 더 이상 테마 토글 기능 없음
+  setTheme: (theme: Theme) => void
+  toggleTheme: () => void
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme] = useState<Theme>('dark') // 항상 다크 모드
+  const [theme, setTheme] = useState<Theme>('light')
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+    
     try {
-      // 로컬스토리지에서 기존 테마 설정 제거
-      localStorage.removeItem('theme')
+      // 로컬 스토리지에서 저장된 테마 불러오기
+      const savedTheme = localStorage.getItem('theme') as Theme
+      if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
+        setTheme(savedTheme)
+      } else {
+        // 시스템 테마 설정 확인
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        setTheme(systemTheme)
+      }
     } catch (error) {
       console.warn('Failed to access localStorage:', error)
+      setTheme('light') // 기본값으로 라이트 모드
     }
-    setMounted(true)
   }, [])
 
   useEffect(() => {
     if (!mounted) return
     
     try {
-      // 항상 다크 모드 클래스 제거 (CSS에서 기본이 다크이므로)
+      // 테마 변경시 document에 클래스 적용 및 로컬 스토리지에 저장
       const root = document.documentElement
-      root.classList.remove('dark')
+      
+      if (theme === 'dark') {
+        root.classList.add('dark')
+      } else {
+        root.classList.remove('dark')
+      }
+      
+      localStorage.setItem('theme', theme)
     } catch (error) {
       console.warn('Failed to set theme:', error)
     }
-  }, [mounted])
+  }, [theme, mounted])
 
-  // 초기 mount 전에는 다크 테마로 렌더링
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light')
+  }
+
+  // 초기 mount 전에는 현재 테마로 렌더링
   if (!mounted) {
     return (
-      <ThemeContext.Provider value={{ theme: 'dark' }}>
+      <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
         {children}
       </ThemeContext.Provider>
     )
   }
 
   return (
-    <ThemeContext.Provider value={{ theme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   )

@@ -2,8 +2,7 @@
 import type { Config } from "tailwindcss"
 
 const config: Config = {
-  // 다크 모드가 기본이므로 darkMode 설정 제거
-  // v4에서도 content 설정을 추가 (컴포넌트 스캔용)
+  darkMode: 'class', // 다크모드 활성화
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",

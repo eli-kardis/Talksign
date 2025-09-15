@@ -593,11 +593,12 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
         </Card>
       )}
 
-      {/* 정렬 가능한 테이블 */}
+      {/* 데스크톱 테이블 (768px 이상) */}
       {!loading && !error && sortedAndFilteredQuotes.length > 0 && (
-        <Card className="bg-card border-border shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
+        <>
+          <Card className="bg-card border-border shadow-sm hidden md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px]">
               <thead className="bg-muted/50 border-b border-border">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-12">
@@ -704,6 +705,72 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
             </table>
           </div>
         </Card>
+
+        {/* 모바일 카드 레이아웃 (768px 미만) */}
+        <div className="md:hidden space-y-3">
+          {sortedAndFilteredQuotes.map((quote) => (
+            <Card key={quote.id} className="bg-card border-border p-4">
+              <div className="flex items-center justify-between mb-3">
+                <Checkbox
+                  checked={selectedQuotes.includes(quote.id)}
+                  onCheckedChange={(checked) => handleSelectQuote(quote.id, checked as boolean)}
+                />
+                <Badge variant={
+                  quote.status === 'approved' ? 'default' :
+                  quote.status === 'sent' ? 'secondary' :
+                  'outline'
+                } className="text-xs">
+                  {quote.status === 'approved' ? '승인됨' :
+                   quote.status === 'sent' ? '전송됨' :
+                   '임시저장'}
+                </Badge>
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="font-medium text-foreground text-sm truncate">
+                  {quote.project}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {quote.client}
+                </p>
+                <div className="flex justify-between items-center text-xs text-muted-foreground">
+                  <span>{new Date(quote.date).toLocaleDateString()}</span>
+                  <span className="font-medium text-foreground">
+                    ₩{quote.amount?.toLocaleString() ?? '0'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex gap-1 mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onViewQuote(quote.id)}
+                  className="flex-1 text-xs h-8"
+                >
+                  보기
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEditQuote(quote.id)}
+                  className="flex-1 text-xs h-8"
+                >
+                  수정
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeleteQuote(quote.id)}
+                  className="text-xs h-8 px-2"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+        </>
       )}
 
       {/* 빈 상태 */}

@@ -4,13 +4,25 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { FileText, User as UserIcon, Settings, LogOut } from "lucide-react";
+import { FileText, User as UserIcon, Settings, LogOut, Menu } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Settings as SettingsModal } from "@/components/Settings";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useIsMobile } from "@/components/ui/use-mobile";
 
 export default function HeaderClient() {
   const { user, signOut } = useAuth();
+  const { theme } = useTheme();
+  const isMobile = useIsMobile();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Context를 통해 사이드바 토글 함수를 전달받는 대신 이벤트를 사용
+  const handleMenuClick = () => {
+    // 커스텀 이벤트를 발생시켜 사이드바를 토글
+    const event = new CustomEvent('toggleMobileSidebar');
+    window.dispatchEvent(event);
+  };
 
   const handleLogout = async () => {
     try {
@@ -23,16 +35,24 @@ export default function HeaderClient() {
   };
 
   return (
-    <header className="bg-background border-b border-border px-4 py-5">
+    <header className="bg-background border-b border-border px-4 sm:px-6 py-2 sm:py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex-1 hidden md:block" />
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <FileText className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <h1 className="text-xl md:text-2xl font-medium text-foreground">Link Flow</h1>
+        <div className="flex items-center gap-2 sm:gap-4">
+          {isMobile && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={handleMenuClick}
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">메뉴 열기</span>
+            </Button>
+          )}
+          <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-foreground">Link Flow</h1>
         </div>
-        <div className="flex-1 flex items-center justify-end gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-accent/50">
@@ -43,23 +63,33 @@ export default function HeaderClient() {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-black border-2 border-gray-600 shadow-lg" align="end" forceMount>
+            <DropdownMenuContent 
+              className="w-56 border-2 shadow-xl z-50" 
+              align="end" 
+              forceMount
+              style={{ 
+                backgroundColor: theme === 'dark' ? '#111111' : '#ffffff',
+                borderColor: theme === 'dark' ? '#333333' : '#e2e8f0',
+                zIndex: 9999,
+                opacity: 1
+              }}
+            >
               <div className="flex flex-col space-y-1 p-2">
-                <p className="text-white font-medium">{user?.name || '사용자'}</p>
-                {user?.email && <p className="text-xs text-gray-300">{user.email}</p>}
-                {user?.businessName && <p className="text-xs text-gray-300">{user.businessName}</p>}
+                <p className="text-foreground font-medium">{user?.name || '사용자'}</p>
+                {user?.email && <p className="text-xs text-muted-foreground">{user.email}</p>}
+                {user?.businessName && <p className="text-xs text-muted-foreground">{user.businessName}</p>}
               </div>
-              <DropdownMenuSeparator className="bg-gray-700" />
+              <DropdownMenuSeparator />
               <DropdownMenuItem 
-                className="cursor-pointer text-white hover:bg-gray-800"
+                className="cursor-pointer text-foreground hover:bg-accent"
                 onClick={() => setIsSettingsOpen(true)}
               >
                 <Settings className="mr-2 h-4 w-4" />
                 <span>계정 설정</span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-gray-700" />
+              <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="cursor-pointer text-red-400 hover:bg-red-900 hover:text-red-300"
+                className="cursor-pointer text-destructive hover:bg-destructive/10 hover:text-destructive"
                 onClick={handleLogout}
               >
                 <LogOut className="mr-2 h-4 w-4" />

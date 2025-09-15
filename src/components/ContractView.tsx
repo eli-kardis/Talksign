@@ -576,115 +576,198 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
         </div>
       </div>
 
-      {/* 정렬 가능한 테이블 */}
+      {/* 데스크톱 테이블 (768px 이상) */}
       {sortedAndFilteredContracts.length > 0 && (
-        <Card className="bg-card border-border shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
-              <thead className="bg-muted/50 border-b border-border">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-12">
-                    <Checkbox
-                      checked={selectedContracts.length === sortedAndFilteredContracts.length && sortedAndFilteredContracts.length > 0}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </th>
-                  <SortableHeader 
-                    field="client" 
-                    currentSort={sortField} 
-                    currentDirection={sortDirection}
-                    onSort={handleSort}
-                  >
-                    회사명
-                  </SortableHeader>
-                  <SortableHeader 
-                    field="project" 
-                    currentSort={sortField} 
-                    currentDirection={sortDirection}
-                    onSort={handleSort}
-                  >
-                    계약서 제목
-                  </SortableHeader>
-                  <SortableHeader 
-                    field="date" 
-                    currentSort={sortField} 
-                    currentDirection={sortDirection}
-                    onSort={handleSort}
-                  >
-                    계약일자
-                  </SortableHeader>
-                  <SortableHeader 
-                    field="status" 
-                    currentSort={sortField} 
-                    currentDirection={sortDirection}
-                    onSort={handleSort}
-                  >
-                    상태
-                  </SortableHeader>
-                  <SortableHeader 
-                    field="amount" 
-                    currentSort={sortField} 
-                    currentDirection={sortDirection}
-                    onSort={handleSort}
-                  >
-                    총합계
-                  </SortableHeader>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedAndFilteredContracts.map((contract) => {
-                  const statusConfig = getStatusBadge(contract.status);
-                  const StatusIcon = statusConfig?.icon || AlertCircle;
-                  
-                  return (
-                    <tr 
-                      key={contract.id} 
-                      className="hover:bg-muted/30 hover:shadow-sm transition-all duration-200 border-b border-border/50 group"
+        <>
+          <Card className="bg-card border-border shadow-sm hidden md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px]">
+                <thead className="bg-muted/50 border-b border-border">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-12">
+                      <Checkbox
+                        checked={selectedContracts.length === sortedAndFilteredContracts.length && sortedAndFilteredContracts.length > 0}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </th>
+                    <SortableHeader 
+                      field="client" 
+                      currentSort={sortField} 
+                      currentDirection={sortDirection}
+                      onSort={handleSort}
                     >
-                      <td className="px-4 py-3 w-12">
-                        <Checkbox
-                          checked={selectedContracts.includes(contract.id)}
-                          onCheckedChange={(checked) => handleSelectContract(contract.id, checked as boolean)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </td>
-                      <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
-                        <div className="flex items-center gap-3">
-                          <div>
-                            <p className="font-medium text-foreground text-sm">{contract.client}</p>
-                            <p className="text-xs text-muted-foreground">{contract.phone}</p>
+                      회사명
+                    </SortableHeader>
+                    <SortableHeader 
+                      field="project" 
+                      currentSort={sortField} 
+                      currentDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      계약서 제목
+                    </SortableHeader>
+                    <SortableHeader 
+                      field="date" 
+                      currentSort={sortField} 
+                      currentDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      계약일자
+                    </SortableHeader>
+                    <SortableHeader 
+                      field="status" 
+                      currentSort={sortField} 
+                      currentDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      상태
+                    </SortableHeader>
+                    <SortableHeader 
+                      field="amount" 
+                      currentSort={sortField} 
+                      currentDirection={sortDirection}
+                      onSort={handleSort}
+                    >
+                      총합계
+                    </SortableHeader>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedAndFilteredContracts.map((contract) => {
+                    const statusConfig = getStatusBadge(contract.status);
+                    const StatusIcon = statusConfig?.icon || AlertCircle;
+                    
+                    return (
+                      <tr 
+                        key={contract.id} 
+                        className="hover:bg-muted/30 hover:shadow-sm transition-all duration-200 border-b border-border/50 group"
+                      >
+                        <td className="px-4 py-3 w-12">
+                          <Checkbox
+                            checked={selectedContracts.includes(contract.id)}
+                            onCheckedChange={(checked) => handleSelectContract(contract.id, checked as boolean)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </td>
+                        <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <p className="font-medium text-foreground text-sm">{contract.client}</p>
+                              <p className="text-xs text-muted-foreground">{contract.phone}</p>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
-                        <p className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">{contract.project}</p>
-                      </td>
-                      <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
-                        <div className="text-sm">
-                          <p className="text-foreground">작성: {contract.createdDate}</p>
-                          {contract.signedDate && (
-                            <p className="text-xs text-muted-foreground">서명: {contract.signedDate}</p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
-                        <Badge className={statusConfig.className}>
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {statusConfig.label}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
-                        <span className="font-mono font-semibold text-foreground text-sm">
-                          {formatCurrency(contract.amount)}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
+                          <p className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">{contract.project}</p>
+                        </td>
+                        <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
+                          <div className="text-sm">
+                            <p className="text-foreground">작성: {contract.createdDate}</p>
+                            {contract.signedDate && (
+                              <p className="text-xs text-muted-foreground">서명: {contract.signedDate}</p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
+                          <Badge className={statusConfig.className}>
+                            <StatusIcon className="w-3 h-3 mr-1" />
+                            {statusConfig.label}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 cursor-pointer" onClick={() => onViewContract?.(contract.id)}>
+                          <span className="font-mono font-semibold text-foreground text-sm">
+                            {formatCurrency(contract.amount)}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {/* 모바일 카드 레이아웃 (768px 미만) */}
+          <div className="md:hidden space-y-3">
+            {sortedAndFilteredContracts.map((contract) => {
+              const statusConfig = getStatusBadge(contract.status);
+              const StatusIcon = statusConfig?.icon || AlertCircle;
+              
+              return (
+                <Card key={contract.id} className="bg-card border-border p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <Checkbox
+                      checked={selectedContracts.includes(contract.id)}
+                      onCheckedChange={(checked) => handleSelectContract(contract.id, checked as boolean)}
+                    />
+                    <Badge className={statusConfig.className}>
+                      <StatusIcon className="w-3 h-3 mr-1" />
+                      {statusConfig.label}
+                    </Badge>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-foreground text-sm truncate">
+                      {contract.project}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {contract.client}
+                    </p>
+                    {contract.phone && (
+                      <p className="text-xs text-muted-foreground">
+                        {contract.phone}
+                      </p>
+                    )}
+                    <div className="flex justify-between items-center text-xs text-muted-foreground">
+                      <div>
+                        <p>작성: {contract.createdDate}</p>
+                        {contract.signedDate && (
+                          <p>서명: {contract.signedDate}</p>
+                        )}
+                      </div>
+                      <span className="font-medium text-foreground">
+                        {formatCurrency(contract.amount)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-1 mt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onViewContract?.(contract.id)}
+                      className="flex-1 text-xs h-8"
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      보기
+                    </Button>
+                    {onEditContract && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onEditContract(contract.id)}
+                        className="flex-1 text-xs h-8"
+                      >
+                        <Edit className="w-3 h-3 mr-1" />
+                        수정
+                      </Button>
+                    )}
+                    {contract.status === 'sent' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => sendContractReminder(contract)}
+                        className="text-xs h-8 px-2"
+                      >
+                        <MessageSquare className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
-        </Card>
+        </>
       )}
 
       {/* 빈 상태 */}

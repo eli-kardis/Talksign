@@ -439,28 +439,28 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button type="button" variant="outline" onClick={handleBackClick} className="border-border">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <Button type="button" variant="outline" onClick={handleBackClick} className="border-border w-fit">
           <ArrowLeft className="w-4 h-4 mr-2" />
           돌아가기
         </Button>
         <div>
-          <h2 className="text-2xl font-medium text-foreground">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-medium text-foreground">
             {isEdit ? '견적서 수정' : '새 견적서 작성'}
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             {isEdit ? '견적서 정보를 수정하세요' : '고객 정보와 프로젝트 내용을 입력하세요'}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Main Form */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
           {/* 견적서 제목 */}
-          <Card className="p-6 bg-card border-border">
+          <Card className="p-4 md:p-6 bg-card border-border">
             <h3 className="font-medium mb-4 text-foreground">견적서 제목</h3>
             <div className="space-y-2">
               <Label htmlFor="quoteTitle" className="text-foreground">제목 *</Label>
@@ -474,22 +474,22 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
             </div>
           </Card>
           {/* 공급자 정보 */}
-          <Card className="p-6 bg-card border-border">
-            <div className="flex items-center justify-between mb-4">
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
               <h3 className="font-medium text-foreground">공급자 정보 (본인)</h3>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setIsEditingSupplier(!isEditingSupplier)}
-                className="border-border"
+                className="border-border w-fit"
               >
                 <Edit3 className="w-4 h-4 mr-2" />
                 {isEditingSupplier ? '저장' : '수정'}
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <div className="space-y-2">
                 <Label htmlFor="supplierName" className="text-foreground">대표자명 *</Label>
                 <Input
@@ -540,7 +540,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
               </div>
 
               {supplierInfo.businessRegistrationNumber && (
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="supplierCompanyName" className="text-foreground">회사명 *</Label>
                   <Input
                     id="supplierCompanyName"
@@ -562,13 +562,13 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
           </Card>
 
           {/* 고객 정보 */}
-          <Card className="p-6 bg-card border-border">
-            <div className="flex justify-between items-center mb-4">
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mb-4">
               <h3 className="font-medium text-foreground">고객 정보</h3>
               <CustomerSelector onCustomerSelect={handleCustomerSelect} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <div className="space-y-2">
                 <Label htmlFor="clientName" className="text-foreground">고객명 *</Label>
                 <Input
@@ -625,7 +625,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                 />
               </div>
 
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="address" className="text-foreground">주소</Label>
                 <Input
                   id="address"
@@ -649,13 +649,13 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         </div>
 
         {/* Action Sidebar - Sticky */}
-        <div className="sticky top-6 self-start">
-          <Card className="p-4 bg-card border-border shadow-lg">
+        <div className="lg:sticky lg:top-6 lg:self-start">
+          <Card className="p-4 md:p-6 bg-card border-border shadow-lg">
             <h3 className="font-medium mb-3 text-foreground">발송 옵션</h3>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Button
                 type="button"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 text-sm sm:text-base"
                 onClick={handleSaveAndSend}
                 disabled={isLoading || !supplierInfo.name || !supplierInfo.email || !supplierInfo.phone || !clientInfo.name || !clientInfo.company || !clientInfo.phone || !clientInfo.email || !quoteTitle.trim() || !validUntil.trim() || (supplierInfo.businessRegistrationNumber && !supplierInfo.companyName)}
               >
@@ -666,7 +666,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-border text-sm"
+                className="w-full border-border h-11 text-sm sm:text-base"
                 onClick={handleSaveDraft}
                 disabled={isLoading || (isEdit && !hasUnsavedChanges)}
               >
@@ -675,8 +675,8 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
               </Button>
             </div>
 
-            <div className="mt-3 p-2 bg-accent rounded-lg">
-              <p className="text-xs text-accent-foreground">
+            <div className="mt-4 p-3 bg-accent rounded-lg">
+              <p className="text-xs sm:text-sm text-accent-foreground">
                 💡 견적서가 카카오톡으로 발송되면 고객이 바로 확인하고 승인할 수 있습니다.
               </p>
             </div>

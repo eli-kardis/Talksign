@@ -5,14 +5,34 @@ import { useAuth } from '@/contexts/AuthContext'
 import HeaderClient from "@/components/HeaderClient"
 import { NavTabs } from "@/components/NavTabs"
 import { PageLoadingSpinner } from "@/components/ui/loading-spinner"
+import { SidebarProvider, Sidebar, useSidebar } from "@/components/ui/sidebar"
+import { useIsMobile } from "@/components/ui/use-mobile"
+import { useEffect } from "react"
 
 interface ClientLayoutProps {
   children: React.ReactNode
 }
 
+// 모바일 사이드바 이벤트 처리 컴포넌트
+function MobileSidebarEventHandler() {
+  const { toggleSidebar } = useSidebar();
+
+  useEffect(() => {
+    const handleToggle = () => {
+      toggleSidebar();
+    };
+
+    window.addEventListener('toggleMobileSidebar', handleToggle);
+    return () => window.removeEventListener('toggleMobileSidebar', handleToggle);
+  }, [toggleSidebar]);
+
+  return null;
+}
+
 export default function ClientLayout({ children }: ClientLayoutProps) {
   const pathname = usePathname()
   const { user, isLoading } = useAuth()
+  const isMobile = useIsMobile()
   
   // 경로 분석
   const isAuthPage = pathname?.startsWith('/auth')
@@ -39,28 +59,58 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   if (!isProtectedRoute || user) {
     // 로그인된 사용자의 보호된 라우트라면 헤더와 사이드바 포함
     if (isProtectedRoute && user) {
-      return (
-        <div className="min-h-screen bg-background">
-          {/* 공통 헤더 */}
-          <HeaderClient />
+      // 모바일에서는 SidebarProvider 사용, 데스크톱에서는 전통적 레이아웃
+      if (isMobile) {
+        return (
+          <SidebarProvider defaultOpen={false}>
+            <MobileSidebarEventHandler />
+            <div className="min-h-screen bg-background">
+              {/* 공통 헤더 */}
+              <HeaderClient />
 
-          <div className="flex">
-            {/* 왼쪽 사이드바 */}
-            <aside className="w-64 bg-card border-r border-border sticky top-0" style={{ height: 'calc(100vh - 64px)' }}>
-              <nav className="p-4">
-                <NavTabs />
-              </nav>
-            </aside>
+              <div className="flex">
+                {/* 모바일 사이드바 */}
+                <Sidebar collapsible="offcanvas" className="bg-background border-r border-border">
+                  <div className="p-4 bg-background">
+                    <NavTabs />
+                  </div>
+                </Sidebar>
 
-            {/* 페이지 컨텐츠 */}
-            <main className="flex-1 p-6">
-              <div className="max-w-6xl mx-auto">
-                {children}
+                {/* 페이지 컨텐츠 */}
+                <main className="flex-1 p-6">
+                  <div className="max-w-6xl mx-auto">
+                    {children}
+                  </div>
+                </main>
               </div>
-            </main>
+            </div>
+          </SidebarProvider>
+        )
+      } else {
+        // 데스크톱 전통적 레이아웃
+        return (
+          <div className="min-h-screen bg-background">
+            {/* 공통 헤더 */}
+            <HeaderClient />
+
+            <div className="flex">
+              {/* 왼쪽 사이드바 - 데스크톱 */}
+              <aside className="w-64 bg-card border-r border-border sticky top-0" style={{ height: 'calc(100vh - 56px)' }}>
+                <nav className="p-4">
+                  <NavTabs />
+                </nav>
+              </aside>
+
+              {/* 페이지 컨텐츠 */}
+              <main className="flex-1 p-6">
+                <div className="max-w-6xl mx-auto">
+                  {children}
+                </div>
+              </main>
+            </div>
           </div>
-        </div>
-      )
+        )
+      }
     }
     
     // 비보호 라우트는 헤더/네비게이션 없이 렌더링
