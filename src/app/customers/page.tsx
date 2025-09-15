@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Building2, User, Mail, Phone, MapPin, Search, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Building2, User, Mail, Phone, MapPin, Search, Trash2, AlertTriangle, ChevronDown, ChevronRight, Calendar } from 'lucide-react';
 import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api-client';
@@ -70,6 +70,7 @@ export default function CustomersPage() {
   });
   const [editErrors, setEditErrors] = useState<Partial<CustomerFormData>>({});
   const [isUpdating, setIsUpdating] = useState(false);
+  const [expandedCards, setExpandedCards] = useState<string[]>([]);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -220,6 +221,14 @@ export default function CustomersPage() {
     setIsEditModalOpen(true);
   };
 
+  const toggleCardExpansion = (customerId: string) => {
+    setExpandedCards(prev => 
+      prev.includes(customerId)
+        ? prev.filter(id => id !== customerId)
+        : [...prev, customerId]
+    );
+  };
+
   const handleEditInputChange = (field: keyof CustomerFormData, value: string) => {
     let formattedValue = value;
     
@@ -332,55 +341,59 @@ export default function CustomersPage() {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
           <h2 className="text-xl md:text-2xl font-medium text-foreground">고객 관리</h2>
           <p className="text-sm text-muted-foreground">고객 정보를 등록하고 관리할 수 있습니다.</p>
+          
         </div>
         
         <div className="flex items-center gap-2">
-          {selectedCustomers.length > 0 && (
-            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-              <DialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  선택 삭제 ({selectedCustomers.length})
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-destructive" />
-                    고객 삭제 확인
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    선택한 {selectedCustomers.length}개의 고객을 삭제하시겠습니까?
-                  </p>
-                  <p className="text-sm text-destructive">
-                    이 작업은 되돌릴 수 없습니다.
-                  </p>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsDeleteModalOpen(false)}
-                    disabled={isDeleting}
-                  >
-                    취소
+          {/* 데스크톱/태블릿에서만 선택 삭제 버튼 표시 */}
+          <div className="hidden sm:flex">
+            {selectedCustomers.length > 0 && (
+              <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    선택 삭제 ({selectedCustomers.length})
                   </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={handleDeleteSelected}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? '삭제 중...' : '삭제'}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-destructive" />
+                      고객 삭제 확인
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      선택한 {selectedCustomers.length}개의 고객을 삭제하시겠습니까?
+                    </p>
+                    <p className="text-sm text-destructive">
+                      이 작업은 되돌릴 수 없습니다.
+                    </p>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsDeleteModalOpen(false)}
+                      disabled={isDeleting}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteSelected}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? '삭제 중...' : '삭제'}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
           
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
           <DialogTrigger asChild>
@@ -502,7 +515,7 @@ export default function CustomersPage() {
 
       {/* Edit Customer Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>고객 정보 수정</DialogTitle>
           </DialogHeader>
@@ -613,122 +626,305 @@ export default function CustomersPage() {
       </Dialog>
 
       {/* Search */}
-      <Card className="p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="회사명, 대표자, 이메일, 연락처로 검색..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </Card>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
+        <Input
+          placeholder="회사명, 대표자, 이메일, 연락처로 검색..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </div>
 
-      {/* Customers Table */}
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-border">
-              <tr>
-                <th className="w-12 p-3 md:p-4">
-                  <Checkbox
-                    checked={
-                      selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0 
-                        ? true
-                        : selectedCustomers.length > 0 && selectedCustomers.length < filteredCustomers.length
-                        ? "indeterminate"
-                        : false
-                    }
-                    onCheckedChange={handleSelectAll}
-                  />
-                </th>
-                <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">회사명</th>
-                <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">대표자</th>
-                <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">담당자</th>
-                <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">사업자등록번호</th>
-                <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">연락처</th>
-                <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">이메일</th>
-                <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">등록일</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCustomers.length > 0 ? (
-                filteredCustomers.map((customer) => (
-                  <tr 
-                    key={customer.id} 
-                    className="border-b border-border hover:bg-muted/50 cursor-pointer"
-                    onClick={() => handleEditCustomer(customer)}
-                  >
-                    <td 
-                      className="p-3 md:p-4"
-                      onClick={(e) => e.stopPropagation()}
+      {/* Customers Table - Desktop/Tablet */}
+      <div className="hidden sm:block">
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-border">
+                <tr>
+                  <th className="w-12 p-3 md:p-4">
+                    <Checkbox
+                      checked={
+                        selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0 
+                          ? true
+                          : selectedCustomers.length > 0 && selectedCustomers.length < filteredCustomers.length
+                          ? "indeterminate"
+                          : false
+                      }
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </th>
+                  <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">회사명</th>
+                  <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">대표자</th>
+                  <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">담당자</th>
+                  <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">사업자등록번호</th>
+                  <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">연락처</th>
+                  <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">이메일</th>
+                  <th className="text-left p-3 md:p-4 font-medium text-muted-foreground">등록일</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCustomers.length > 0 ? (
+                  filteredCustomers.map((customer) => (
+                    <tr 
+                      key={customer.id} 
+                      className="border-b border-border hover:bg-muted/50 cursor-pointer"
+                      onClick={() => handleEditCustomer(customer)}
                     >
+                      <td 
+                        className="p-3 md:p-4"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={selectedCustomers.includes(customer.id)}
+                          onCheckedChange={() => handleSelectCustomer(customer.id)}
+                        />
+                      </td>
+                      <td className="p-3 md:p-4">
+                        <span className="font-medium text-foreground">
+                          {customer.company_name}
+                        </span>
+                      </td>
+                      <td className="p-3 md:p-4">
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-foreground">{customer.representative_name}</span>
+                        </div>
+                      </td>
+                      <td className="p-3 md:p-4">
+                        <span className="text-muted-foreground">
+                          {customer.contact_person || '-'}
+                        </span>
+                      </td>
+                      <td className="p-3 md:p-4">
+                        <span className="text-muted-foreground">
+                          {customer.business_registration_number || '-'}
+                        </span>
+                      </td>
+                      <td className="p-3 md:p-4">
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-foreground">{customer.phone}</span>
+                        </div>
+                      </td>
+                      <td className="p-3 md:p-4">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-foreground">{customer.email}</span>
+                        </div>
+                      </td>
+                      <td className="p-3 md:p-4">
+                        <span className="text-muted-foreground text-sm">
+                          {new Date(customer.created_at).toLocaleDateString('ko-KR')}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                      {searchTerm ? '검색 결과가 없습니다.' : '등록된 고객이 없습니다.'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+
+      {/* Customer Cards - Mobile */}
+      <div className="sm:hidden space-y-3">
+        {/* Mobile Select All */}
+        <Card className="p-3">
+          <div className="flex items-center gap-3">
+            <Checkbox
+              checked={
+                selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0 
+                  ? true
+                  : selectedCustomers.length > 0 && selectedCustomers.length < filteredCustomers.length
+                  ? "indeterminate"
+                  : false
+              }
+              onCheckedChange={handleSelectAll}
+            />
+            <span className="text-sm font-medium text-foreground">
+              전체 선택 ({selectedCustomers.length}/{filteredCustomers.length})
+            </span>
+          </div>
+        </Card>
+
+        {/* Mobile Customer Cards */}
+        {filteredCustomers.length > 0 ? (
+          filteredCustomers.map((customer) => {
+            const isExpanded = expandedCards.includes(customer.id);
+            return (
+              <Card key={customer.id} className="overflow-hidden">
+                {/* Collapsed Header - Always Visible */}
+                <div 
+                  className="p-4 hover:bg-muted/20 cursor-pointer"
+                  onClick={() => toggleCardExpansion(customer.id)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={selectedCustomers.includes(customer.id)}
                         onCheckedChange={() => handleSelectCustomer(customer.id)}
                       />
-                    </td>
-                    <td className="p-3 md:p-4">
-                      <span className="font-medium text-foreground">
-                        {customer.company_name}
-                      </span>
-                    </td>
-                    <td className="p-3 md:p-4">
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium text-foreground text-sm leading-tight">
+                          회사명: {customer.company_name}
+                        </span>
+                        <span className="text-muted-foreground text-sm">|</span>
+                        <div className="flex items-center gap-1">
+                          <Phone className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-sm text-foreground">{customer.phone}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-shrink-0">
+                      {isExpanded ? (
+                        <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expanded Details */}
+                {isExpanded && (
+                  <div className="px-4 pb-4 border-t border-border bg-muted/20">
+                    <div className="space-y-2 text-sm pt-3">
+                      {/* 대표자 */}
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-foreground font-medium">대표자:</span>
                         <span className="text-foreground">{customer.representative_name}</span>
                       </div>
-                    </td>
-                    <td className="p-3 md:p-4">
-                      <span className="text-muted-foreground">
-                        {customer.contact_person || '-'}
-                      </span>
-                    </td>
-                    <td className="p-3 md:p-4">
-                      <span className="text-muted-foreground">
-                        {customer.business_registration_number || '-'}
-                      </span>
-                    </td>
-                    <td className="p-3 md:p-4">
+                      
+                      {/* 담당자 */}
+                      {customer.contact_person && (
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-foreground font-medium">담당자:</span>
+                          <span className="text-foreground">{customer.contact_person}</span>
+                        </div>
+                      )}
+                      
+                      {/* 이메일 */}
+                      <div className="flex items-start gap-2">
+                        <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                        <span className="text-foreground font-medium flex-shrink-0">이메일:</span>
+                        <span className="text-foreground break-all">{customer.email}</span>
+                      </div>
+                      
+                      {/* 연락처 (이미 위에 표시되었지만 상세 정보로 다시 표시) */}
                       <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-muted-foreground" />
+                        <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-foreground font-medium">연락처:</span>
                         <span className="text-foreground">{customer.phone}</span>
                       </div>
-                    </td>
-                    <td className="p-3 md:p-4">
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-foreground">{customer.email}</span>
+                      
+                      {/* 사업자번호 */}
+                      {customer.business_registration_number && (
+                        <div className="flex items-center gap-2">
+                          <span className="w-4 h-4 text-muted-foreground flex-shrink-0 text-center text-xs font-bold">사</span>
+                          <span className="text-foreground font-medium">사업자번호:</span>
+                          <span className="text-foreground">{customer.business_registration_number}</span>
+                        </div>
+                      )}
+                      
+                      {/* 등록일 및 수정 버튼 */}
+                      <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Calendar className="w-3 h-3" />
+                          <span>등록일: {new Date(customer.created_at).toLocaleDateString('ko-KR')}</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs px-3 py-1 h-auto"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditCustomer(customer);
+                          }}
+                        >
+                          수정
+                        </Button>
                       </div>
-                    </td>
-                    <td className="p-3 md:p-4">
-                      <span className="text-muted-foreground text-sm">
-                        {new Date(customer.created_at).toLocaleDateString('ko-KR')}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
-                    {searchTerm ? '검색 결과가 없습니다.' : '등록된 고객이 없습니다.'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            );
+          })
+        ) : (
+          <Card className="p-8">
+            <div className="text-center text-muted-foreground">
+              {searchTerm ? '검색 결과가 없습니다.' : '등록된 고객이 없습니다.'}
+            </div>
+          </Card>
+        )}
+      </div>
 
-      {/* Summary */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            총 {filteredCustomers.length}개의 고객
-          </span>
-        </div>
-      </Card>
+      {/* Mobile Floating Delete Button */}
+      <div className="sm:hidden">
+        {selectedCustomers.length > 0 && (
+          <div className="fixed bottom-6 right-6 z-50">
+            <Button
+              variant="destructive"
+              className="px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 scale-100 hover:scale-105 flex items-center gap-2"
+              onClick={() => setIsDeleteModalOpen(true)}
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="text-sm font-medium">선택 삭제 ({selectedCustomers.length})</span>
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              고객 삭제 확인
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              선택한 {selectedCustomers.length}개의 고객을 삭제하시겠습니까?
+            </p>
+            <p className="text-sm text-destructive">
+              이 작업은 되돌릴 수 없습니다.
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={isDeleting}
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteSelected}
+              disabled={isDeleting}
+            >
+              {isDeleting ? '삭제 중...' : '삭제'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
