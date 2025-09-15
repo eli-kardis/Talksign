@@ -25,7 +25,7 @@ export default function HeaderClient() {
   return (
     <header className="bg-background border-b border-border px-4 py-5">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex-1 hidden md:block" />
+        <div className="flex-1" />
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
             <FileText className="w-6 h-6 text-primary-foreground" />

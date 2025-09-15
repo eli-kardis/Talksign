@@ -45,8 +45,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           <HeaderClient />
 
           <div className="flex">
-            {/* 왼쪽 사이드바 */}
-            <aside className="w-64 bg-card border-r border-border sticky top-0" style={{ height: 'calc(100vh - 64px)' }}>
+            {/* 왼쪽 사이드바 - 모바일에서는 숨김 */}
+            <aside
+              className="hidden md:block w-64 bg-card border-r border-border md:sticky md:top-0"
+              style={{ height: 'calc(100vh - 64px)' }}
+            >
               <nav className="p-4">
                 <NavTabs />
               </nav>
