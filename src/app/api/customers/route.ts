@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
             email: body.email.trim(),
             phone: body.phone.trim(),
             address: body.address?.trim() || null
-          }
+          } as any
         ])
         .select()
         .single()

@@ -1,16 +1,16 @@
 // src/app/documents/contracts/[contractId]/sign/page.tsx
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTenant } from "@/contexts/TenantContext";
 
 interface ContractSignPageProps {
-  params: {
+  params: Promise<{
     contractId: string;
-  };
+  }>;
 }
 
 export default function ContractSignPage({ params }: ContractSignPageProps) {
@@ -19,6 +19,13 @@ export default function ContractSignPage({ params }: ContractSignPageProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
+  const [contractId, setContractId] = useState<string>('');
+
+  useEffect(() => {
+    params.then((resolvedParams) => {
+      setContractId(resolvedParams.contractId);
+    });
+  }, [params]);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
@@ -84,7 +91,7 @@ export default function ContractSignPage({ params }: ContractSignPageProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">계약서 서명</h1>
-          <p className="text-muted-foreground">계약서 ID: {params.contractId}</p>
+          <p className="text-muted-foreground">계약서 ID: {contractId}</p>
         </div>
       </div>
 

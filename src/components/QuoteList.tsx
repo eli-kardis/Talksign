@@ -753,7 +753,7 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onEditQuote(quote.id)}
+                  onClick={() => onEditQuote?.(quote.id)}
                   className="flex-1 text-xs h-8"
                 >
                   수정
@@ -761,7 +761,7 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDeleteQuote(quote.id)}
+                  onClick={() => console.log('Delete quote:', quote.id)}
                   className="text-xs h-8 px-2"
                 >
                   <Trash2 className="w-3 h-3" />

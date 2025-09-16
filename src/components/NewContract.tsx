@@ -130,7 +130,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           quantity: item.quantity || 1,
           unit_price: item.unit_price || item.amount,
           amount: item.amount,
-          unit: item.unit || '개'
+          unit: (item as any).unit || '개'
         }))
       : [{
           id: Date.now().toString(),
@@ -283,7 +283,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           quantity: item.quantity || 1,
           unit_price: item.unit_price || item.amount,
           amount: item.amount,
-          unit: item.unit || '개'
+          unit: (item as any).unit || '개'
         })));
       }
 

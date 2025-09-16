@@ -657,7 +657,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                 type="button"
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 text-sm sm:text-base"
                 onClick={handleSaveAndSend}
-                disabled={isLoading || !supplierInfo.name || !supplierInfo.email || !supplierInfo.phone || !clientInfo.name || !clientInfo.company || !clientInfo.phone || !clientInfo.email || !quoteTitle.trim() || !validUntil.trim() || (supplierInfo.businessRegistrationNumber && !supplierInfo.companyName)}
+                disabled={Boolean(isLoading || !supplierInfo.name || !supplierInfo.email || !supplierInfo.phone || !clientInfo.name || !clientInfo.company || !clientInfo.phone || !clientInfo.email || quoteTitle.trim() === '' || validUntil.trim() === '' || (supplierInfo.businessRegistrationNumber && !supplierInfo.companyName))}
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 {isLoading ? '발송 중...' : '카카오톡으로 발송'}

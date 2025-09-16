@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     console.log('Fetched contracts from Supabase:', contracts)
     
     // Transform data to match frontend expectations
-    const transformedContracts = contracts?.map(contract => ({
+    const transformedContracts = (contracts && Array.isArray(contracts)) ? contracts.map((contract: any) => ({
       id: contract.id,
       client: contract.client_name || 'Unknown Client',
       project: contract.title || 'Untitled Project',
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       signedDate: contract.signed_at ? new Date(contract.signed_at).toISOString().split('T')[0] : undefined,
       contractUrl: contract.contract_url || '#',
       phone: contract.client_phone || ''
-    })) || []
+    })) : []
     
     console.log('Transformed contracts:', transformedContracts)
 
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     console.log('API Route: POST /api/contracts called')
     console.log('Request body:', body)
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createUserSupabaseClient(request)
 
     // Get user ID from session (you may need to adjust this based on your auth setup)
     const authHeader = request.headers.get('authorization')
@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
     
     // For now, get the first user as a fallback
     const { data: users } = await supabase.from('users').select('id').limit(1)
-    if (users && users.length > 0) {
-      userId = users[0].id
+    if (users && Array.isArray(users) && users.length > 0) {
+      userId = (users[0] as any).id
     }
 
     // Prepare contract data for Supabase
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     // Insert the contract into Supabase
     const { data: contract, error } = await supabase
       .from('contracts')
-      .insert([contractData])
+      .insert([contractData as any])
       .select()
       .single()
 

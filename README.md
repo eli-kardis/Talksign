@@ -143,9 +143,46 @@ npm run start
 
 ### Vercel 배포
 
-1. Vercel 계정에 연결
-2. 환경 변수 설정
-3. GitHub 저장소 연결 시 자동 배포
+1. **Vercel 계정 설정**
+   ```bash
+   # Vercel CLI 설치
+   npm i -g vercel
+
+   # 프로젝트를 Vercel에 배포
+   vercel
+   ```
+
+2. **환경 변수 설정**
+
+   Vercel 대시보드에서 다음 환경 변수들을 설정하세요:
+
+   **필수 환경 변수:**
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+   ```
+
+   **선택적 환경 변수:**
+   ```
+   NEXT_PUBLIC_TOSS_CLIENT_KEY=your_toss_client_key
+   TOSS_SECRET_KEY=your_toss_secret_key
+   KAKAO_API_KEY=your_kakao_api_key
+   KAKAO_SENDER_KEY=your_kakao_sender_key
+   JWT_SECRET=your_jwt_secret
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   KAKAO_CLIENT_ID=your_kakao_client_id
+   KAKAO_CLIENT_SECRET=your_kakao_client_secret
+   ```
+
+3. **도메인 설정**
+   - Vercel 대시보드에서 커스텀 도메인 연결 가능
+   - SSL 인증서는 자동으로 생성됩니다
+
+4. **배포 확인**
+   - GitHub 저장소 연결 시 푸시마다 자동 배포
+   - 프리뷰 배포도 자동으로 생성됩니다
 
 ## 🧪 개발 도구
 

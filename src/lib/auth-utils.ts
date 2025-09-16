@@ -21,9 +21,9 @@ export function createAuthenticatedSupabaseClient(request: NextRequest) {
       persistSession: false
     },
     global: {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : undefined
-      }
+      headers: token ? {
+        Authorization: `Bearer ${token}`
+      } : {}
     }
   })
 
@@ -98,9 +98,9 @@ export function createUserSupabaseClient(request: NextRequest) {
       persistSession: false
     },
     global: {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : undefined
-      }
+      headers: token ? {
+        Authorization: `Bearer ${token}`
+      } : {}
     }
   })
 

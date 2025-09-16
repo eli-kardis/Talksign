@@ -59,8 +59,8 @@ export async function PUT(
           phone: body.phone.trim(),
           address: body.address?.trim() || null,
           updated_at: new Date().toISOString()
-        })
-        .eq('id', customerId)
+        } as any)
+        .eq('id', customerId as any)
         .select()
         .single()
 
