@@ -5,10 +5,10 @@
   "description": "프리랜서를 위한 견적, 전자계약, 결제 및 카카오톡 자동 리마인드 기능을 통합한 올인원 SaaS 서비스",
   "license": "MIT",
   "author": "Link Flow팀",
-  "homepage": "https://github.com/your-username/linkflow",
+  "homepage": "https://talksign.co.kr",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/linkflow.git"
+    "url": "https://github.com/eli-kardis/Talksign.git"
   },
   "keywords": [
     "freelancer",
