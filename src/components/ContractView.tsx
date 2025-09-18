@@ -13,6 +13,7 @@ import { PenTool, FileText, Clock, CheckCircle, AlertCircle, Search, MessageSqua
 import { Checkbox } from './ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { AuthenticatedApiClient } from '@/lib/api-client';
+import { DemoModeNotice } from './DemoModeNotice';
 
 interface Contract {
   id: string;
@@ -421,6 +422,9 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
 
   return (
     <div className="space-y-4 md:space-y-6">
+      {/* 데모 모드 알림 */}
+      <DemoModeNotice />
+
       {/* 상단 검색 및 버튼 */}
       <div className="flex items-center justify-between gap-3">
         <div className="relative w-full md:w-72">

@@ -33,49 +33,85 @@ export function createAuthenticatedSupabaseClient(request: NextRequest) {
 // 사용자 인증 확인 및 user_id 반환
 export async function getUserFromRequest(request: NextRequest): Promise<string | null> {
   try {
-    // 개발 환경에서는 첫 번째 사용자를 기본으로 사용
-    // 실제 운영에서는 아래 주석 해제하고 개발용 코드는 제거해야 함
-    if (process.env.NODE_ENV === 'development') {
-      const supabase = createServerSupabaseClient()
-      const { data: users, error } = await supabase
-        .from('users')
-        .select('id')
-        .order('created_at', { ascending: true })
-        .limit(1)
-      
-      if (users && users.length > 0) {
-        console.log('Development mode: Using first user:', users[0].id)
-        return users[0].id
-      }
-      
-      // 사용자가 없으면 기본 개발 사용자 ID 반환
-      console.log('No users found, using default dev user')
-      return '80d20e48-7189-4874-b792-9e514aaa0572'
-    }
-    
-    // 운영 환경에서의 실제 인증 로직
+    console.log('Getting user from request, NODE_ENV:', process.env.NODE_ENV)
+
+    // 인증 토큰 확인 시도
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.replace('Bearer ', '')
-    
-    if (!token) {
-      console.log('No authorization token found')
-      return null
+
+    if (token) {
+      // 토큰이 있으면 Supabase에서 검증
+      const supabase = createUserSupabaseClient(request)
+      const { data: { user }, error } = await supabase.auth.getUser(token)
+
+      if (!error && user) {
+        console.log('Authenticated user:', user.id)
+        return user.id
+      } else {
+        console.log('Token validation failed:', error?.message)
+      }
     }
-    
-    // Supabase에서 토큰 검증
-    const supabase = createUserSupabaseClient(request)
-    const { data: { user }, error } = await supabase.auth.getUser(token)
-    
-    if (error || !user) {
-      console.error('Token validation failed:', error)
-      return null
-    }
-    
-    console.log('Authenticated user:', user.id)
-    return user.id
+
+    // 토큰이 없거나 검증 실패 시 데모 사용자 생성/반환
+    console.log('No valid token found, creating/finding demo user')
+    return await getOrCreateDemoUser()
+
   } catch (error) {
     console.error('Error getting user from request:', error)
-    return null
+    // 에러 발생 시에도 데모 사용자 반환
+    return await getOrCreateDemoUser()
+  }
+}
+
+// 데모 사용자 생성 또는 기존 사용자 반환
+async function getOrCreateDemoUser(): Promise<string> {
+  try {
+    const supabase = createServerSupabaseClient()
+
+    // 기존 데모 사용자 확인
+    const { data: existingUsers } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', 'demo@talksign.app')
+      .limit(1)
+
+    if (existingUsers && existingUsers.length > 0) {
+      console.log('Using existing demo user:', existingUsers[0].id)
+      return existingUsers[0].id
+    }
+
+    // 데모 사용자 생성
+    const demoUserData = {
+      id: '80d20e48-7189-4874-b792-9e514aaa0572', // 고정 UUID
+      email: 'demo@talksign.app',
+      name: '데모 사용자',
+      phone: '010-1234-5678',
+      company_name: '데모 회사',
+      business_name: '데모 비즈니스',
+      business_registration_number: '123-45-67890',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    const { data: newUser, error } = await supabase
+      .from('users')
+      .upsert(demoUserData, { onConflict: 'id' })
+      .select('id')
+      .single()
+
+    if (error) {
+      console.error('Failed to create demo user:', error)
+      // 실패해도 고정 ID 반환
+      return '80d20e48-7189-4874-b792-9e514aaa0572'
+    }
+
+    console.log('Created demo user:', newUser.id)
+    return newUser.id
+
+  } catch (error) {
+    console.error('Error in getOrCreateDemoUser:', error)
+    // 모든 것이 실패해도 고정 ID 반환
+    return '80d20e48-7189-4874-b792-9e514aaa0572'
   }
 }
 

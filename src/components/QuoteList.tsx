@@ -16,6 +16,7 @@ import { ko } from "date-fns/locale";
 import { ImageWithFallback } from "./ui/ImageWithFallback";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthenticatedApiClient } from "@/lib/api-client";
+import { DemoModeNotice } from "./DemoModeNotice";
 import {
   FileText,
   Search,
@@ -412,6 +413,9 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
 
   return (
     <div className="space-y-4 md:space-y-6">
+      {/* 데모 모드 알림 */}
+      <DemoModeNotice />
+
       {/* 상단 검색 및 버튼 */}
       <div className="flex items-center justify-between gap-3">
         <div className="relative w-full md:w-72">
