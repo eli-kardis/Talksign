@@ -8,7 +8,7 @@ import ClientLayout from "@/components/ClientLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
-  title: "Link Flow - 견적·계약·결제",
+  title: "TalkSign - 견적·계약·결제",
   description:
     "견적서 작성부터 전자계약, 결제까지 한 번에 처리하고 카카오톡으로 자동 리마인드까지",
   keywords: ["프리랜서", "견적서", "전자계약", "결제", "카카오톡", "알림톡"],

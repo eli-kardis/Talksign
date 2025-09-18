@@ -67,45 +67,47 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
             {/* 공통 헤더 */}
             <HeaderClient />
 
-            <SidebarProvider defaultOpen={false}>
-              <MobileSidebarEventHandler />
-              {/* 모바일 사이드바 */}
-              <Sidebar
-                collapsible="offcanvas"
-                className="bg-sidebar border-r border-sidebar-border [&>*]:bg-sidebar [&_*]:bg-sidebar"
-                style={{
-                  backgroundColor: 'var(--sidebar)',
-                  borderColor: 'var(--sidebar-border)'
-                }}
-              >
-                <div
-                  className="bg-sidebar h-full w-full flex flex-col"
+            <div className="flex flex-1">
+              <SidebarProvider defaultOpen={false}>
+                <MobileSidebarEventHandler />
+                {/* 모바일 사이드바 */}
+                <Sidebar
+                  collapsible="offcanvas"
+                  className="bg-sidebar border-r border-sidebar-border [&>*]:bg-sidebar [&_*]:bg-sidebar"
                   style={{
                     backgroundColor: 'var(--sidebar)',
-                    color: 'var(--sidebar-foreground)'
+                    borderColor: 'var(--sidebar-border)'
                   }}
                 >
-                  {/* 모바일 사이드바 헤더 */}
-                  <div className="p-4 border-b border-sidebar-border">
-                    <h1 className="text-lg font-medium text-sidebar-foreground">Link Flow</h1>
-                  </div>
+                  <div
+                    className="bg-sidebar h-full w-full flex flex-col"
+                    style={{
+                      backgroundColor: 'var(--sidebar)',
+                      color: 'var(--sidebar-foreground)'
+                    }}
+                  >
+                    {/* 모바일 사이드바 헤더 */}
+                    <div className="p-4 border-b border-sidebar-border">
+                      <h1 className="text-lg font-medium text-sidebar-foreground">TalkSign</h1>
+                    </div>
 
-                  {/* 네비게이션 탭들 */}
-                  <div className="p-4 flex-1">
-                    <NavTabs />
+                    {/* 네비게이션 탭들 */}
+                    <div className="p-4 flex-1">
+                      <NavTabs />
+                    </div>
                   </div>
+                </Sidebar>
+              </SidebarProvider>
+
+              {/* 페이지 컨텐츠 - 모바일에서는 전체 너비 사용 */}
+              <main className="w-full flex-1">
+                <div className="px-4 py-6 mx-auto md:px-10 md:py-12 lg:max-w-[1440px]">
+                  {children}
                 </div>
-              </Sidebar>
-            </SidebarProvider>
+              </main>
+            </div>
 
-            {/* 페이지 컨텐츠 - 모바일에서는 전체 너비 사용 */}
-            <main className="w-full flex-1">
-              <div className="px-4 py-6 mx-auto md:px-10 md:py-12 lg:max-w-[1440px]">
-                {children}
-              </div>
-            </main>
-
-            {/* 푸터 */}
+            {/* 푸터 - 전체 화면 하단 */}
             <Footer />
           </div>
         )
@@ -118,22 +120,22 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
             <div className="flex flex-1">
               {/* 왼쪽 사이드바 - 데스크톱 */}
-              <aside className="w-64 bg-card border-r border-border sticky top-0" style={{ height: 'calc(100vh - 56px)' }}>
+              <aside className="w-64 bg-card border-r border-border">
                 <nav className="p-4">
                   <NavTabs />
                 </nav>
               </aside>
 
               {/* 페이지 컨텐츠 */}
-              <main className="flex-1 flex flex-col">
-                <div className="px-4 py-6 mx-auto md:px-10 md:py-12 lg:max-w-[1440px] flex-1">
+              <main className="flex-1">
+                <div className="px-4 py-6 mx-auto md:px-10 md:py-12 lg:max-w-[1440px]">
                   {children}
                 </div>
-
-                {/* 푸터 */}
-                <Footer />
               </main>
             </div>
+
+            {/* 푸터 - 전체 화면 하단 (사이드바 포함) */}
+            <Footer />
           </div>
         )
       }

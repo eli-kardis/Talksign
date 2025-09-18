@@ -51,14 +51,14 @@ export default function HeaderClient() {
             </Button>
           )}
           {!isMobile && (
-            <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-foreground">Link Flow</h1>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-foreground">TalkSign</h1>
           )}
         </div>
 
         {/* 중앙 영역 (모바일에서만 로고 표시) */}
         {isMobile && (
           <div className="flex justify-center">
-            <h1 className="text-lg font-medium text-foreground">Link Flow</h1>
+            <h1 className="text-lg font-medium text-foreground">TalkSign</h1>
           </div>
         )}
 
