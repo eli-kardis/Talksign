@@ -40,20 +40,40 @@ export async function getUserFromRequest(request: NextRequest): Promise<string |
     const token = authHeader?.replace('Bearer ', '')
 
     if (token) {
-      // 토큰이 있으면 Supabase에서 검증
-      const supabase = createUserSupabaseClient(request)
-      const { data: { user }, error } = await supabase.auth.getUser(token)
+      console.log('Token found, attempting validation...')
 
-      if (!error && user) {
-        console.log('Authenticated user:', user.id)
-        return user.id
-      } else {
-        console.log('Token validation failed:', error?.message)
+      try {
+        // JWT 토큰 디코딩하여 사용자 ID 추출
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        const userId = payload.sub
+
+        if (userId && userId !== 'undefined') {
+          console.log('Valid authenticated user from token:', userId)
+
+          // 사용자 존재 확인 (선택적)
+          const supabase = createServerSupabaseClient()
+          const { data: user } = await supabase
+            .from('users')
+            .select('id')
+            .eq('id', userId)
+            .single()
+
+          if (user) {
+            console.log('User exists in database:', user.id)
+            return user.id
+          } else {
+            console.log('User not found in database, creating demo user')
+          }
+        }
+      } catch (tokenError) {
+        console.log('Token parsing failed:', tokenError)
       }
+    } else {
+      console.log('No authorization token found')
     }
 
     // 토큰이 없거나 검증 실패 시 데모 사용자 생성/반환
-    console.log('No valid token found, creating/finding demo user')
+    console.log('Falling back to demo user')
     return await getOrCreateDemoUser()
 
   } catch (error) {

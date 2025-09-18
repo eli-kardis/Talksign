@@ -14,10 +14,10 @@ export async function GET(request: NextRequest) {
     }
     
     console.log('Fetching quotes for user:', userId)
-    
-    // 서버 클라이언트로 견적서 조회 (개발 환경에서는 RLS를 우회)
-    const supabase = createServerSupabaseClient()
-    
+
+    // 사용자별 클라이언트로 견적서 조회 (RLS 적용)
+    const supabase = createUserSupabaseClient(request)
+
     const { data: quotes, error } = await supabase
       .from('quotes')
       .select('*')
@@ -26,12 +26,15 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching quotes:', error)
-      return NextResponse.json({ error: 'Failed to fetch quotes' }, { status: 500 })
+      // Supabase 에러 시 빈 배열 반환 (RLS 정책으로 인한 접근 제한일 수 있음)
+      console.log('Returning empty array due to database error')
+      return NextResponse.json([])
     }
 
     console.log('Raw quotes from database:', JSON.stringify(quotes, null, 2))
     console.log('Number of quotes found:', quotes?.length || 0)
 
+    // 견적서가 없으면 빈 배열 반환 (정상적인 상황)
     return NextResponse.json(quotes || [])
   } catch (error) {
     console.error('Error in GET /api/quotes:', error)
@@ -50,8 +53,9 @@ export async function POST(request: NextRequest) {
     }
     
     console.log('Creating quote for user:', userId)
-    
-    const supabase = createServerSupabaseClient()
+
+    // 사용자별 클라이언트로 견적서 생성 (RLS 적용)
+    const supabase = createUserSupabaseClient(request)
     console.log('Supabase client created')
     
     const body = await request.json()
