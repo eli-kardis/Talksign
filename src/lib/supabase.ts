@@ -1,17 +1,22 @@
 import { createClient } from '@supabase/supabase-js'
-import { projectId, publicAnonKey } from './supabase-info'
 
-// 개발/프로덕션 환경에 따른 URL 설정
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 
-  (process.env.NODE_ENV === 'development' 
-    ? `https://${projectId}.supabase.co`  // 개발 환경에서도 원격 사용
-    : `https://${projectId}.supabase.co`)
+// 환경 변수에서 Supabase 설정 가져오기
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-// 환경 변수가 있으면 우선 사용, 없으면 info 파일의 키 사용
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || publicAnonKey
+// 필수 환경 변수 검증
+if (!supabaseUrl) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+}
 
-// Service Role Key 설정 (환경 변수가 없으면 anon key 사용 - 개발용)
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || publicAnonKey
+if (!supabaseAnonKey) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
+}
+
+if (!supabaseServiceKey) {
+  console.warn('Missing SUPABASE_SERVICE_ROLE_KEY - using anon key for service operations')
+}
 
 // Supabase 클라이언트 생성
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
@@ -19,7 +24,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 // 서버 사이드에서 사용할 클라이언트 (Service Role Key 사용)
 export const supabaseAdmin = createClient(
   supabaseUrl,
-  supabaseServiceKey,
+  supabaseServiceKey || supabaseAnonKey,
   {
     auth: {
       autoRefreshToken: false,
@@ -29,7 +34,7 @@ export const supabaseAdmin = createClient(
 )
 
 // 서버 API 호출을 위한 기본 URL
-export const API_BASE_URL = `https://${projectId}.supabase.co/functions/v1/make-server-e83d4894`
+export const API_BASE_URL = `${supabaseUrl}/functions/v1/make-server-e83d4894`
 
 // API 요청 헬퍼 함수
 export async function apiRequest(endpoint: string, options: RequestInit = {}) {

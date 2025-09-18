@@ -1,11 +1,16 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { jwtVerify, createRemoteJWKSet } from 'jose'
 import type { Database } from './supabase'
 
 // 서버 사이드에서 인증된 Supabase 클라이언트 생성
 export function createAuthenticatedSupabaseClient(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321'
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl) {
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+  }
 
   if (!supabaseServiceKey) {
     throw new Error('Missing Supabase service role key')
@@ -30,6 +35,33 @@ export function createAuthenticatedSupabaseClient(request: NextRequest) {
   return client
 }
 
+// JWT 토큰 검증 함수
+async function verifySupabaseJWT(token: string): Promise<string | null> {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl) {
+      console.error('Missing NEXT_PUBLIC_SUPABASE_URL for JWT verification')
+      return null
+    }
+
+    // Supabase JWT 검증을 위한 JWKS URL
+    const jwksUrl = new URL(`${supabaseUrl}/rest/v1/jwks`)
+    const JWKS = createRemoteJWKSet(jwksUrl)
+
+    // JWT 검증
+    const { payload } = await jwtVerify(token, JWKS, {
+      issuer: 'supabase',
+      audience: 'authenticated',
+    })
+
+    // 사용자 ID 반환
+    return payload.sub || null
+  } catch (error) {
+    console.log('JWT verification failed:', error)
+    return null
+  }
+}
+
 // 사용자 인증 확인 및 user_id 반환
 export async function getUserFromRequest(request: NextRequest): Promise<string | null> {
   try {
@@ -43,9 +75,8 @@ export async function getUserFromRequest(request: NextRequest): Promise<string |
       console.log('Token found, attempting validation...')
 
       try {
-        // JWT 토큰 디코딩하여 사용자 ID 추출
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        const userId = payload.sub
+        // JWT 토큰 검증 (보안 강화)
+        const userId = await verifySupabaseJWT(token)
 
         if (userId && userId !== 'undefined') {
           console.log('Valid authenticated user from token:', userId)
@@ -66,7 +97,7 @@ export async function getUserFromRequest(request: NextRequest): Promise<string |
           }
         }
       } catch (tokenError) {
-        console.log('Token parsing failed:', tokenError)
+        console.log('Token verification failed:', tokenError)
       }
     } else {
       console.log('No authorization token found')
@@ -137,8 +168,12 @@ async function getOrCreateDemoUser(): Promise<string> {
 
 // RLS가 적용된 Supabase 클라이언트 생성 (사용자 토큰 사용)
 export function createUserSupabaseClient(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321'
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl) {
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+  }
 
   if (!supabaseAnonKey) {
     throw new Error('Missing Supabase anon key')
@@ -165,8 +200,12 @@ export function createUserSupabaseClient(request: NextRequest) {
 
 // 서버 사이드에서 사용할 Supabase 클라이언트 생성 (service role key 사용)
 export function createServerSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321'
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl) {
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+  }
 
   if (!supabaseServiceKey) {
     throw new Error('Missing Supabase service role key')
