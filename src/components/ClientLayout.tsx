@@ -39,10 +39,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const isAuthPage = pathname?.startsWith('/auth')
   const isRootPage = pathname === '/'
   const isDashboardRoute = pathname?.startsWith('/dashboard')
-  const isProtectedRoute = isDashboardRoute || pathname?.startsWith('/documents') || pathname?.startsWith('/finance') || pathname?.startsWith('/schedule') || pathname?.startsWith('/customers')
-  
-  // 인증 페이지나 루트 페이지라면 헤더와 네비게이션 없이 렌더링
-  if (isAuthPage || isRootPage) {
+  const isProtectedRoute = isDashboardRoute || pathname?.startsWith('/documents') || pathname?.startsWith('/finance') || pathname?.startsWith('/schedule') || pathname?.startsWith('/customers') || isRootPage
+
+  // 인증 페이지라면 헤더와 네비게이션 없이 렌더링
+  if (isAuthPage) {
     return <>{children}</>
   }
   
@@ -51,15 +51,16 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     return <PageLoadingSpinner message="애플리케이션 초기화 중..." />
   }
   
-  // 보호된 라우트에서 비로그인 사용자 - 각 페이지에서 리다이렉트 처리하므로 로딩 화면만 표시
-  if (isProtectedRoute && !user) {
-    return <PageLoadingSpinner message="인증 확인 중..." />
-  }
-  
-  // 비보호 라우트 또는 로그인된 사용자
-  if (!isProtectedRoute || user) {
-    // 로그인된 사용자의 보호된 라우트라면 헤더와 사이드바 포함
-    if (isProtectedRoute && user) {
+  // 임시: 모든 사용자에게 접근 허용
+  // 보호된 라우트에서 비로그인 사용자도 접근 가능하도록 임시 수정
+  // if (isProtectedRoute && !user) {
+  //   return <PageLoadingSpinner message="인증 확인 중..." />
+  // }
+
+  // 모든 라우트에 접근 허용 (임시)
+  if (true) {
+    // 보호된 라우트라면 헤더와 사이드바 포함 (로그인 여부 무관)
+    if (isProtectedRoute) {
       // 모바일에서는 SidebarProvider 사용, 데스크톱에서는 전통적 레이아웃
       if (isMobile) {
         return (
