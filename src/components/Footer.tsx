@@ -69,12 +69,15 @@ export function Footer({ onNavigate }: FooterProps) {
                 사업자등록번호: 613-31-11781
               </div>
               <div className="text-muted-foreground">
-                <a href="mailto:dhtj123@naver.com" className="hover:text-primary transition-colors">
+                사업자명: 아웃풋프로젝트
+              </div>
+              <div className="text-muted-foreground">
+                이메일: <a href="mailto:dhtj123@naver.com" className="hover:text-primary transition-colors">
                   dhtj123@naver.com
                 </a>
               </div>
               <div className="text-muted-foreground">
-                <a href="tel:010-8398-1144" className="hover:text-primary transition-colors">
+                전화번호: <a href="tel:010-8398-1144" className="hover:text-primary transition-colors">
                   010-8398-1144
                 </a>
               </div>
