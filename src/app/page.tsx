@@ -29,7 +29,7 @@ export default function Page() {
     setSchedulesLoading(false)
   }, [])
 
-  // 네비게이션 핸들러
+  // 네비게이션 핸들러 - 도메인 구조에 맞춰 수정
   const onNavigate = (view: string) => {
     switch (view) {
       case 'documents':
@@ -49,6 +49,14 @@ export default function Page() {
         break
       case 'dashboard':
         // 이미 메인에 있으므로 아무것도 하지 않음
+        break
+      case 'login':
+        // 로그인은 accounts 도메인으로
+        window.location.href = 'https://accounts.talksign.co.kr/login'
+        break
+      case 'signup':
+        // 회원가입은 accounts 도메인으로
+        window.location.href = 'https://accounts.talksign.co.kr/signup'
         break
       default:
         console.warn('Unknown navigation view:', view)
