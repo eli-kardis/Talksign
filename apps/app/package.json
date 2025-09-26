@@ -30,7 +30,6 @@
     "preview": "next build && next start",
     "clean": "rm -rf .next out",
     "check-env": "node scripts/check-env.js",
-    "postinstall": "npm run type-check",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset",

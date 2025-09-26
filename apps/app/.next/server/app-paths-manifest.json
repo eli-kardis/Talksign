@@ -1,8 +1,1 @@
-{
-  "/_not-found/page": "app/_not-found/page.js",
-  "/api/customers/route": "app/api/customers/route.js",
-  "/api/quotes/route": "app/api/quotes/route.js",
-  "/auth/signin/page": "app/auth/signin/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/page": "app/page.js"
-}
+{}

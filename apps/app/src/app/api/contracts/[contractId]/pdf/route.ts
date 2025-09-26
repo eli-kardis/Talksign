@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import jsPDF from 'jspdf'
 
+export const runtime = 'nodejs'
+
 interface ContractItem {
   name: string
   description?: string
