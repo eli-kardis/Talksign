@@ -167,8 +167,9 @@ function generateQuotePDF(quote: Quote, supplierInfo: any): Buffer {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { quoteId: string } }
+  { params }: { params: Promise<{ quoteId: string }> }
 ) {
+  const { quoteId } = await params
   try {
     const userId = await getUserFromRequest(request)
     if (!userId) {
@@ -181,7 +182,7 @@ export async function GET(
     const { data: quote, error } = await supabase
       .from('quotes')
       .select('*')
-      .eq('id', params.quoteId)
+      .eq('id', quoteId)
       .eq('user_id', userId)
       .single()
 

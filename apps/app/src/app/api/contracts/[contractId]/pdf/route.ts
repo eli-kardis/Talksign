@@ -277,8 +277,9 @@ function generateContractPDF(contract: Contract, supplierInfo: any): Buffer {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { contractId: string } }
+  { params }: { params: Promise<{ contractId: string }> }
 ) {
+  const { contractId } = await params
   try {
     const userId = await getUserFromRequest(request)
     if (!userId) {
@@ -291,7 +292,7 @@ export async function GET(
     const { data: contract, error } = await supabase
       .from('contracts')
       .select('*')
-      .eq('id', params.contractId)
+      .eq('id', contractId)
       .eq('user_id', userId)
       .single()
 
