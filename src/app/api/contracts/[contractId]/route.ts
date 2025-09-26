@@ -30,8 +30,8 @@ interface MockContract {
   client_name: string
   client_email: string
   client_phone: string
-  client_company: string
-  client_business_number?: string
+  client_company: string | null
+  client_business_number?: string | null
   client_address?: string
   project_start_date: string
   project_end_date: string
@@ -45,13 +45,13 @@ interface MockContract {
     amount: number
   }>
   terms: string[]
-  payment_terms: string
+  payment_terms?: string
   subtotal: number
   tax_amount: number
   tax_rate: number
   total_amount: number
   created_at: string
-  signed_date?: string
+  signed_date?: string | null
   supplier?: {
     name: string
     email: string
