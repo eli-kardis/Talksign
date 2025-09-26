@@ -147,8 +147,8 @@ export async function POST(request: NextRequest) {
       console.error('Failed to create quote:', error)
       return NextResponse.json({ 
         error: 'Failed to create quote', 
-        details: error.message,
-        code: error.code 
+        details: (error as any).message,
+        code: (error as any).code 
       }, { status: 500 })
     }
 

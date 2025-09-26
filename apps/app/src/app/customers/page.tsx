@@ -18,11 +18,11 @@ interface Customer {
   id: string;
   company_name: string;
   representative_name: string;
-  contact_person?: string;
-  business_registration_number?: string;
+  contact_person?: string | null;
+  business_registration_number?: string | null;
   email: string;
   phone: string;
-  address?: string;
+  address?: string | null;
   created_at: string;
   updated_at?: string;
 }
