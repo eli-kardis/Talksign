@@ -30,6 +30,8 @@ interface MockContract {
   client_email: string
   client_phone: string
   client_company: string
+  client_business_number?: string
+  client_address?: string
   project_start_date: string
   project_end_date: string
   project_description: string
