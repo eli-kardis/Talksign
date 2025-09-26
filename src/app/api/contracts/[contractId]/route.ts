@@ -45,6 +45,9 @@ interface MockContract {
   }>
   terms: string[]
   payment_terms: string
+  subtotal: number
+  tax_amount: number
+  tax_rate: number
   total_amount: number
   created_at: string
   supplier?: {
