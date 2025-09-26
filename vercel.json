@@ -1,11 +1,11 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
+  "buildCommand": "cd apps/app && npm run build",
+  "devCommand": "cd apps/app && npm run dev",
   "installCommand": "npm install",
-  "outputDirectory": ".next",
+  "outputDirectory": "apps/app/.next",
   "functions": {
-    "src/app/api/**/*.ts": {
+    "apps/app/src/app/api/**/*.ts": {
       "maxDuration": 30
     }
   },
