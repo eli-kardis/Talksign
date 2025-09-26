@@ -51,6 +51,7 @@ interface MockContract {
   tax_rate: number
   total_amount: number
   created_at: string
+  signed_date?: string
   supplier?: {
     name: string
     email: string
