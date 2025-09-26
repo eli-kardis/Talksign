@@ -34,6 +34,7 @@ interface MockContract {
   project_end_date: string
   project_description: string
   items: Array<{
+    id: string
     name: string
     description: string
     unit_price: number
