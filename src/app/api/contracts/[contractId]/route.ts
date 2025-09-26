@@ -22,7 +22,40 @@ function createServerSupabaseClient() {
 }
 
 // Mock contract data with detailed information
-const mockContracts: any[] = [
+interface MockContract {
+  id: string
+  title: string
+  status: string
+  client_name: string
+  client_email: string
+  client_phone: string
+  client_company: string
+  project_start_date: string
+  project_end_date: string
+  project_description: string
+  items: Array<{
+    name: string
+    description: string
+    unit_price: number
+    quantity: number
+    amount: number
+  }>
+  terms: string[]
+  payment_terms: string
+  total_amount: number
+  created_at: string
+  supplier?: {
+    name: string
+    email: string
+    phone: string
+    business_name: string
+    business_registration_number: string
+    company_name: string
+    business_address: string
+  }
+}
+
+const mockContracts: MockContract[] = [
   {
     id: "90cfcedd-b86d-4f13-96c0-bce2d9072665",
     title: "웹사이트 리뉴얼 프로젝트 계약서",

@@ -1,8 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest, createServerSupabaseClient } from '@/lib/auth-utils'
-import type { Database } from '@/lib/supabase'
+import type { Database, QuoteItem } from '@/lib/supabase'
 
 type QuoteInsert = Database['public']['Tables']['quotes']['Insert']
+
+// Frontend QuoteItem interface (different from DB QuoteItem)
+interface FrontendQuoteItem {
+  id: number
+  name: string
+  description: string
+  unit_price: number
+  quantity: number
+  unit: string
+  amount: number
+}
+
+interface SupplierInfo {
+  name: string
+  email: string
+  phone: string
+  business_registration_number: string | null
+  company_name: string | null
+  business_name: string | null
+}
+
+interface QuoteRequestBody {
+  client_name: string
+  client_email: string
+  client_phone?: string
+  client_company?: string
+  title: string
+  description?: string
+  valid_until?: string
+  expires_at?: string
+  items: FrontendQuoteItem[]
+  status?: 'draft' | 'sent'
+  supplier_info?: SupplierInfo
+  client_business_number?: string
+  client_address?: string
+  client_logo_url?: string
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -58,7 +95,7 @@ export async function POST(request: NextRequest) {
     const supabase = createServerSupabaseClient()
     console.log('Supabase server client created')
     
-    const body = await request.json()
+    const body: QuoteRequestBody = await request.json()
     console.log('Request body:', JSON.stringify(body, null, 2))
     
     // 필수 필드 검증
@@ -72,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     // 견적서 항목 총합 계산
     const items = body.items || []
-    const subtotal = items.reduce((sum: number, item: { amount?: number }) => sum + (item.amount || 0), 0)
+    const subtotal = items.reduce((sum: number, item: FrontendQuoteItem) => sum + (item.amount || 0), 0)
     console.log('Calculated subtotal:', subtotal)
 
     // 공급자 정보로 사용자 프로필 업데이트 (필요시)
@@ -98,21 +135,27 @@ export async function POST(request: NextRequest) {
     // 견적서 생성
     const expiresAt = body.valid_until ? new Date(body.valid_until).toISOString() : (body.expires_at ? new Date(body.expires_at).toISOString() : null)
     
-    const quoteData: any = {
+    // Convert frontend items to DB format
+    const dbItems: QuoteItem[] = items.map(item => ({
+      id: item.id.toString(),
+      description: `${item.name}: ${item.description}`,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      total: item.amount
+    }))
+
+    const quoteData: Partial<QuoteInsert> = {
       user_id: userId,
       client_name: body.client_name,
       client_email: body.client_email,
-      client_phone: body.client_phone || null,
-      client_company: body.client_company || null,
+      client_phone: body.client_phone || undefined,
+      client_company: body.client_company || undefined,
       title: body.title,
-      description: body.description || null,
-      items: items,
+      description: body.description || undefined,
+      items: dbItems,
       subtotal: subtotal,
       status: body.status || 'draft',
-      expires_at: expiresAt,
-      client_business_number: body.client_business_number || null,
-      client_address: body.client_address || null,
-      client_logo_url: body.client_logo_url || null,
+      expires_at: expiresAt || undefined,
     }
     
     console.log('Quote data to insert:', JSON.stringify(quoteData, null, 2))
