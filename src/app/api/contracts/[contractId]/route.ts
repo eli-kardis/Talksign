@@ -407,14 +407,13 @@ export async function PUT(
     }
 
     // Update contract in mock data
-    const updatedContract = {
+    const updatedContract: MockContract = {
       ...mockContracts[contractIndex],
-      client: body.clientInfo?.name || mockContracts[contractIndex].client,
-      project: body.contractInfo?.title || mockContracts[contractIndex].project,
-      amount: body.clientInfo?.amount || mockContracts[contractIndex].amount,
-      phone: body.clientInfo?.phone || mockContracts[contractIndex].phone,
-      status: body.isDraft ? 'pending' : 'sent',
-      updatedDate: new Date().toISOString().split('T')[0]
+      client_name: body.clientInfo?.name || mockContracts[contractIndex].client_name,
+      title: body.contractInfo?.title || mockContracts[contractIndex].title,
+      total_amount: body.clientInfo?.amount || mockContracts[contractIndex].total_amount,
+      client_phone: body.clientInfo?.phone || mockContracts[contractIndex].client_phone,
+      status: body.isDraft ? 'draft' : 'sent',
     }
 
     mockContracts[contractIndex] = updatedContract
