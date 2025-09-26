@@ -310,7 +310,7 @@ export async function GET(
     const pdfBuffer = generateContractPDF(contract, supplierInfo)
 
     // PDF 응답 반환
-    return new NextResponse(pdfBuffer as BodyInit, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
