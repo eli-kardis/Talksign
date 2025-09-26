@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import type { Database } from '@/lib/supabase'
 
+type ContractStatus = 'draft' | 'sent' | 'signed' | 'completed' | 'cancelled'
+
+// Type for selected contract fields from Supabase
+interface ContractSelectResult {
+  id: string
+  title: string | null
+  client_name: string | null
+  client_phone: string | null
+  total_amount: number | null
+  status: string | null
+  created_at: string
+  signed_at: string | null
+  contract_url: string | null
+}
+
 export async function GET(request: NextRequest) {
   try {
     // 사용자 인증 확인
@@ -39,7 +54,7 @@ export async function GET(request: NextRequest) {
     console.log('Fetched contracts from Supabase:', contracts)
     
     // Transform data to match frontend expectations
-    const transformedContracts = (contracts && Array.isArray(contracts)) ? contracts.map((contract: Database['public']['Tables']['contracts']['Row']) => ({
+    const transformedContracts = (contracts && Array.isArray(contracts)) ? contracts.map((contract: ContractSelectResult) => ({
       id: contract.id,
       client: contract.client_name || 'Unknown Client',
       project: contract.title || 'Untitled Project',
