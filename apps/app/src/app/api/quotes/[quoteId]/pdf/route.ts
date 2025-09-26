@@ -12,6 +12,14 @@ interface QuoteItem {
   amount: number
 }
 
+interface SupplierInfo {
+  name?: string
+  phone?: string
+  business_registration_number?: string
+  company_name?: string
+  business_name?: string
+}
+
 interface Quote {
   id: string
   title: string
@@ -29,7 +37,7 @@ interface Quote {
   created_at: string
 }
 
-function generateQuotePDF(quote: Quote, supplierInfo: any): Buffer {
+function generateQuotePDF(quote: Quote, supplierInfo: SupplierInfo): Buffer {
   const pdf = new jsPDF('p', 'mm', 'a4')
 
   // 한글 폰트 설정을 위한 기본 설정

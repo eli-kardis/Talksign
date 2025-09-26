@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
+import type { Database } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
     console.log('Fetched contracts from Supabase:', contracts)
     
     // Transform data to match frontend expectations
-    const transformedContracts = (contracts && Array.isArray(contracts)) ? contracts.map((contract: any) => ({
+    const transformedContracts = (contracts && Array.isArray(contracts)) ? contracts.map((contract: Database['public']['Tables']['contracts']['Row']) => ({
       id: contract.id,
       client: contract.client_name || 'Unknown Client',
       project: contract.title || 'Untitled Project',

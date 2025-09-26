@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     // 견적서 생성
     const expiresAt = body.valid_until ? new Date(body.valid_until).toISOString() : (body.expires_at ? new Date(body.expires_at).toISOString() : null)
     
-    const quoteData: any = {
+    const quoteData: Partial<QuoteInsert> = {
       user_id: userId,
       client_name: body.client_name,
       client_email: body.client_email,
