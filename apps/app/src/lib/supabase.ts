@@ -145,6 +145,9 @@ export type Database = {
           client_email: string
           client_phone?: string
           client_company?: string
+          client_business_number?: string
+          client_address?: string
+          client_logo_url?: string
           title: string
           description?: string
           items: QuoteItem[]
@@ -165,6 +168,9 @@ export type Database = {
           client_email: string
           client_phone?: string
           client_company?: string
+          client_business_number?: string
+          client_address?: string
+          client_logo_url?: string
           title: string
           description?: string
           items: QuoteItem[]
@@ -180,6 +186,9 @@ export type Database = {
           client_email?: string
           client_phone?: string
           client_company?: string
+          client_business_number?: string
+          client_address?: string
+          client_logo_url?: string
           title?: string
           description?: string
           items?: QuoteItem[]
