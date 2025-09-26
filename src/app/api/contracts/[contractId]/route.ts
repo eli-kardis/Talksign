@@ -25,6 +25,7 @@ function createServerSupabaseClient() {
 interface MockContract {
   id: string
   title: string
+  description?: string
   status: string
   client_name: string
   client_email: string
