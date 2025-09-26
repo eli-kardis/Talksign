@@ -54,9 +54,9 @@ export async function POST(request: NextRequest) {
     
     console.log('Creating quote for user:', userId)
 
-    // 사용자별 클라이언트로 견적서 생성 (RLS 적용)
-    const supabase = createUserSupabaseClient(request)
-    console.log('Supabase client created')
+    // 서버 클라이언트로 견적서 생성 (RLS 우회)
+    const supabase = createServerSupabaseClient()
+    console.log('Supabase server client created')
     
     const body = await request.json()
     console.log('Request body:', JSON.stringify(body, null, 2))
@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
       expires_at: expiresAt,
       client_business_number: body.client_business_number || null,
       client_address: body.client_address || null,
+      client_logo_url: body.client_logo_url || null,
     }
     
     console.log('Quote data to insert:', JSON.stringify(quoteData, null, 2))
