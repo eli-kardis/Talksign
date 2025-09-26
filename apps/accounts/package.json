@@ -1,0 +1,30 @@
+{
+  "name": "@talksign/accounts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TalkSign 인증 페이지",
+  "scripts": {
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start -p 3002",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next out"
+  },
+  "dependencies": {
+    "next": "15.4.6",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "tailwindcss": "^4",
+    "lucide-react": "^0.539.0",
+    "@supabase/supabase-js": "^2.55.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5",
+    "eslint": "^9",
+    "eslint-config-next": "15.4.6"
+  }
+}
