@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       subtotal: subtotal,
       tax_rate: taxRate,
       status: body.status || 'draft',
-      expires_at: expiresAt,
+      expires_at: expiresAt ?? undefined,
       client_business_number: body.client_business_number || null,
       client_address: body.client_address || null,
     }

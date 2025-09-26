@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
       items: dbItems,
       subtotal: subtotal,
       status: body.status || 'draft',
-      expires_at: expiresAt || undefined,
+      expires_at: expiresAt ?? undefined,
     }
     
     console.log('Quote data to insert:', JSON.stringify(quoteData, null, 2))
