@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
-import type { Database } from '@/lib/supabase'
-
-type ContractStatus = 'draft' | 'sent' | 'signed' | 'completed' | 'cancelled'
 
 // Type for selected contract fields from Supabase
 interface ContractSelectResult {
@@ -84,13 +81,12 @@ export async function POST(request: NextRequest) {
     const supabase = createUserSupabaseClient(request)
 
     // Get user ID from session (you may need to adjust this based on your auth setup)
-    const authHeader = request.headers.get('authorization')
     let userId = null
     
     // For now, get the first user as a fallback
     const { data: users } = await supabase.from('users').select('id').limit(1)
     if (users && Array.isArray(users) && users.length > 0) {
-      userId = (users[0] as any).id
+      userId = users[0].id
     }
 
     // Prepare contract data for Supabase
@@ -127,7 +123,7 @@ export async function POST(request: NextRequest) {
     // Insert the contract into Supabase
     const { data: contract, error } = await supabase
       .from('contracts')
-      .insert([contractData as any])
+      .insert([contractData])
       .select()
       .single()
 
