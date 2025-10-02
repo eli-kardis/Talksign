@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest, createServerSupabaseClient } from '@/lib/auth-utils'
-import { supabaseAdmin } from '@/lib/supabase'
-import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { logCreate, extractMetadata } from '@/lib/audit-log'
 import type { Database } from '@/lib/supabase'
 
 type QuoteInsert = Database['public']['Tables']['quotes']['Insert']
@@ -14,7 +14,13 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
+
+    // Rate limiting 체크
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.DEFAULT)
+    if (rateLimitError) {
+      return rateLimitError
+    }
+
     console.log('Fetching quotes for user:', userId)
 
     // 사용자별 클라이언트로 견적서 조회 (RLS 적용)
@@ -47,13 +53,19 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     console.log('API Route: POST /api/quotes called')
-    
+
     // 사용자 인증 확인 - 개발 환경에서는 현재 사용자 사용
     const userId = await getUserFromRequest(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
+
+    // Rate limiting 체크
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.DEFAULT)
+    if (rateLimitError) {
+      return rateLimitError
+    }
+
     console.log('Creating quote for user:', userId)
 
     // 사용자별 클라이언트로 견적서 생성 (RLS 적용)
@@ -76,10 +88,6 @@ export async function POST(request: NextRequest) {
     const items = body.items || []
     const subtotal = items.reduce((sum: number, item: { amount?: number }) => sum + (item.amount || 0), 0)
     console.log('Calculated subtotal:', subtotal)
-
-    // 세금 계산 (기본 10%) - tax_amount와 total_amount는 데이터베이스에서 자동 계산됨
-    const taxRate = body.tax_rate || 10.0
-    console.log('Tax rate:', taxRate, 'Subtotal:', subtotal)
 
     // 공급자 정보로 사용자 프로필 업데이트 (필요시)
     if (body.supplier_info) {
@@ -114,7 +122,6 @@ export async function POST(request: NextRequest) {
       description: body.description || null,
       items: items,
       subtotal: subtotal,
-      tax_rate: taxRate,
       status: body.status || 'draft',
       expires_at: expiresAt,
       client_business_number: body.client_business_number || null,
@@ -123,36 +130,26 @@ export async function POST(request: NextRequest) {
     
     console.log('Quote data to insert:', JSON.stringify(quoteData, null, 2))
 
-    // RLS 정책을 우회하기 위해 supabaseAdmin 사용 시도
-    let quote, error
-    try {
-      if (process.env.NODE_ENV === 'development' && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        ({ data: quote, error } = await supabaseAdmin.from('quotes').insert(quoteData).select().single())
-      } else {
-        // 개발 환경에서 service role key가 없을 때는 anon client로 시도
-        // 실제 production에서는 이 방법을 사용하면 안됨
-        console.log('Warning: Using anon key for quote creation due to missing service role key')
-        const anonSupabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
-        ({ data: quote, error } = await anonSupabase.from('quotes').insert(quoteData).select().single())
-      }
-    } catch (insertError) {
-      console.error('Insert operation failed:', insertError)
-      error = insertError
-    }
+    const { data: quote, error } = await supabase
+      .from('quotes')
+      .insert(quoteData)
+      .select()
+      .single()
 
     if (error) {
       console.error('Failed to create quote:', error)
       return NextResponse.json({ 
         error: 'Failed to create quote', 
-        details: (error as any).message,
-        code: (error as any).code 
+        details: error.message,
+        code: error.code 
       }, { status: 500 })
     }
 
     console.log('Quote created successfully:', quote)
+
+    // Audit logging
+    await logCreate(userId, 'quote', quote.id, quoteData, extractMetadata(request))
+
     return NextResponse.json(quote, { status: 201 })
     
   } catch (error) {

@@ -103,13 +103,26 @@ export async function getUserFromRequest(request: NextRequest): Promise<string |
       console.log('No authorization token found')
     }
 
-    // 토큰이 없거나 검증 실패 시 데모 사용자 생성/반환
-    console.log('Falling back to demo user')
+    // 토큰이 없거나 검증 실패 시 처리
+    // ✅ 프로덕션 환경: 인증 실패로 null 반환
+    if (process.env.NODE_ENV === 'production') {
+      console.log('Production environment: No valid authentication')
+      return null
+    }
+
+    // ✅ 개발 환경: 데모 사용자 생성/반환
+    console.log('Development environment: Falling back to demo user')
     return await getOrCreateDemoUser()
 
   } catch (error) {
     console.error('Error getting user from request:', error)
-    // 에러 발생 시에도 데모 사용자 반환
+
+    // ✅ 프로덕션 환경: 에러 발생 시 null 반환
+    if (process.env.NODE_ENV === 'production') {
+      return null
+    }
+
+    // ✅ 개발 환경: 에러 발생 시에도 데모 사용자 반환
     return await getOrCreateDemoUser()
   }
 }
@@ -117,12 +130,6 @@ export async function getUserFromRequest(request: NextRequest): Promise<string |
 // 데모 사용자 생성 또는 기존 사용자 반환
 async function getOrCreateDemoUser(): Promise<string> {
   try {
-    // service role key가 없으면 고정 데모 사용자 ID만 반환
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.log('No service role key available, using hardcoded demo user ID')
-      return '80d20e48-7189-4874-b792-9e514aaa0572'
-    }
-
     const supabase = createServerSupabaseClient()
 
     // 기존 데모 사용자 확인

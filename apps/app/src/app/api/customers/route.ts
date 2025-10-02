@@ -1,44 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { MockCustomerService } from '@/lib/mockData'
 
 
 export async function GET(request: NextRequest) {
   try {
     console.log('API Route: GET /api/customers called')
-    
+
     // 사용자 인증 확인
     const userId = await getUserFromRequest(request)
     if (!userId) {
       console.log('Unauthorized access attempt')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
-    console.log('Authenticated user:', userId)
 
-    // 개발 환경에서 RLS 우회를 위해 users 테이블에 demo user 먼저 생성
-    if (process.env.NODE_ENV === 'development') {
-      try {
-        const demoUserData = {
-          id: userId,
-          email: 'demo@talksign.co.kr',
-          name: '데모 사용자',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-
-        // supabaseAdmin을 사용하여 사용자 생성 (RLS 우회)
-        const { supabaseAdmin } = await import('@/lib/supabase')
-        await supabaseAdmin
-          .from('users')
-          .upsert(demoUserData, { onConflict: 'id' })
-
-        console.log('Demo user ensured for GET request in development')
-      } catch (userError) {
-        console.warn('Failed to ensure demo user:', userError)
-      }
+    // Rate limiting 체크
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.DEFAULT)
+    if (rateLimitError) {
+      return rateLimitError
     }
 
+    console.log('Authenticated user:', userId)
+    
     // RLS가 적용된 Supabase 클라이언트로 데이터 가져오기
     try {
       const supabase = createUserSupabaseClient(request)
@@ -59,16 +43,7 @@ export async function GET(request: NextRequest) {
       }
 
       console.log('Successfully fetched customers from Supabase:', customers ? customers.length : 0)
-
-      // Supabase에서 데이터를 가져왔지만 비어있는 경우에도 mock 데이터 사용
-      if (!customers || customers.length === 0) {
-        console.log('No customers in Supabase, using mock data')
-        const mockCustomers = MockCustomerService.getAll()
-        console.log('Using mock data, fetched customers:', mockCustomers.length)
-        return NextResponse.json(mockCustomers)
-      }
-
-      return NextResponse.json(customers)
+      return NextResponse.json(customers || [])
     } catch (supabaseError) {
       console.error('Supabase connection exception:', supabaseError)
       // 연결 실패 시 mock 데이터 사용
@@ -89,7 +64,13 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
+
+    // Rate limiting 체크
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.DEFAULT)
+    if (rateLimitError) {
+      return rateLimitError
+    }
+
     const body = await request.json()
     console.log('API Route: POST /api/customers called for user:', userId)
     console.log('Request body:', body)
@@ -112,29 +93,6 @@ export async function POST(request: NextRequest) {
         { error: 'Invalid email format' },
         { status: 400 }
       )
-    }
-
-    // 개발 환경에서 RLS 우회를 위해 users 테이블에 demo user 먼저 생성
-    if (process.env.NODE_ENV === 'development') {
-      try {
-        const demoUserData = {
-          id: userId,
-          email: 'demo@talksign.co.kr',
-          name: '데모 사용자',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-
-        // supabaseAdmin을 사용하여 사용자 생성 (RLS 우회)
-        const { supabaseAdmin } = await import('@/lib/supabase')
-        await supabaseAdmin
-          .from('users')
-          .upsert(demoUserData, { onConflict: 'id' })
-
-        console.log('Demo user created/updated for development')
-      } catch (userError) {
-        console.warn('Failed to create demo user:', userError)
-      }
     }
 
     // Supabase에 데이터 저장 (user_id 포함)
@@ -206,10 +164,16 @@ export async function DELETE(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
+
+    // Rate limiting 체크
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.DEFAULT)
+    if (rateLimitError) {
+      return rateLimitError
+    }
+
     const body = await request.json()
     const { customerIds } = body
-    
+
     console.log('API Route: DELETE /api/customers called for user:', userId)
     console.log('Customer IDs to delete:', customerIds)
 

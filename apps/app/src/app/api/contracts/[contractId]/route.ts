@@ -1,25 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { logDelete, extractMetadata } from '@/lib/audit-log'
 import type { Database } from '@/lib/supabase'
-
-// 서버 사이드에서 사용할 Supabase 클라이언트 생성
-function createServerSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321'
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseServiceKey) {
-    throw new Error('Missing Supabase service role key')
-  }
-
-  const client = createClient<Database>(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
-
-  return client
-}
 
 // Mock contract data with detailed information
 const mockContracts: any[] = [
@@ -255,17 +238,30 @@ export async function GET(
 ) {
   try {
     const { contractId } = await params;
-    
+
     if (!contractId) {
       return NextResponse.json({ error: 'Contract ID is required' }, { status: 400 })
+    }
+
+    // 사용자 인증 확인
+    const userId = await getUserFromRequest(request)
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limiting 체크
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.DEFAULT)
+    if (rateLimitError) {
+      return rateLimitError
     }
 
     console.log('API Route: GET /api/contracts/[contractId] called')
     console.log('Contract ID:', contractId)
 
-    const supabase = createServerSupabaseClient()
-    
-    // Get contract from Supabase
+    // RLS가 적용된 클라이언트 사용 (사용자 본인 데이터만 접근 가능)
+    const supabase = createUserSupabaseClient(request)
+
+    // Get contract from Supabase (RLS 정책으로 본인 계약서만 조회 가능)
     const { data: contract, error } = await supabase
       .from('contracts')
       .select(`
@@ -296,11 +292,11 @@ export async function GET(
 
     if (error) {
       console.error('Error fetching contract:', error)
-      
+
       if (error.code === 'PGRST116') {
         return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
       }
-      
+
       return NextResponse.json({ error: 'Failed to fetch contract' }, { status: 500 })
     }
 
@@ -393,17 +389,37 @@ export async function DELETE(
 ) {
   try {
     const { contractId } = await params;
-    
+
     if (!contractId) {
       return NextResponse.json({ error: 'Contract ID is required' }, { status: 400 })
+    }
+
+    // 사용자 인증 확인
+    const userId = await getUserFromRequest(request)
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limiting 체크
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.DEFAULT)
+    if (rateLimitError) {
+      return rateLimitError
     }
 
     console.log('API Route: DELETE /api/contracts/[contractId] called')
     console.log('Contract ID:', contractId)
 
-    const supabase = createServerSupabaseClient()
-    
-    // 계약서 삭제
+    // RLS가 적용된 클라이언트 사용 (사용자 본인 데이터만 삭제 가능)
+    const supabase = createUserSupabaseClient(request)
+
+    // 삭제 전 데이터 조회 (audit log용)
+    const { data: contractToDelete } = await supabase
+      .from('contracts')
+      .select('*')
+      .eq('id', contractId)
+      .single()
+
+    // 계약서 삭제 (RLS 정책으로 본인 계약서만 삭제 가능)
     const { error } = await supabase
       .from('contracts')
       .delete()
@@ -411,15 +427,20 @@ export async function DELETE(
 
     if (error) {
       console.error('Error deleting contract:', error)
-      
+
       if (error.code === 'PGRST116') {
         return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
       }
-      
+
       return NextResponse.json({ error: 'Failed to delete contract' }, { status: 500 })
     }
 
     console.log('Contract deleted successfully:', contractId)
+
+    // Audit logging
+    if (contractToDelete) {
+      await logDelete(userId, 'contract', contractId, contractToDelete, extractMetadata(request))
+    }
 
     return NextResponse.json({ message: 'Contract deleted successfully' }, { status: 200 })
   } catch (error) {

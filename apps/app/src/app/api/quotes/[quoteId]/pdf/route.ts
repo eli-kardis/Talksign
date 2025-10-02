@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { logSensitiveOperation, extractMetadata } from '@/lib/audit-log'
 import jsPDF from 'jspdf'
 
 export const runtime = 'nodejs'
@@ -176,6 +178,12 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Rate limiting 체크 (PDF 생성은 더 많은 요청 허용)
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.FILE_OPERATIONS)
+    if (rateLimitError) {
+      return rateLimitError
+    }
+
     const supabase = createUserSupabaseClient(request)
 
     // 견적서 조회
@@ -201,6 +209,19 @@ export async function GET(
 
     // PDF 생성
     const pdfBuffer = generateQuotePDF(quote, supplierInfo)
+
+    // Audit logging for sensitive operation (PDF export)
+    await logSensitiveOperation(
+      userId,
+      'export',
+      'quote',
+      quoteId,
+      {
+        ...extractMetadata(request),
+        export_type: 'pdf',
+        file_name: `quote-${quote.id}.pdf`
+      }
+    )
 
     // PDF 응답 반환
     return new NextResponse(new Uint8Array(pdfBuffer), {

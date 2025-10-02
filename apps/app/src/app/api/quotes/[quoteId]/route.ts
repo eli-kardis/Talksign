@@ -1,25 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { logDelete, extractMetadata } from '@/lib/audit-log'
 import type { Database } from '@/lib/supabase'
-
-// 서버 사이드에서 사용할 Supabase 클라이언트 생성
-function createServerSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321'
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseServiceKey) {
-    throw new Error('Missing Supabase service role key')
-  }
-
-  const client = createClient<Database>(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
-
-  return client
-}
 
 export async function GET(
   request: NextRequest,
@@ -27,14 +10,28 @@ export async function GET(
 ) {
   try {
     const { quoteId } = await params;
-    
+
     if (!quoteId) {
       return NextResponse.json({ error: 'Quote ID is required' }, { status: 400 })
     }
 
-    const supabase = createServerSupabaseClient()
-    
+    // 사용자 인증 확인
+    const userId = await getUserFromRequest(request)
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limiting 체크
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.DEFAULT)
+    if (rateLimitError) {
+      return rateLimitError
+    }
+
+    // RLS가 적용된 클라이언트 사용 (사용자 본인 데이터만 접근 가능)
+    const supabase = createUserSupabaseClient(request)
+
     // 특정 견적서 조회 (공급자 정보 포함)
+    // RLS 정책으로 user_id가 자동으로 필터링됨
     const { data: quote, error } = await supabase
       .from('quotes')
       .select(`
@@ -54,11 +51,11 @@ export async function GET(
 
     if (error) {
       console.error('Error fetching quote:', error)
-      
+
       if (error.code === 'PGRST116') {
         return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
       }
-      
+
       return NextResponse.json({ error: 'Failed to fetch quote' }, { status: 500 })
     }
 
@@ -79,17 +76,30 @@ export async function PUT(
 ) {
   try {
     const { quoteId } = await params;
-    
+
     if (!quoteId) {
       return NextResponse.json({ error: 'Quote ID is required' }, { status: 400 })
+    }
+
+    // 사용자 인증 확인
+    const userId = await getUserFromRequest(request)
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limiting 체크
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.DEFAULT)
+    if (rateLimitError) {
+      return rateLimitError
     }
 
     const body = await request.json()
     console.log('API Route: PUT /api/quotes/[quoteId] called')
     console.log('Request body:', body)
 
-    const supabase = createServerSupabaseClient()
-    
+    // RLS가 적용된 클라이언트 사용 (사용자 본인 데이터만 수정 가능)
+    const supabase = createUserSupabaseClient(request)
+
     // 견적서 아이템들의 subtotal 계산
     const subtotal = body.items?.reduce((sum: number, item: any) => {
       return sum + (item.unit_price * item.quantity)
@@ -119,7 +129,7 @@ export async function PUT(
 
     console.log('Quote data to update:', quoteData)
 
-    // 견적서 업데이트
+    // 견적서 업데이트 (RLS 정책으로 본인 견적서만 수정 가능)
     const { data: quote, error } = await supabase
       .from('quotes')
       .update(quoteData)
@@ -147,17 +157,37 @@ export async function DELETE(
 ) {
   try {
     const { quoteId } = await params;
-    
+
     if (!quoteId) {
       return NextResponse.json({ error: 'Quote ID is required' }, { status: 400 })
+    }
+
+    // 사용자 인증 확인
+    const userId = await getUserFromRequest(request)
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limiting 체크
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.DEFAULT)
+    if (rateLimitError) {
+      return rateLimitError
     }
 
     console.log('API Route: DELETE /api/quotes/[quoteId] called')
     console.log('Quote ID:', quoteId)
 
-    const supabase = createServerSupabaseClient()
-    
-    // 견적서 삭제
+    // RLS가 적용된 클라이언트 사용 (사용자 본인 데이터만 삭제 가능)
+    const supabase = createUserSupabaseClient(request)
+
+    // 삭제 전 데이터 조회 (audit log용)
+    const { data: quoteToDelete } = await supabase
+      .from('quotes')
+      .select('*')
+      .eq('id', quoteId)
+      .single()
+
+    // 견적서 삭제 (RLS 정책으로 본인 견적서만 삭제 가능)
     const { error } = await supabase
       .from('quotes')
       .delete()
@@ -165,15 +195,20 @@ export async function DELETE(
 
     if (error) {
       console.error('Error deleting quote:', error)
-      
+
       if (error.code === 'PGRST116') {
         return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
       }
-      
+
       return NextResponse.json({ error: 'Failed to delete quote' }, { status: 500 })
     }
 
     console.log('Quote deleted successfully:', quoteId)
+
+    // Audit logging
+    if (quoteToDelete) {
+      await logDelete(userId, 'quote', quoteId, quoteToDelete, extractMetadata(request))
+    }
 
     return NextResponse.json({ message: 'Quote deleted successfully' }, { status: 200 })
   } catch (error) {

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { logCreate, extractMetadata } from '@/lib/audit-log'
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,7 +10,13 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
+
+    // Rate limiting 체크
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.DEFAULT)
+    if (rateLimitError) {
+      return rateLimitError
+    }
+
     console.log('API Route: GET /api/contracts called for user:', userId)
     
     // RLS가 적용된 클라이언트로 사용자 소유 계약서만 조회
@@ -61,28 +69,33 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    console.log('API Route: POST /api/contracts called')
-    console.log('Request body:', body)
-
-    const supabase = createUserSupabaseClient(request)
-
-    // Get user ID from session (you may need to adjust this based on your auth setup)
-    const authHeader = request.headers.get('authorization')
-    let userId = null
-    
-    // For now, get the first user as a fallback
-    const { data: users } = await supabase.from('users').select('id').limit(1)
-    if (users && Array.isArray(users) && users.length > 0) {
-      userId = (users[0] as any).id
+    // 사용자 인증 확인 (가장 먼저 수행)
+    const userId = await getUserFromRequest(request)
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Rate limiting 체크
+    const rateLimitError = checkRateLimit(userId, RATE_LIMITS.DEFAULT)
+    if (rateLimitError) {
+      return rateLimitError
+    }
+
+    const body = await request.json()
+    console.log('API Route: POST /api/contracts called')
+    console.log('User ID:', userId)
+    console.log('Request body:', body)
+
+    // RLS가 적용된 클라이언트 사용
+    const supabase = createUserSupabaseClient(request)
+
     // Prepare contract data for Supabase
+    // user_id는 인증된 userId 사용 (절대 클라이언트에서 받지 않음)
     const contractData = {
       title: body.title || 'New Contract',
       content: body.description || '',
       status: body.status || 'draft',
-      user_id: userId,
+      user_id: userId,  // ✅ 인증된 사용자 ID 사용
       quote_id: body.quote_id || null,
       client_name: body.client_name,
       client_email: body.client_email,
@@ -108,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Saving contract data to Supabase:', contractData)
 
-    // Insert the contract into Supabase
+    // Insert the contract into Supabase (RLS 정책으로 본인 계약서만 생성 가능)
     const { data: contract, error } = await supabase
       .from('contracts')
       .insert([contractData as any])
@@ -121,6 +134,9 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Contract created successfully:', contract)
+
+    // Audit logging
+    await logCreate(userId, 'contract', contract.id, contractData, extractMetadata(request))
 
     return NextResponse.json(contract, { status: 201 })
   } catch (error) {
