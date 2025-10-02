@@ -12,6 +12,14 @@ interface ContractItem {
   amount: number
 }
 
+interface SupplierInfo {
+  name?: string
+  phone?: string
+  business_registration_number?: string
+  company_name?: string
+  business_name?: string
+}
+
 interface Contract {
   id: string
   title: string
@@ -39,7 +47,7 @@ interface Contract {
   signed_at?: string
 }
 
-function generateContractPDF(contract: Contract, supplierInfo: any): Buffer {
+function generateContractPDF(contract: Contract, supplierInfo: SupplierInfo): Buffer {
   const pdf = new jsPDF('p', 'mm', 'a4')
 
   pdf.setFont('helvetica')

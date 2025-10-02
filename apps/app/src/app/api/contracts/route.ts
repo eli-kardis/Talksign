@@ -3,6 +3,19 @@ import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logCreate, extractMetadata } from '@/lib/audit-log'
 
+// Type for selected contract fields from Supabase
+interface ContractSelectResult {
+  id: string
+  title: string | null
+  client_name: string | null
+  client_phone: string | null
+  total_amount: number | null
+  status: string | null
+  created_at: string
+  signed_at: string | null
+  contract_url: string | null
+}
+
 export async function GET(request: NextRequest) {
   try {
     // 사용자 인증 확인
@@ -46,7 +59,7 @@ export async function GET(request: NextRequest) {
     console.log('Fetched contracts from Supabase:', contracts)
     
     // Transform data to match frontend expectations
-    const transformedContracts = (contracts && Array.isArray(contracts)) ? contracts.map((contract: any) => ({
+    const transformedContracts = (contracts && Array.isArray(contracts)) ? contracts.map((contract: ContractSelectResult) => ({
       id: contract.id,
       client: contract.client_name || 'Unknown Client',
       project: contract.title || 'Untitled Project',
@@ -124,7 +137,7 @@ export async function POST(request: NextRequest) {
     // Insert the contract into Supabase (RLS 정책으로 본인 계약서만 생성 가능)
     const { data: contract, error } = await supabase
       .from('contracts')
-      .insert([contractData as any])
+      .insert([contractData])
       .select()
       .single()
 

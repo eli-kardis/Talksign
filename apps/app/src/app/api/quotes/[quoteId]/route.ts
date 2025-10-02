@@ -101,7 +101,7 @@ export async function PUT(
     const supabase = createUserSupabaseClient(request)
 
     // 견적서 아이템들의 subtotal 계산
-    const subtotal = body.items?.reduce((sum: number, item: any) => {
+    const subtotal = body.items?.reduce((sum: number, item: { unit_price: number; quantity: number }) => {
       return sum + (item.unit_price * item.quantity)
     }, 0) || 0
 

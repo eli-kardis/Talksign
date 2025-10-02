@@ -5,7 +5,48 @@ import { logDelete, extractMetadata } from '@/lib/audit-log'
 import type { Database } from '@/lib/supabase'
 
 // Mock contract data with detailed information
-const mockContracts: any[] = [
+interface MockContract {
+  id: string
+  title: string
+  description?: string
+  status: string
+  client_name: string
+  client_email: string
+  client_phone: string
+  client_company: string | null
+  client_business_number?: string | null
+  client_address?: string
+  project_start_date: string
+  project_end_date: string
+  project_description?: string
+  items: Array<{
+    id: string
+    name: string
+    description: string
+    unit_price: number
+    quantity: number
+    amount: number
+  }>
+  terms: string[]
+  payment_terms?: string
+  subtotal: number
+  tax_amount: number
+  tax_rate: number
+  total_amount: number
+  created_at: string
+  signed_date?: string | null
+  supplier?: {
+    name: string
+    email: string
+    phone: string
+    business_name: string
+    business_registration_number: string
+    company_name: string
+    business_address: string
+  }
+}
+
+const mockContracts: MockContract[] = [
   {
     id: "90cfcedd-b86d-4f13-96c0-bce2d9072665",
     title: "웹사이트 리뉴얼 프로젝트 계약서",
@@ -362,14 +403,13 @@ export async function PUT(
     }
 
     // Update contract in mock data
-    const updatedContract = {
+    const updatedContract: MockContract = {
       ...mockContracts[contractIndex],
-      client: body.clientInfo?.name || mockContracts[contractIndex].client,
-      project: body.contractInfo?.title || mockContracts[contractIndex].project,
-      amount: body.clientInfo?.amount || mockContracts[contractIndex].amount,
-      phone: body.clientInfo?.phone || mockContracts[contractIndex].phone,
-      status: body.isDraft ? 'pending' : 'sent',
-      updatedDate: new Date().toISOString().split('T')[0]
+      client_name: body.clientInfo?.name || mockContracts[contractIndex].client_name,
+      title: body.contractInfo?.title || mockContracts[contractIndex].title,
+      total_amount: body.clientInfo?.amount || mockContracts[contractIndex].total_amount,
+      client_phone: body.clientInfo?.phone || mockContracts[contractIndex].client_phone,
+      status: body.isDraft ? 'draft' : 'sent',
     }
 
     mockContracts[contractIndex] = updatedContract
