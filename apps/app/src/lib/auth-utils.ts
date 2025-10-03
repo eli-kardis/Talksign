@@ -104,25 +104,14 @@ export async function getUserFromRequest(request: NextRequest): Promise<string |
     }
 
     // 토큰이 없거나 검증 실패 시 처리
-    // ✅ 프로덕션 환경: 인증 실패로 null 반환
-    if (process.env.NODE_ENV === 'production') {
-      console.log('Production environment: No valid authentication')
-      return null
-    }
-
-    // ✅ 개발 환경: 데모 사용자 생성/반환
-    console.log('Development environment: Falling back to demo user')
+    // ⚠️ 임시: 프로덕션에서도 데모 유저 허용 (인증 시스템 완성 전까지)
+    console.log('No valid authentication, falling back to demo user')
     return await getOrCreateDemoUser()
 
   } catch (error) {
     console.error('Error getting user from request:', error)
 
-    // ✅ 프로덕션 환경: 에러 발생 시 null 반환
-    if (process.env.NODE_ENV === 'production') {
-      return null
-    }
-
-    // ✅ 개발 환경: 에러 발생 시에도 데모 사용자 반환
+    // ⚠️ 임시: 에러 발생 시에도 데모 사용자 반환
     return await getOrCreateDemoUser()
   }
 }
@@ -213,20 +202,19 @@ export function createUserSupabaseClient(request: NextRequest) {
 
 /**
  * 개발/프로덕션 환경에 맞는 Supabase 클라이언트를 생성합니다.
- * - 프로덕션: 항상 User 클라이언트 사용 (RLS 적용)
- * - 개발 & 토큰 없음: Service Role Key 사용 (RLS 우회, 데모 유저용)
- * - 개발 & 토큰 있음: User 클라이언트 사용 (RLS 적용)
+ * ⚠️ 임시: 토큰이 없으면 항상 Service Role Key 사용 (데모 모드)
+ * TODO: 프로덕션에서 인증 필수로 변경 필요
  */
 export function createSupabaseClient(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
   const hasToken = !!authHeader
 
-  // 개발 환경에서 토큰이 없으면 Service Role Key 사용
-  if (!hasToken && process.env.NODE_ENV !== 'production') {
+  // 토큰이 없으면 Service Role Key 사용 (데모 유저용)
+  if (!hasToken) {
     return createServerSupabaseClient()
   }
 
-  // 그 외의 경우 User 클라이언트 사용
+  // 토큰이 있으면 User 클라이언트 사용 (RLS 적용)
   return createUserSupabaseClient(request)
 }
 
