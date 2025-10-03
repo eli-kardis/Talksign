@@ -211,6 +211,25 @@ export function createUserSupabaseClient(request: NextRequest) {
   return client
 }
 
+/**
+ * 개발/프로덕션 환경에 맞는 Supabase 클라이언트를 생성합니다.
+ * - 프로덕션: 항상 User 클라이언트 사용 (RLS 적용)
+ * - 개발 & 토큰 없음: Service Role Key 사용 (RLS 우회, 데모 유저용)
+ * - 개발 & 토큰 있음: User 클라이언트 사용 (RLS 적용)
+ */
+export function createSupabaseClient(request: NextRequest) {
+  const authHeader = request.headers.get('authorization')
+  const hasToken = !!authHeader
+
+  // 개발 환경에서 토큰이 없으면 Service Role Key 사용
+  if (!hasToken && process.env.NODE_ENV !== 'production') {
+    return createServerSupabaseClient()
+  }
+
+  // 그 외의 경우 User 클라이언트 사용
+  return createUserSupabaseClient(request)
+}
+
 // 서버 사이드에서 사용할 Supabase 클라이언트 생성 (service role key 사용)
 export function createServerSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

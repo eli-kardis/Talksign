@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
+import { createSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logCreate, extractMetadata } from '@/lib/audit-log'
 
@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('API Route: GET /api/contracts called for user:', userId)
-    
-    // RLS가 적용된 클라이언트로 사용자 소유 계약서만 조회
-    const supabase = createUserSupabaseClient(request)
+
+    // 환경에 맞는 Supabase 클라이언트 생성
+    const supabase = createSupabaseClient(request)
     
     // Get contracts from Supabase
     const { data: contracts, error } = await supabase
@@ -99,8 +99,8 @@ export async function POST(request: NextRequest) {
     console.log('User ID:', userId)
     console.log('Request body:', body)
 
-    // RLS가 적용된 클라이언트 사용
-    const supabase = createUserSupabaseClient(request)
+    // 환경에 맞는 Supabase 클라이언트 생성
+    const supabase = createSupabaseClient(request)
 
     // Prepare contract data for Supabase
     // user_id는 인증된 userId 사용 (절대 클라이언트에서 받지 않음)

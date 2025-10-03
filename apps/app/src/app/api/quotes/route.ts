@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createUserSupabaseClient, getUserFromRequest, createServerSupabaseClient } from '@/lib/auth-utils'
+import { createSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logCreate, extractMetadata } from '@/lib/audit-log'
 import type { Database } from '@/lib/supabase'
@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
 
     console.log('Fetching quotes for user:', userId)
 
-    // 사용자별 클라이언트로 견적서 조회 (RLS 적용)
-    const supabase = createUserSupabaseClient(request)
+    // 환경에 맞는 Supabase 클라이언트 생성
+    const supabase = createSupabaseClient(request)
 
     const { data: quotes, error } = await supabase
       .from('quotes')
@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
 
     console.log('Creating quote for user:', userId)
 
-    // 사용자별 클라이언트로 견적서 생성 (RLS 적용)
-    const supabase = createUserSupabaseClient(request)
+    // 환경에 맞는 Supabase 클라이언트 생성
+    const supabase = createSupabaseClient(request)
     console.log('Supabase client created')
     
     const body = await request.json()
