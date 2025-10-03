@@ -39,7 +39,7 @@ export class AuthenticatedApiClient {
     })
   }
 
-  static async post(url: string, data: any): Promise<Response> {
+  static async post(url: string, data: unknown): Promise<Response> {
     const headers = await this.getAuthHeaders()
     return fetch(url, {
       method: 'POST',
@@ -48,7 +48,7 @@ export class AuthenticatedApiClient {
     })
   }
 
-  static async put(url: string, data: any): Promise<Response> {
+  static async put(url: string, data: unknown): Promise<Response> {
     const headers = await this.getAuthHeaders()
     return fetch(url, {
       method: 'PUT',
@@ -57,7 +57,7 @@ export class AuthenticatedApiClient {
     })
   }
 
-  static async delete(url: string, data?: any): Promise<Response> {
+  static async delete(url: string, data?: unknown): Promise<Response> {
     const headers = await this.getAuthHeaders()
     const config: RequestInit = {
       method: 'DELETE',

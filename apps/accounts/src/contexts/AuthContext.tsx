@@ -20,7 +20,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // public.users 테이블에 사용자 레코드가 있는지 확인하고 없으면 생성
-async function ensureUserExists(authUser: any) {
+async function ensureUserExists(authUser: { id: string; email?: string; user_metadata?: Record<string, unknown> }) {
   try {
     console.log('Checking user existence for:', authUser.id)
     
