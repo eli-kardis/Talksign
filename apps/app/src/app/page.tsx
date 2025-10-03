@@ -72,9 +72,9 @@ export default function Page() {
     )
   }
 
-  // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+  // 로그인하지 않은 경우 account.talksign.co.kr로 리디렉션
   if (!user) {
-    router.push('/login')
+    window.location.href = 'https://account.talksign.co.kr/auth/signin'
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
