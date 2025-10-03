@@ -47,10 +47,10 @@ export function EmailVerification({ email, onResendEmail, onBackToSignup }: Emai
           text: result.error || '이메일 재전송에 실패했습니다.' 
         })
       }
-    } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: '이메일 재전송 중 오류가 발생했습니다.' 
+    } catch {
+      setMessage({
+        type: 'error',
+        text: '이메일 재전송 중 오류가 발생했습니다.'
       })
     } finally {
       setIsResending(false)

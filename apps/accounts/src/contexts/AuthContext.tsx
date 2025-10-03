@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import type { Session } from '@supabase/supabase-js'
 import type { User } from '@/types/user'
 import { supabase } from '@/lib/supabase'
 import { auth, type UserData, type AuthResult } from '@/lib/auth'
@@ -96,8 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         )
         
         const result = await Promise.race([sessionPromise, timeoutPromise])
-        const { data: { session }, error } = result as any
-        
+        const { data: { session }, error } = result as { data: { session: Session | null }; error: { message?: string } | null }
+
         if (!mounted) return
 
         if (error) {
