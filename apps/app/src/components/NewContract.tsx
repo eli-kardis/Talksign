@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ArrowLeft, MessageSquare, Save, User, Building, AlertTriangle, Plus, X, Edit3 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { CustomerSelector } from './CustomerSelector';
+import { SupplierSignatureModal } from './SupplierSignatureModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters';
 
@@ -85,6 +86,11 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   const [showQuoteDialog, setShowQuoteDialog] = useState(false);
   const [quotes, setQuotes] = useState<any[]>([]);
   const [loadingQuotes, setLoadingQuotes] = useState(false);
+
+  // 전자서명 관련 상태
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [supplierSignature, setSupplierSignature] = useState<string | null>(null);
+  const [pendingContractData, setPendingContractData] = useState<any>(null);
 
   // 1. 계약서 기본 정보
   const [contractBasicInfo, setContractBasicInfo] = useState({
@@ -624,60 +630,96 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       return;
     }
 
-    setIsLoading(true);
-    
-    try {
-      const contractData = {
-        title: contractBasicInfo.title,
-        description: contractBasicInfo.description,
-        client_name: clientInfo.name,
-        client_email: clientInfo.email,
-        client_phone: clientInfo.phone,
-        client_company: clientInfo.company,
-        client_business_number: clientInfo.businessNumber,
-        client_address: clientInfo.address,
-        supplier_info: supplierInfo,
-        project_start_date: projectInfo.startDate,
-        project_end_date: projectInfo.endDate,
-        project_description: projectInfo.description,
-        items: contractItems,
-        terms: contractTerms.filter(term => term.trim()),
-        payment_terms: paymentInfo.paymentTerms === 'custom' ? paymentInfo.customPaymentTerms : paymentInfo.paymentTerms,
-        payment_method: paymentInfo.paymentMethod,
-        additional_terms: paymentInfo.additionalTerms,
-        ...calculateTotals(),
-        status: 'sent',
-        ...(initialData?.quoteId && { quote_id: initialData.quoteId })
-      };
+    // 계약서 데이터 준비
+    const contractData = {
+      title: contractBasicInfo.title,
+      description: contractBasicInfo.description,
+      client_name: clientInfo.name,
+      client_email: clientInfo.email,
+      client_phone: clientInfo.phone,
+      client_company: clientInfo.company,
+      client_business_number: clientInfo.businessNumber,
+      client_address: clientInfo.address,
+      supplier_info: supplierInfo,
+      project_start_date: projectInfo.startDate,
+      project_end_date: projectInfo.endDate,
+      project_description: projectInfo.description,
+      items: contractItems,
+      terms: contractTerms.filter(term => term.trim()),
+      payment_terms: paymentInfo.paymentTerms === 'custom' ? paymentInfo.customPaymentTerms : paymentInfo.paymentTerms,
+      payment_method: paymentInfo.paymentMethod,
+      additional_terms: paymentInfo.additionalTerms,
+      ...calculateTotals(),
+      status: 'draft', // 먼저 draft로 저장
+      ...(initialData?.quoteId && { quote_id: initialData.quoteId })
+    };
 
+    // 계약서 데이터 저장 후 서명 모달 표시
+    setPendingContractData(contractData);
+    setShowSignatureModal(true);
+  };
+
+  // 서명 완료 후 실제 전송 처리
+  const handleSignatureConfirm = async (signatureData: string) => {
+    if (!pendingContractData) return;
+
+    setIsLoading(true);
+
+    try {
+      let contractId = editContractId;
+
+      // 1. 계약서 생성 또는 수정 (draft 상태로)
       if (isEdit && editContractId) {
         const response = await fetch(`/api/contracts/${editContractId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(contractData),
+          body: JSON.stringify(pendingContractData),
         });
 
         if (!response.ok) {
           throw new Error('계약서 수정에 실패했습니다.');
         }
-        
-        alert(`${clientInfo.name}님께 수정된 계약서가 발송되었습니다!`);
       } else {
         const response = await fetch('/api/contracts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(contractData),
+          body: JSON.stringify(pendingContractData),
         });
 
         if (!response.ok) {
           throw new Error('계약서 생성에 실패했습니다.');
         }
-        
-        alert(`${clientInfo.name}님께 계약서가 발송되었습니다!`);
+
+        const contract = await response.json();
+        contractId = contract.id;
       }
 
-      // 성공 시 처리
+      // 2. 공급자 서명 추가
+      const signResponse = await fetch(`/api/contracts/${contractId}/sign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signatureData }),
+      });
 
+      if (!signResponse.ok) {
+        throw new Error('서명 저장에 실패했습니다.');
+      }
+
+      // 3. 계약서 상태를 'sent'로 변경
+      const updateResponse = await fetch(`/api/contracts/${contractId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...pendingContractData, status: 'sent' }),
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('계약서 전송에 실패했습니다.');
+      }
+
+      setSupplierSignature(signatureData);
+      alert(`${clientInfo.name}님께 서명된 계약서가 발송되었습니다!`);
+
+      // 성공 시 처리
       if (isEdit) {
         setInitialFormData({
           contractBasicInfo, clientInfo, supplierInfo, projectInfo,
@@ -685,13 +727,14 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         });
         setHasUnsavedChanges(false);
       }
-      
+
       onNavigate('contracts');
     } catch (error) {
       console.error('Contract save error:', error);
       alert(error instanceof Error ? error.message : '계약서 저장에 실패했습니다.');
     } finally {
       setIsLoading(false);
+      setPendingContractData(null);
     }
   };
 
@@ -1695,6 +1738,17 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 공급자 전자서명 모달 */}
+      <SupplierSignatureModal
+        open={showSignatureModal}
+        onClose={() => {
+          setShowSignatureModal(false);
+          setPendingContractData(null);
+        }}
+        onConfirm={handleSignatureConfirm}
+        supplierName={supplierInfo.name || user?.name || ''}
+      />
     </div>
   );
 }

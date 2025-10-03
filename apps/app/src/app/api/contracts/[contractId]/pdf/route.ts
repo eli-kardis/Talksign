@@ -20,6 +20,14 @@ interface SupplierInfo {
   business_name?: string
 }
 
+interface SignatureData {
+  data: string
+  signedAt: string
+  signedBy: string
+  ipAddress: string
+  userAgent: string
+}
+
 interface Contract {
   id: string
   title: string
@@ -45,6 +53,8 @@ interface Contract {
   status: string
   created_at: string
   signed_at?: string
+  freelancer_signature_data?: SignatureData
+  client_signature_data?: SignatureData
 }
 
 function generateContractPDF(contract: Contract, supplierInfo: SupplierInfo): Buffer {
@@ -270,15 +280,44 @@ function generateContractPDF(contract: Contract, supplierInfo: SupplierInfo): Bu
   // 서명 공간
   pdf.text('갑 (공급자)', 30, yPosition)
   pdf.text('을 (고객)', 130, yPosition)
-  yPosition += 15
+  yPosition += 10
 
-  if (supplierInfo?.name) {
-    pdf.text(`서명: ${supplierInfo.name}`, 30, yPosition)
+  // 공급자 서명 이미지 또는 텍스트
+  if (contract.freelancer_signature_data?.data) {
+    try {
+      // 서명 이미지를 PDF에 추가
+      const signatureImage = contract.freelancer_signature_data.data
+      pdf.addImage(signatureImage, 'PNG', 30, yPosition, 40, 15)
+      yPosition += 18
+      pdf.setFontSize(8)
+      pdf.text(`서명일: ${new Date(contract.freelancer_signature_data.signedAt).toLocaleDateString('ko-KR')}`, 30, yPosition)
+      pdf.setFontSize(10)
+    } catch (error) {
+      console.error('Error adding supplier signature image:', error)
+      pdf.text(`서명: ${supplierInfo?.name || '_______________'}`, 30, yPosition)
+    }
   } else {
-    pdf.text('서명: _______________', 30, yPosition)
+    pdf.text(`서명: ${supplierInfo?.name || '_______________'}`, 30, yPosition)
   }
 
-  pdf.text(`서명: ${contract.client_name}`, 130, yPosition)
+  // 고객 서명 이미지 또는 텍스트
+  const clientYPosition = yPosition - (contract.freelancer_signature_data?.data ? 18 : 0)
+  if (contract.client_signature_data?.data) {
+    try {
+      // 고객 서명 이미지를 PDF에 추가
+      const clientSignatureImage = contract.client_signature_data.data
+      pdf.addImage(clientSignatureImage, 'PNG', 130, clientYPosition, 40, 15)
+      const clientSignDateY = clientYPosition + 18
+      pdf.setFontSize(8)
+      pdf.text(`서명일: ${new Date(contract.client_signature_data.signedAt).toLocaleDateString('ko-KR')}`, 130, clientSignDateY)
+      pdf.setFontSize(10)
+    } catch (error) {
+      console.error('Error adding client signature image:', error)
+      pdf.text(`서명: ${contract.client_name}`, 130, clientYPosition)
+    }
+  } else {
+    pdf.text(`서명: _______________`, 130, clientYPosition)
+  }
 
   return Buffer.from(pdf.output('arraybuffer'))
 }
