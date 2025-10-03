@@ -8,12 +8,24 @@ export class AuthenticatedApiClient {
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      console.log('[AuthenticatedApiClient] Getting session...')
+      const { data: { session }, error } = await supabase.auth.getSession()
+
+      if (error) {
+        console.error('[AuthenticatedApiClient] Session error:', error)
+        return headers
+      }
+
       if (session?.access_token) {
+        console.log('[AuthenticatedApiClient] Session found, adding Authorization header')
+        console.log('[AuthenticatedApiClient] Token preview:', session.access_token.substring(0, 20) + '...')
         headers['Authorization'] = `Bearer ${session.access_token}`
+      } else {
+        console.warn('[AuthenticatedApiClient] No session or access_token found')
+        console.log('[AuthenticatedApiClient] Session data:', session)
       }
     } catch (error) {
-      console.error('Failed to get session token:', error)
+      console.error('[AuthenticatedApiClient] Failed to get session token:', error)
     }
 
     return headers

@@ -38,26 +38,41 @@ export function createAuthenticatedSupabaseClient(request: NextRequest) {
 // JWT 토큰 검증 함수
 async function verifySupabaseJWT(token: string): Promise<string | null> {
   try {
+    console.log('[Auth] Verifying JWT token...')
+    console.log('[Auth] Token preview:', token.substring(0, 30) + '...')
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     if (!supabaseUrl) {
-      console.error('Missing NEXT_PUBLIC_SUPABASE_URL for JWT verification')
+      console.error('[Auth] Missing NEXT_PUBLIC_SUPABASE_URL for JWT verification')
       return null
     }
 
-    // Supabase JWT 검증을 위한 JWKS URL
-    const jwksUrl = new URL(`${supabaseUrl}/rest/v1/jwks`)
+    // Supabase JWT 검증을 위한 JWKS URL (올바른 엔드포인트)
+    const jwksUrl = new URL(`${supabaseUrl}/auth/v1/jwks`)
+    console.log('[Auth] JWKS URL:', jwksUrl.toString())
+
     const JWKS = createRemoteJWKSet(jwksUrl)
 
-    // JWT 검증
+    // JWT 검증 - Supabase의 실제 issuer 형식 사용
+    const issuerUrl = `${supabaseUrl}/auth/v1`
+    console.log('[Auth] Expected issuer:', issuerUrl)
+
     const { payload } = await jwtVerify(token, JWKS, {
-      issuer: 'supabase',
+      issuer: issuerUrl,
       audience: 'authenticated',
     })
+
+    console.log('[Auth] JWT verified successfully')
+    console.log('[Auth] User ID from token:', payload.sub)
 
     // 사용자 ID 반환
     return payload.sub || null
   } catch (error) {
-    console.log('JWT verification failed:', error)
+    console.error('[Auth] JWT verification failed:', error)
+    if (error instanceof Error) {
+      console.error('[Auth] Error name:', error.name)
+      console.error('[Auth] Error message:', error.message)
+    }
     return null
   }
 }
@@ -65,53 +80,69 @@ async function verifySupabaseJWT(token: string): Promise<string | null> {
 // 사용자 인증 확인 및 user_id 반환
 export async function getUserFromRequest(request: NextRequest): Promise<string | null> {
   try {
-    console.log('Getting user from request, NODE_ENV:', process.env.NODE_ENV)
+    console.log('[Auth] ==================== NEW REQUEST ====================')
+    console.log('[Auth] Getting user from request')
+    console.log('[Auth] NODE_ENV:', process.env.NODE_ENV)
+    console.log('[Auth] Request URL:', request.url)
+    console.log('[Auth] Request method:', request.method)
 
     // 인증 토큰 확인 시도
     const authHeader = request.headers.get('authorization')
+    console.log('[Auth] Authorization header present:', !!authHeader)
+
     const token = authHeader?.replace('Bearer ', '')
 
     if (token) {
-      console.log('Token found, attempting validation...')
+      console.log('[Auth] Token found, length:', token.length)
+      console.log('[Auth] Attempting JWT validation...')
 
       try {
         // JWT 토큰 검증 (보안 강화)
         const userId = await verifySupabaseJWT(token)
 
         if (userId && userId !== 'undefined') {
-          console.log('Valid authenticated user from token:', userId)
+          console.log('[Auth] ✓ Valid authenticated user from token:', userId)
 
           // 사용자 존재 확인 (선택적)
           const supabase = createServerSupabaseClient()
-          const { data: user } = await supabase
+          const { data: user, error: userError } = await supabase
             .from('users')
             .select('id')
             .eq('id', userId)
             .single()
 
+          if (userError) {
+            console.error('[Auth] Error checking user in database:', userError)
+          }
+
           if (user) {
-            console.log('User exists in database:', user.id)
+            console.log('[Auth] ✓ User exists in database:', user.id)
             return user.id
           } else {
-            console.log('User not found in database, creating demo user')
+            console.warn('[Auth] ✗ User not found in database, will fall back to demo user')
           }
+        } else {
+          console.warn('[Auth] ✗ Invalid or undefined userId from token')
         }
       } catch (tokenError) {
-        console.log('Token verification failed:', tokenError)
+        console.error('[Auth] ✗ Token verification exception:', tokenError)
       }
     } else {
-      console.log('No authorization token found')
+      console.warn('[Auth] ✗ No authorization token found in request')
     }
 
     // 토큰이 없거나 검증 실패 시 처리
     // ⚠️ 임시: 프로덕션에서도 데모 유저 허용 (인증 시스템 완성 전까지)
-    console.log('No valid authentication, falling back to demo user')
-    return await getOrCreateDemoUser()
+    console.log('[Auth] → Falling back to demo user')
+    const demoUserId = await getOrCreateDemoUser()
+    console.log('[Auth] Demo user ID:', demoUserId)
+    return demoUserId
 
   } catch (error) {
-    console.error('Error getting user from request:', error)
+    console.error('[Auth] ✗ Error getting user from request:', error)
 
     // ⚠️ 임시: 에러 발생 시에도 데모 사용자 반환
+    console.log('[Auth] → Falling back to demo user due to error')
     return await getOrCreateDemoUser()
   }
 }
