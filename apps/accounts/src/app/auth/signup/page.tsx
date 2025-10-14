@@ -6,11 +6,14 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Signup } from '@/components/Signup'
 import { TermsOfService } from '@/components/TermsOfService'
 import { PrivacyPolicy } from '@/components/PrivacyPolicy'
+import { EmailVerification } from '@/components/EmailVerification'
+import { supabase } from '@/lib/supabase'
 
 export default function SignUpPage() {
   const { user, isLoading } = useAuth()
   const router = useRouter()
   const [view, setView] = useState('signup')
+  const [signupEmail, setSignupEmail] = useState('')
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -25,9 +28,27 @@ export default function SignUpPage() {
     } else if (newView === 'dashboard') {
       // 메인 앱으로 리디렉션
       window.location.href = 'https://app.talksign.co.kr/dashboard'
+    } else if (newView === 'email-verification') {
+      // 회원가입 후 이메일 인증 페이지로
+      setView('email-verification')
     } else {
       setView(newView)
     }
+  }
+
+  const handleResendEmail = async () => {
+    if (!signupEmail) return { success: false, error: '이메일 정보가 없습니다.' }
+
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: signupEmail,
+    })
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
   }
 
   if (isLoading) {
@@ -49,5 +70,23 @@ export default function SignUpPage() {
     return <PrivacyPolicy onNavigate={handleNavigate} />
   }
 
-  return <Signup onNavigate={handleNavigate} />
+  if (view === 'email-verification') {
+    return (
+      <EmailVerification
+        email={signupEmail}
+        onResendEmail={handleResendEmail}
+        onBackToSignup={() => setView('signup')}
+      />
+    )
+  }
+
+  return (
+    <Signup
+      onNavigate={handleNavigate}
+      onSignupSuccess={(email) => {
+        setSignupEmail(email)
+        handleNavigate('email-verification')
+      }}
+    />
+  )
 }

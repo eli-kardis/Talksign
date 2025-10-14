@@ -13,9 +13,10 @@ import type { UserData } from '@/lib/auth'
 
 interface SignupProps {
   onNavigate: (view: string) => void
+  onSignupSuccess?: (email: string) => void
 }
 
-export function Signup({ onNavigate }: SignupProps) {
+export function Signup({ onNavigate, onSignupSuccess }: SignupProps) {
   const { signUp } = useAuth()
   const [formData, setFormData] = useState<UserData>({
     name: '',
@@ -69,8 +70,12 @@ export function Signup({ onNavigate }: SignupProps) {
     const result = await signUp(formData)
     
     if (result.success) {
-      alert('회원가입이 완료되었습니다. 로그인해 주세요.')
-      onNavigate('login')
+      // 이메일 인증 페이지로 이동 (이메일 정보 전달)
+      if (onSignupSuccess) {
+        onSignupSuccess(formData.email)
+      } else {
+        onNavigate('email-verification')
+      }
     } else {
       setError(result.error || '회원가입에 실패했습니다.')
     }
