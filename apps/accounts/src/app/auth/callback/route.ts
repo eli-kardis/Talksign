@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
 
     console.log('[Callback] Environment variables OK')
 
+    // 리다이렉트 응답 생성
+    let redirectUrl = 'https://app.talksign.co.kr/dashboard'
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -29,10 +32,7 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll()
           },
           setAll(cookiesToSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
-            // App Router에서는 쿠키 설정을 응답 객체에서 처리
-            cookiesToSet.forEach(({ name, value }) => {
-              request.cookies.set(name, value)
-            })
+            // 쿠키는 나중에 응답 객체에 설정
           },
         },
       }
@@ -60,12 +60,62 @@ export async function GET(request: NextRequest) {
 
       // 비밀번호 재설정
       if (type === 'recovery' || next === '/auth/reset-password') {
-        return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password`)
+        const response = NextResponse.redirect(`${requestUrl.origin}/auth/reset-password`)
+
+        // 세션 쿠키 설정
+        if (data.session) {
+          response.cookies.set({
+            name: 'sb-access-token',
+            value: data.session.access_token,
+            path: '/',
+            domain: '.talksign.co.kr',
+            sameSite: 'lax',
+            secure: true,
+            httpOnly: true,
+          })
+          response.cookies.set({
+            name: 'sb-refresh-token',
+            value: data.session.refresh_token,
+            path: '/',
+            domain: '.talksign.co.kr',
+            sameSite: 'lax',
+            secure: true,
+            httpOnly: true,
+          })
+        }
+
+        return response
       }
 
       // 이메일 인증 성공 - 바로 대시보드로 리다이렉트
       console.log('[Callback] Email verified, redirecting to dashboard')
-      return NextResponse.redirect('https://app.talksign.co.kr/dashboard')
+
+      const response = NextResponse.redirect('https://app.talksign.co.kr/dashboard')
+
+      // 세션 쿠키를 크로스 도메인으로 설정
+      if (data.session) {
+        console.log('[Callback] Setting session cookies for cross-domain')
+        response.cookies.set({
+          name: 'sb-access-token',
+          value: data.session.access_token,
+          path: '/',
+          domain: '.talksign.co.kr',
+          sameSite: 'lax',
+          secure: true,
+          httpOnly: true,
+        })
+        response.cookies.set({
+          name: 'sb-refresh-token',
+          value: data.session.refresh_token,
+          path: '/',
+          domain: '.talksign.co.kr',
+          sameSite: 'lax',
+          secure: true,
+          httpOnly: true,
+        })
+      }
+
+      return response
     } catch (error) {
       console.error('[Callback] Exception:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
