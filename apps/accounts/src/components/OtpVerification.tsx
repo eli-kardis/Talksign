@@ -162,7 +162,7 @@ export function OtpVerification({ email, onResendEmail, onBackToSignup }: OtpVer
         {/* Verification Card */}
         <Card className="border-border">
           <CardHeader className="text-center">
-            <CardTitle className="text-xl text-foreground">6자리 인증 코드</CardTitle>
+            <CardTitle className="text-lg sm:text-xl text-foreground">6자리 인증 코드</CardTitle>
             <CardDescription className="text-muted-foreground">
               {email}로 전송된 코드를 입력하세요
             </CardDescription>
@@ -184,7 +184,7 @@ export function OtpVerification({ email, onResendEmail, onBackToSignup }: OtpVer
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   disabled={isVerifying}
-                  className="w-12 h-14 text-center text-2xl font-semibold border-2 border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-50"
+                  className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-semibold border-2 border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-50"
                 />
               ))}
             </div>

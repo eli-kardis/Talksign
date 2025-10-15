@@ -51,7 +51,7 @@ export function Login({ onNavigate }: LoginProps) {
         {/* Login Form */}
         <Card>
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-xl">로그인</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">로그인</CardTitle>
             <CardDescription>
               계정에 로그인하여 서비스를 이용하세요
             </CardDescription>

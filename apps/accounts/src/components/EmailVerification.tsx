@@ -81,7 +81,7 @@ export function EmailVerification({ email, onResendEmail, onBackToSignup }: Emai
                 <Mail className="w-8 h-8 text-primary" />
               </div>
             </div>
-            <CardTitle className="text-xl text-foreground">이메일을 확인해주세요</CardTitle>
+            <CardTitle className="text-lg sm:text-xl text-foreground">이메일을 확인해주세요</CardTitle>
             <CardDescription className="text-muted-foreground">
               회원가입을 완료하려면 이메일 인증이 필요합니다
             </CardDescription>

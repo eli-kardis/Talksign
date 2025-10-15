@@ -131,7 +131,7 @@ export function Signup({ onNavigate, onSignupSuccess }: SignupProps) {
         {/* Signup Form */}
         <Card className="border-border">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-xl text-foreground">회원가입</CardTitle>
+            <CardTitle className="text-lg sm:text-xl text-foreground">회원가입</CardTitle>
             <CardDescription className="text-muted-foreground">
               무료로 시작하여 업무 효율성을 높여보세요
             </CardDescription>
@@ -174,10 +174,10 @@ export function Signup({ onNavigate, onSignupSuccess }: SignupProps) {
               </div>
 
               {/* 회사명 (사업자등록번호 입력시에만 표시) - 슬라이드 애니메이션 */}
-              <div 
+              <div
                 className="transition-all duration-500 ease-out overflow-hidden"
                 style={{
-                  maxHeight: showCompanyField ? '120px' : '0px',
+                  maxHeight: showCompanyField ? '200px' : '0px',
                   opacity: showCompanyField ? 1 : 0,
                   transform: `translateY(${showCompanyField ? '0px' : '-20px'})`,
                   marginBottom: showCompanyField ? '16px' : '0px',
