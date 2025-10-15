@@ -123,7 +123,7 @@ export function Signup({ onNavigate, onSignupSuccess }: SignupProps) {
             </div>
           </div>
           <div>
-            <h1 className="text-2xl font-medium text-foreground">Link Flow</h1>
+            <h1 className="text-2xl font-medium text-foreground">톡싸인</h1>
             <p className="text-muted-foreground mt-2">새로운 계정을 만들어보세요</p>
           </div>
         </div>

@@ -27,7 +27,7 @@ export function PrivacyPolicy({ onNavigate, returnTo = 'dashboard' }: PrivacyPol
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <Shield className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-medium text-foreground">Link Flow</h1>
+            <h1 className="text-xl font-medium text-foreground">톡싸인</h1>
           </div>
           
           <div className="w-[100px]"></div>
@@ -48,7 +48,7 @@ export function PrivacyPolicy({ onNavigate, returnTo = 'dashboard' }: PrivacyPol
               <section>
                 <h3 className="text-lg font-medium text-foreground mb-3">1. 개인정보의 처리목적</h3>
                 <p className="text-foreground leading-relaxed mb-3">
-                  Link Flow(이하 &ldquo;회사&rdquo;)은 다음의 목적을 위해 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 개인정보보호법 제18조에 따라 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.
+                  톡싸인(이하 &ldquo;회사&rdquo;)은 다음의 목적을 위해 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 개인정보보호법 제18조에 따라 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.
                 </p>
                 <div className="space-y-2">
                   <p className="text-foreground leading-relaxed">

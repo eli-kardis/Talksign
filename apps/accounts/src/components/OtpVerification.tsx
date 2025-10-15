@@ -283,7 +283,7 @@ export function OtpVerification({ email, onResendEmail, onBackToSignup }: OtpVer
             <div className="text-center pt-4 border-t border-border">
               <p className="text-xs text-muted-foreground">
                 문제가 지속되면{' '}
-                <Link href="mailto:support@linkflow.co.kr" className="text-primary hover:text-primary/80">
+                <Link href="mailto:support@talksign.co.kr" className="text-primary hover:text-primary/80">
                   고객지원
                 </Link>
                 으로 문의해주세요

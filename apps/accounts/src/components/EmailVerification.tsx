@@ -100,7 +100,7 @@ export function EmailVerification({ email, onResendEmail, onBackToSignup }: Emai
                 <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
                   <p className="font-medium text-foreground mb-1">1. 이메일 확인</p>
-                  <p className="text-muted-foreground">받은 편지함에서 Link Flow에서 보낸 이메일을 찾아주세요</p>
+                  <p className="text-muted-foreground">받은 편지함에서 톡싸인에서 보낸 이메일을 찾아주세요</p>
                 </div>
               </div>
 
@@ -217,7 +217,7 @@ export function EmailVerification({ email, onResendEmail, onBackToSignup }: Emai
             <div className="text-center pt-4 border-t border-border">
               <p className="text-xs text-muted-foreground">
                 문제가 지속되면{' '}
-                <Link href="mailto:support@linkflow.co.kr" className="text-primary hover:text-primary/80">
+                <Link href="mailto:support@talksign.co.kr" className="text-primary hover:text-primary/80">
                   고객지원
                 </Link>
                 으로 문의해주세요

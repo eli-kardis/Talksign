@@ -27,7 +27,7 @@ export function TermsOfService({ onNavigate, returnTo = 'dashboard' }: TermsOfSe
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <FileText className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-medium text-foreground">Link Flow</h1>
+            <h1 className="text-xl font-medium text-foreground">톡싸인</h1>
           </div>
           
           <div className="w-[100px]"></div>
@@ -48,7 +48,7 @@ export function TermsOfService({ onNavigate, returnTo = 'dashboard' }: TermsOfSe
               <section>
                 <h3 className="text-lg font-medium text-foreground mb-3">제1조 (목적)</h3>
                 <p className="text-foreground leading-relaxed">
-                  이 약관은 Link Flow(이하 &ldquo;서비스&rdquo;)이 제공하는 견적서 작성, 계약서 관리, 결제 처리 등의 서비스 이용에 관한 기본적인 사항을 규정함을 목적으로 합니다.
+                  이 약관은 톡싸인(이하 &ldquo;서비스&rdquo;)이 제공하는 견적서 작성, 계약서 관리, 결제 처리 등의 서비스 이용에 관한 기본적인 사항을 규정함을 목적으로 합니다.
                 </p>
               </section>
 
@@ -56,7 +56,7 @@ export function TermsOfService({ onNavigate, returnTo = 'dashboard' }: TermsOfSe
                 <h3 className="text-lg font-medium text-foreground mb-3">제2조 (정의)</h3>
                 <div className="space-y-2">
                   <p className="text-foreground leading-relaxed">
-                    1. &ldquo;서비스&rdquo;란 Link Flow이 제공하는 견적서 작성, 계약서 관리, 결제 처리, 세금계산서 발행 등의 통합 업무 관리 서비스를 의미합니다.
+                    1. &ldquo;서비스&rdquo;란 톡싸인이 제공하는 견적서 작성, 계약서 관리, 결제 처리, 세금계산서 발행 등의 통합 업무 관리 서비스를 의미합니다.
                   </p>
                   <p className="text-foreground leading-relaxed">
                     2. &ldquo;회원&rdquo;이란 본 약관에 동의하고 서비스에 가입하여 서비스를 이용하는 개인 또는 법인을 의미합니다.

@@ -70,7 +70,7 @@ export function SocialComplete({ user, onComplete }: SocialCompleteProps) {
             </div>
           </div>
           <div>
-            <h1 className="text-2xl font-medium text-foreground">Link Flow</h1>
+            <h1 className="text-2xl font-medium text-foreground">톡싸인</h1>
             <p className="text-muted-foreground mt-2">추가 정보를 입력해주세요</p>
           </div>
         </div>
