@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
   const hostname = request.headers.get('host') || ''
 
@@ -41,17 +42,74 @@ export function middleware(request: NextRequest) {
 
     case 'accounts.talksign.co.kr':
       // 인증 도메인: 로그인/회원가입만 허용
-      const allowedAuthPaths = ['/', '/login', '/signup', '/signin', '/forgot-password', '/reset-password', '/api']
+      const allowedAuthPaths = ['/', '/login', '/signup', '/signin', '/forgot-password', '/reset-password', '/api', '/auth']
       if (!allowedAuthPaths.some(path => url.pathname.startsWith(path))) {
         // 허용되지 않은 경로는 로그인 페이지로 리다이렉트
-        url.pathname = '/login'
+        url.pathname = '/auth/signin'
         return NextResponse.redirect(url)
       }
       break
 
     case 'app.talksign.co.kr':
-      // 앱 도메인: 모든 앱 기능 허용
-      // 인증되지 않은 사용자의 경우 accounts 도메인으로 리다이렉트는 각 페이지에서 처리
+      // 앱 도메인: 인증 체크 후 보호된 라우트 처리
+      const protectedRoutes = ['/dashboard', '/documents', '/finance', '/schedule', '/customers']
+      const isProtectedRoute = protectedRoutes.some(route => url.pathname.startsWith(route))
+      
+      // 공개 라우트 (인증 불필요)
+      const publicRoutes = ['/api', '/_next', '/favicon.ico']
+      const isPublicRoute = publicRoutes.some(route => url.pathname.startsWith(route))
+
+      if (isProtectedRoute) {
+        // 서버 사이드에서 쿠키 기반 세션 확인
+        let response = NextResponse.next()
+        
+        const supabase = createServerClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            cookies: {
+              get(name: string) {
+                return request.cookies.get(name)?.value
+              },
+              set(name: string, value: string, options: any) {
+                response.cookies.set({
+                  name,
+                  value,
+                  ...options,
+                  domain: '.talksign.co.kr',
+                  sameSite: 'lax',
+                  secure: true
+                })
+              },
+              remove(name: string, options: any) {
+                response.cookies.set({
+                  name,
+                  value: '',
+                  maxAge: 0,
+                  ...options,
+                  domain: '.talksign.co.kr'
+                })
+              }
+            }
+          }
+        )
+
+        const { data: { session } } = await supabase.auth.getSession()
+
+        if (!session) {
+          // 세션이 없으면 accounts 도메인 로그인 페이지로 리다이렉트
+          const redirectUrl = new URL('https://accounts.talksign.co.kr/auth/signin')
+          redirectUrl.searchParams.set('redirect', url.pathname)
+          return NextResponse.redirect(redirectUrl)
+        }
+
+        return response
+      }
+
+      if (!isPublicRoute) {
+        return NextResponse.next()
+      }
+      
       return NextResponse.next()
 
     default:

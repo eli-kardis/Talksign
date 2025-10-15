@@ -12,15 +12,21 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      // 로그인 성공 시 메인 앱으로 리디렉션
-      window.location.href = 'https://app.talksign.co.kr/dashboard'
+      // 로그인 성공 시 메인 앱으로 리디렉션 (username 포함)
+      const username = user.email.split('@')[0]
+      window.location.href = `https://app.talksign.co.kr/dashboard/${username}`
     }
   }, [user, isLoading])
 
-  const handleNavigate = (newView: string) => {
+  const handleNavigate = async (newView: string) => {
     if (newView === 'dashboard') {
-      // 메인 앱으로 리디렉션
-      window.location.href = 'https://app.talksign.co.kr/dashboard'
+      // 메인 앱으로 리디렉션 (username 포함)
+      if (user) {
+        const username = user.email.split('@')[0]
+        window.location.href = `https://app.talksign.co.kr/dashboard/${username}`
+      } else {
+        window.location.href = 'https://app.talksign.co.kr/dashboard'
+      }
     } else if (newView === 'signup') {
       router.push('/auth/signup')
     }
