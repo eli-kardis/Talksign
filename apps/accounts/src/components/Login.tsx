@@ -42,18 +42,26 @@ export function Login({ onNavigate }: LoginProps) {
     setError('')
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: 'https://accounts.talksign.co.kr/auth/callback',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       })
 
       if (error) {
+        console.error('Google OAuth error:', error)
         setError('Google 로그인에 실패했습니다.')
         setIsLoading(false)
       }
-    } catch {
+
+      // OAuth는 자동으로 리다이렉트되므로 여기서는 로딩 상태 유지
+    } catch (err) {
+      console.error('Google OAuth exception:', err)
       setError('Google 로그인 중 오류가 발생했습니다.')
       setIsLoading(false)
     }
