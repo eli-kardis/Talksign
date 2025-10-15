@@ -4,7 +4,6 @@ import { use, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { extractUsername } from "@/lib/utils"
-import DocumentsPage from "@/app/documents/page"
 
 export default function UserDocumentsPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params)
@@ -19,7 +18,7 @@ export default function UserDocumentsPage({ params }: { params: Promise<{ userna
     }
   }, [user, isLoading])
 
-  // 인증된 사용자의 username 검증
+  // 인증된 사용자의 username 검증 및 /documents/quotes로 리다이렉트
   useEffect(() => {
     if (!isLoading && user) {
       const userUsername = extractUsername(user.email)
@@ -27,6 +26,9 @@ export default function UserDocumentsPage({ params }: { params: Promise<{ userna
       // URL의 username과 실제 user의 username이 다르면 올바른 경로로 리디렉션
       if (username !== userUsername) {
         router.replace(`/${userUsername}/documents`)
+      } else {
+        // username이 올바르면 /documents/quotes로 리다이렉트
+        router.replace(`/${username}/documents/quotes`)
       }
     }
   }, [user, isLoading, username, router])
@@ -48,6 +50,6 @@ export default function UserDocumentsPage({ params }: { params: Promise<{ userna
     return null
   }
 
-  // 기존 DocumentsPage 컴포넌트 렌더링
-  return <DocumentsPage />
+  // useEffect에서 리다이렉트 처리 중
+  return null
 }
