@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { use, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Dashboard } from "@/components/Dashboard"
@@ -16,7 +16,8 @@ export interface ScheduleItem {
   description?: string
 }
 
-export default function UserDashboardPage({ params }: { params: { username: string } }) {
+export default function UserDashboardPage({ params }: { params: Promise<{ username: string }> }) {
+  const { username } = use(params)
   const router = useRouter()
   const { user, isLoading } = useAuth()
   const [schedules, setSchedules] = useState<ScheduleItem[]>([])
@@ -109,13 +110,13 @@ export default function UserDashboardPage({ params }: { params: { username: stri
   useEffect(() => {
     if (!isLoading && user) {
       const userUsername = user.email.split('@')[0]
-      
+
       // URL의 username과 실제 user의 username이 다르면 올바른 경로로 리디렉션
-      if (params.username !== userUsername) {
+      if (username !== userUsername) {
         router.replace(`/dashboard/${userUsername}`)
       }
     }
-  }, [user, isLoading, params.username, router])
+  }, [user, isLoading, username, router])
 
   // 네비게이션 핸들러
   const onNavigate = (view: string) => {
