@@ -123,21 +123,60 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // OAuth code 처리 (비밀번호 재설정)
+  // OAuth code 처리 (Google OAuth 로그인 또는 비밀번호 재설정)
   if (code) {
     try {
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
-      
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
       if (error) {
         console.error('[Callback] Code exchange error:', error)
-        return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password?error=invalid_link`)
+        // 비밀번호 재설정 요청인 경우에만 reset-password로
+        if (next === '/auth/reset-password') {
+          return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password?error=invalid_link`)
+        }
+        return NextResponse.redirect(`${requestUrl.origin}/auth/signin?error=auth_failed`)
       }
 
-      // 성공적으로 세션을 설정했으면 reset-password 페이지로 리다이렉트
-      return NextResponse.redirect(`${requestUrl.origin}${next || '/auth/reset-password'}`)
+      console.log('[Callback] Session exchanged successfully for user:', data.user?.email)
+
+      // 비밀번호 재설정 요청인지 확인
+      if (next === '/auth/reset-password') {
+        return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password`)
+      }
+
+      // Google OAuth 로그인 - 대시보드로 리다이렉트
+      const response = NextResponse.redirect('https://app.talksign.co.kr/dashboard')
+
+      // 세션 쿠키를 크로스 도메인으로 설정
+      if (data.session) {
+        console.log('[Callback] Setting OAuth session cookies for cross-domain')
+        response.cookies.set({
+          name: 'sb-access-token',
+          value: data.session.access_token,
+          path: '/',
+          domain: '.talksign.co.kr',
+          sameSite: 'lax',
+          secure: true,
+          httpOnly: true,
+        })
+        response.cookies.set({
+          name: 'sb-refresh-token',
+          value: data.session.refresh_token,
+          path: '/',
+          domain: '.talksign.co.kr',
+          sameSite: 'lax',
+          secure: true,
+          httpOnly: true,
+        })
+      }
+
+      return response
     } catch (error) {
       console.error('[Callback] Exception:', error)
-      return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password?error=callback_error`)
+      if (next === '/auth/reset-password') {
+        return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password?error=callback_error`)
+      }
+      return NextResponse.redirect(`${requestUrl.origin}/auth/signin?error=callback_error`)
     }
   }
 
