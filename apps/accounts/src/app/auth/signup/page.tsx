@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Signup } from '@/components/Signup'
 import { TermsOfService } from '@/components/TermsOfService'
 import { PrivacyPolicy } from '@/components/PrivacyPolicy'
-import { EmailVerification } from '@/components/EmailVerification'
+import { OtpVerification } from '@/components/OtpVerification'
 import { supabase } from '@/lib/supabase'
 
 export default function SignUpPage() {
@@ -28,9 +28,9 @@ export default function SignUpPage() {
     } else if (newView === 'dashboard') {
       // 메인 앱으로 리디렉션
       window.location.href = 'https://app.talksign.co.kr/dashboard'
-    } else if (newView === 'email-verification') {
-      // 회원가입 후 이메일 인증 페이지로
-      setView('email-verification')
+    } else if (newView === 'otp-verification') {
+      // 회원가입 후 OTP 인증 페이지로
+      setView('otp-verification')
     } else {
       setView(newView)
     }
@@ -70,9 +70,9 @@ export default function SignUpPage() {
     return <PrivacyPolicy onNavigate={handleNavigate} />
   }
 
-  if (view === 'email-verification') {
+  if (view === 'otp-verification') {
     return (
-      <EmailVerification
+      <OtpVerification
         email={signupEmail}
         onResendEmail={handleResendEmail}
         onBackToSignup={() => setView('signup')}
@@ -85,7 +85,7 @@ export default function SignUpPage() {
       onNavigate={handleNavigate}
       onSignupSuccess={(email) => {
         setSignupEmail(email)
-        handleNavigate('email-verification')
+        handleNavigate('otp-verification')
       }}
     />
   )
