@@ -9,21 +9,26 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         node-version: [18.x, 20.x]
-    
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://fwbkesioorqklhlcgmio.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymtlc2lvb3Jxa2xobGNnbWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNDkxNzgsImV4cCI6MjA3MDgyNTE3OH0.YWsNJBHYzbm-y-zRNfxRu777qVU_8NYEWmLa62tf-3I
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymtlc2lvb3Jxa2xobGNnbWlvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTI0OTE3OCwiZXhwIjoyMDcwODI1MTc4fQ
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-        
+
     - name: Install dependencies
       run: npm ci
       
