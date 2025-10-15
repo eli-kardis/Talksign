@@ -22,7 +22,9 @@ export async function GET(request: NextRequest) {
 
     // 리다이렉트 응답 생성
     let redirectUrl = 'https://app.talksign.co.kr/dashboard'
+    const response = NextResponse.redirect(redirectUrl)
 
+    // Supabase 클라이언트 생성 - 쿠키를 response에 직접 설정
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -32,7 +34,10 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll()
           },
           setAll(cookiesToSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
-            // 쿠키는 나중에 응답 객체에 설정
+            // Supabase가 설정하려는 쿠키를 response에 추가
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options as any)
+            })
           },
         },
       }
@@ -60,61 +65,12 @@ export async function GET(request: NextRequest) {
 
       // 비밀번호 재설정
       if (type === 'recovery' || next === '/auth/reset-password') {
-        const response = NextResponse.redirect(`${requestUrl.origin}/auth/reset-password`)
-
-        // 세션 쿠키 설정
-        if (data.session) {
-          response.cookies.set({
-            name: 'sb-access-token',
-            value: data.session.access_token,
-            path: '/',
-            domain: '.talksign.co.kr',
-            sameSite: 'lax',
-            secure: true,
-            httpOnly: true,
-          })
-          response.cookies.set({
-            name: 'sb-refresh-token',
-            value: data.session.refresh_token,
-            path: '/',
-            domain: '.talksign.co.kr',
-            sameSite: 'lax',
-            secure: true,
-            httpOnly: true,
-          })
-        }
-
-        return response
+        const resetResponse = NextResponse.redirect(`${requestUrl.origin}/auth/reset-password`)
+        return resetResponse
       }
 
       // 이메일 인증 성공 - 바로 대시보드로 리다이렉트
       console.log('[Callback] Email verified, redirecting to dashboard')
-
-      const response = NextResponse.redirect('https://app.talksign.co.kr/dashboard')
-
-      // 세션 쿠키를 크로스 도메인으로 설정
-      if (data.session) {
-        console.log('[Callback] Setting session cookies for cross-domain')
-        response.cookies.set({
-          name: 'sb-access-token',
-          value: data.session.access_token,
-          path: '/',
-          domain: '.talksign.co.kr',
-          sameSite: 'lax',
-          secure: true,
-          httpOnly: true,
-        })
-        response.cookies.set({
-          name: 'sb-refresh-token',
-          value: data.session.refresh_token,
-          path: '/',
-          domain: '.talksign.co.kr',
-          sameSite: 'lax',
-          secure: true,
-          httpOnly: true,
-        })
-      }
-
       return response
     } catch (error) {
       console.error('[Callback] Exception:', error)
@@ -126,6 +82,7 @@ export async function GET(request: NextRequest) {
   // OAuth code 처리 (Google OAuth 로그인 또는 비밀번호 재설정)
   if (code) {
     try {
+      console.log('[Callback] Exchanging code for session...')
       const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
       if (error) {
@@ -138,38 +95,17 @@ export async function GET(request: NextRequest) {
       }
 
       console.log('[Callback] Session exchanged successfully for user:', data.user?.email)
+      console.log('[Callback] Session cookies should be set by Supabase client')
 
       // 비밀번호 재설정 요청인지 확인
       if (next === '/auth/reset-password') {
-        return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password`)
+        const resetResponse = NextResponse.redirect(`${requestUrl.origin}/auth/reset-password`)
+        return resetResponse
       }
 
       // Google OAuth 로그인 - 대시보드로 리다이렉트
-      const response = NextResponse.redirect('https://app.talksign.co.kr/dashboard')
-
-      // 세션 쿠키를 크로스 도메인으로 설정
-      if (data.session) {
-        console.log('[Callback] Setting OAuth session cookies for cross-domain')
-        response.cookies.set({
-          name: 'sb-access-token',
-          value: data.session.access_token,
-          path: '/',
-          domain: '.talksign.co.kr',
-          sameSite: 'lax',
-          secure: true,
-          httpOnly: true,
-        })
-        response.cookies.set({
-          name: 'sb-refresh-token',
-          value: data.session.refresh_token,
-          path: '/',
-          domain: '.talksign.co.kr',
-          sameSite: 'lax',
-          secure: true,
-          httpOnly: true,
-        })
-      }
-
+      // response는 이미 위에서 생성되었고, Supabase가 setAll을 통해 쿠키를 설정함
+      console.log('[Callback] Redirecting to dashboard with session cookies')
       return response
     } catch (error) {
       console.error('[Callback] Exception:', error)
