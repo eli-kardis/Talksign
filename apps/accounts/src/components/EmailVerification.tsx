@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Mail, CheckCircle, Clock, RefreshCw, ArrowLeft } from 'lucide-react'
 import Link from "next/link"
+import { supabase } from '@/lib/supabase'
 
 interface EmailVerificationProps {
   email: string
@@ -17,6 +18,51 @@ export function EmailVerification({ email, onResendEmail, onBackToSignup }: Emai
   const [isResending, setIsResending] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [isVerifying, setIsVerifying] = useState(false)
+
+  // 인증 상태 실시간 감지
+  useEffect(() => {
+    // 세션 변화 감지
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[EmailVerification] Auth event:', event, 'Session:', !!session)
+
+      if (event === 'SIGNED_IN' && session) {
+        setIsVerifying(true)
+        setMessage({
+          type: 'success',
+          text: '이메일 인증이 완료되었습니다! 잠시 후 대시보드로 이동합니다...'
+        })
+
+        // 2초 후 대시보드로 리다이렉트
+        setTimeout(() => {
+          window.location.href = 'https://app.talksign.co.kr/dashboard'
+        }, 2000)
+      }
+    })
+
+    // 주기적으로 세션 확인 (2초마다)
+    const checkInterval = setInterval(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        setIsVerifying(true)
+        setMessage({
+          type: 'success',
+          text: '이메일 인증이 완료되었습니다! 잠시 후 대시보드로 이동합니다...'
+        })
+
+        setTimeout(() => {
+          window.location.href = 'https://app.talksign.co.kr/dashboard'
+        }, 2000)
+
+        clearInterval(checkInterval)
+      }
+    }, 2000)
+
+    return () => {
+      authListener.subscription.unsubscribe()
+      clearInterval(checkInterval)
+    }
+  }, [])
 
   // 재전송 쿨다운 타이머
   useEffect(() => {

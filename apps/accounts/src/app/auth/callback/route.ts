@@ -69,9 +69,9 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password`, { headers: response.headers })
       }
 
-      // 이메일 인증 성공 - 앱으로 리다이렉트
-      console.log('[Callback] Email verified, redirecting to app')
-      return NextResponse.redirect('https://app.talksign.co.kr/dashboard', { headers: response.headers })
+      // 이메일 인증 성공 - 성공 페이지로 리다이렉트 (원래 탭에서 감지됨)
+      console.log('[Callback] Email verified, showing success page')
+      return NextResponse.redirect(`${requestUrl.origin}/auth/verification-success`, { headers: response.headers })
     } catch (error) {
       console.error('[Callback] Exception:', error)
       return NextResponse.redirect(`${requestUrl.origin}/auth/signin?error=callback_error`)
