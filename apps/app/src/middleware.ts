@@ -52,8 +52,9 @@ export async function middleware(request: NextRequest) {
 
     case 'app.talksign.co.kr':
       // 앱 도메인: 인증 체크 후 보호된 라우트 처리
-      const protectedRoutes = ['/dashboard', '/documents', '/finance', '/schedule', '/customers']
-      const isProtectedRoute = protectedRoutes.some(route => url.pathname.startsWith(route))
+      // /[username]/* 형식의 라우트 감지
+      const usernamePattern = /^\/[^\/]+\/(dashboard|documents|finance|schedule|customers)/
+      const isProtectedRoute = usernamePattern.test(url.pathname)
       
       // 공개 라우트 (인증 불필요)
       const publicRoutes = ['/api', '/_next', '/favicon.ico']
@@ -101,6 +102,21 @@ export async function middleware(request: NextRequest) {
           const redirectUrl = new URL('https://accounts.talksign.co.kr/auth/signin')
           redirectUrl.searchParams.set('redirect', url.pathname)
           return NextResponse.redirect(redirectUrl)
+        }
+
+        // 세션이 있으면 username 검증
+        const userEmail = session.user.email
+        if (userEmail) {
+          const username = userEmail.split('@')[0]
+          const pathSegments = url.pathname.split('/').filter(Boolean)
+
+          // URL의 첫 번째 세그먼트가 username인지 확인
+          if (pathSegments.length > 0 && pathSegments[0] !== username) {
+            // 잘못된 username이면 올바른 경로로 리다이렉트
+            const correctPath = `/${username}/${pathSegments.slice(1).join('/')}`
+            url.pathname = correctPath
+            return NextResponse.redirect(url)
+          }
         }
 
         return response

@@ -20,11 +20,9 @@ export async function GET(request: NextRequest) {
 
     console.log('[Callback] Environment variables OK')
 
-    // 리다이렉트 응답 생성
-    let redirectUrl = 'https://app.talksign.co.kr/dashboard'
-    let response = NextResponse.redirect(redirectUrl)
+    // Supabase 클라이언트 생성 - 쿠키를 저장할 변수
+    let cookies: Array<{ name: string; value: string; options?: Record<string, unknown> }> = []
 
-    // Supabase 클라이언트 생성 - 쿠키를 response에 직접 설정 (크로스 도메인)
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -34,22 +32,28 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll()
           },
           setAll(cookiesToSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
-            // Supabase가 설정하려는 쿠키를 크로스 도메인으로 설정
-            console.log('[Callback] Setting cookies:', cookiesToSet.map(c => ({ name: c.name, hasValue: !!c.value })))
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, {
-                ...options,
-                domain: '.talksign.co.kr', // 크로스 도메인 설정
-                path: '/',
-                sameSite: 'lax',
-                secure: true,
-                httpOnly: true,
-              })
-            })
+            // Supabase가 설정하려는 쿠키를 저장 (나중에 response에 설정)
+            console.log('[Callback] Caching cookies:', cookiesToSet.map(c => ({ name: c.name, hasValue: !!c.value })))
+            cookies = cookiesToSet
           },
         },
       }
     )
+
+    // 쿠키를 response에 설정하는 헬퍼 함수
+    const setCookiesOnResponse = (response: NextResponse) => {
+      cookies.forEach(({ name, value, options }) => {
+        response.cookies.set(name, value, {
+          ...options,
+          domain: '.talksign.co.kr', // 크로스 도메인 설정
+          path: '/',
+          sameSite: 'lax',
+          secure: true,
+          httpOnly: true,
+        })
+      })
+      return response
+    }
 
   // token_hash를 사용하는 이메일 링크 (회원가입 인증)
   if (token_hash && type) {
@@ -77,9 +81,14 @@ export async function GET(request: NextRequest) {
         return resetResponse
       }
 
-      // 이메일 인증 성공 - 바로 대시보드로 리다이렉트
+      // 이메일 인증 성공 - username 기반 대시보드로 리다이렉트
       console.log('[Callback] Email verified, redirecting to dashboard')
-      return response
+
+      const username = data.user?.email ? data.user.email.split('@')[0] : 'user'
+      const response = NextResponse.redirect(`https://app.talksign.co.kr/${username}/dashboard`)
+      console.log('[Callback] Redirecting to:', `/${username}/dashboard`)
+
+      return setCookiesOnResponse(response)
     } catch (error) {
       console.error('[Callback] Exception:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -111,10 +120,12 @@ export async function GET(request: NextRequest) {
         return resetResponse
       }
 
-      // Google OAuth 로그인 - 대시보드로 리다이렉트
-      // response는 이미 위에서 생성되었고, Supabase가 setAll을 통해 쿠키를 설정함
-      console.log('[Callback] Redirecting to dashboard with session cookies')
-      return response
+      // Google OAuth 로그인 - username 기반 대시보드로 리다이렉트
+      const username = data.user?.email ? data.user.email.split('@')[0] : 'user'
+      const response = NextResponse.redirect(`https://app.talksign.co.kr/${username}/dashboard`)
+      console.log('[Callback] Redirecting to:', `/${username}/dashboard`)
+
+      return setCookiesOnResponse(response)
     } catch (error) {
       console.error('[Callback] Exception:', error)
       if (next === '/auth/reset-password') {
