@@ -42,32 +42,32 @@ export const supabase = createBrowserClient(
         const parts = value.split(`; ${name}=`)
         if (parts.length === 2) return parts.pop()?.split(';').shift()
       },
-      set(name: string, value: string, options: any) {
+      set(name: string, value: string, options: { maxAge?: number } = {}) {
         if (typeof document === 'undefined') return
         let cookieString = `${name}=${value}`
-        
+
         if (cookieOptions) {
           cookieString += `; domain=${cookieOptions.domain}`
           cookieString += `; path=${cookieOptions.path}`
           cookieString += `; samesite=${cookieOptions.sameSite}`
           if (cookieOptions.secure) cookieString += '; secure'
         }
-        
+
         if (options?.maxAge) {
           cookieString += `; max-age=${options.maxAge}`
         }
-        
+
         document.cookie = cookieString
       },
-      remove(name: string, options: any) {
+      remove(name: string) {
         if (typeof document === 'undefined') return
         let cookieString = `${name}=; max-age=0`
-        
+
         if (cookieOptions) {
           cookieString += `; domain=${cookieOptions.domain}`
           cookieString += `; path=${cookieOptions.path}`
         }
-        
+
         document.cookie = cookieString
       }
     }
