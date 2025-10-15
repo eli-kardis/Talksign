@@ -22,9 +22,9 @@ export async function GET(request: NextRequest) {
 
     // 리다이렉트 응답 생성
     let redirectUrl = 'https://app.talksign.co.kr/dashboard'
-    const response = NextResponse.redirect(redirectUrl)
+    let response = NextResponse.redirect(redirectUrl)
 
-    // Supabase 클라이언트 생성 - 쿠키를 response에 직접 설정
+    // Supabase 클라이언트 생성 - 쿠키를 response에 직접 설정 (크로스 도메인)
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -34,9 +34,17 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll()
           },
           setAll(cookiesToSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
-            // Supabase가 설정하려는 쿠키를 response에 추가
+            // Supabase가 설정하려는 쿠키를 크로스 도메인으로 설정
+            console.log('[Callback] Setting cookies:', cookiesToSet.map(c => ({ name: c.name, hasValue: !!c.value })))
             cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options as any)
+              response.cookies.set(name, value, {
+                ...options,
+                domain: '.talksign.co.kr', // 크로스 도메인 설정
+                path: '/',
+                sameSite: 'lax',
+                secure: true,
+                httpOnly: true,
+              })
             })
           },
         },
