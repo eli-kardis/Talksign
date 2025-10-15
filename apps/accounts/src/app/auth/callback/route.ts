@@ -20,34 +20,23 @@ export async function GET(request: NextRequest) {
 
     console.log('[Callback] Environment variables OK')
 
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
+            // App Router에서는 쿠키 설정을 응답 객체에서 처리
+            cookiesToSet.forEach(({ name, value }) => {
+              request.cookies.set(name, value)
+            })
+          },
         },
-        setAll(cookiesToSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value)
-          })
-          response = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set({ name, value, ...options })
-          })
-        },
-      },
-    }
-  )
+      }
+    )
 
   // token_hash를 사용하는 이메일 링크 (회원가입 인증)
   if (token_hash && type) {
@@ -71,12 +60,12 @@ export async function GET(request: NextRequest) {
 
       // 비밀번호 재설정
       if (type === 'recovery' || next === '/auth/reset-password') {
-        return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password`, { headers: response.headers })
+        return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password`)
       }
 
       // 이메일 인증 성공 - 바로 대시보드로 리다이렉트
       console.log('[Callback] Email verified, redirecting to dashboard')
-      return NextResponse.redirect('https://app.talksign.co.kr/dashboard', { headers: response.headers })
+      return NextResponse.redirect('https://app.talksign.co.kr/dashboard')
     } catch (error) {
       console.error('[Callback] Exception:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -93,9 +82,9 @@ export async function GET(request: NextRequest) {
         console.error('[Callback] Code exchange error:', error)
         return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password?error=invalid_link`)
       }
-      
+
       // 성공적으로 세션을 설정했으면 reset-password 페이지로 리다이렉트
-      return NextResponse.redirect(`${requestUrl.origin}${next || '/auth/reset-password'}`, { headers: response.headers })
+      return NextResponse.redirect(`${requestUrl.origin}${next || '/auth/reset-password'}`)
     } catch (error) {
       console.error('[Callback] Exception:', error)
       return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password?error=callback_error`)
