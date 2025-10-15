@@ -15,9 +15,9 @@ jobs:
         node-version: [18.x, 20.x]
 
     env:
-      NEXT_PUBLIC_SUPABASE_URL: https://fwbkesioorqklhlcgmio.supabase.co
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymtlc2lvb3Jxa2xobGNnbWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNDkxNzgsImV4cCI6MjA3MDgyNTE3OH0.YWsNJBHYzbm-y-zRNfxRu777qVU_8NYEWmLa62tf-3I
-      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Ymtlc2lvb3Jxa2xobGNnbWlvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTI0OTE3OCwiZXhwIjoyMDcwODI1MTc4fQ
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
     steps:
     - name: Checkout code
