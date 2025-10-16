@@ -19,59 +19,10 @@ if (!supabaseServiceKey) {
   console.warn('Missing SUPABASE_SERVICE_ROLE_KEY - using anon key for service operations')
 }
 
-// 쿠키 도메인 설정 (프로덕션에서만 사용)
-const isProduction = typeof window !== 'undefined' && 
-  (window.location.hostname.includes('talksign.co.kr'))
-
-const cookieOptions = isProduction ? {
-  domain: '.talksign.co.kr',
-  path: '/',
-  sameSite: 'lax' as const,
-  secure: true
-} : undefined
-
-// Supabase 브라우저 클라이언트 생성 (쿠키 기반)
+// Supabase 브라우저 클라이언트 생성 (기본 쿠키 설정 사용)
 export const supabase = createBrowserClient(
   supabaseUrl,
-  supabaseAnonKey,
-  {
-    cookies: {
-      get(name: string) {
-        if (typeof document === 'undefined') return undefined
-        const value = `; ${document.cookie}`
-        const parts = value.split(`; ${name}=`)
-        if (parts.length === 2) return parts.pop()?.split(';').shift()
-      },
-      set(name: string, value: string, options: any) {
-        if (typeof document === 'undefined') return
-        let cookieString = `${name}=${value}`
-        
-        if (cookieOptions) {
-          cookieString += `; domain=${cookieOptions.domain}`
-          cookieString += `; path=${cookieOptions.path}`
-          cookieString += `; samesite=${cookieOptions.sameSite}`
-          if (cookieOptions.secure) cookieString += '; secure'
-        }
-        
-        if (options?.maxAge) {
-          cookieString += `; max-age=${options.maxAge}`
-        }
-        
-        document.cookie = cookieString
-      },
-      remove(name: string, options: any) {
-        if (typeof document === 'undefined') return
-        let cookieString = `${name}=; max-age=0`
-        
-        if (cookieOptions) {
-          cookieString += `; domain=${cookieOptions.domain}`
-          cookieString += `; path=${cookieOptions.path}`
-        }
-        
-        document.cookie = cookieString
-      }
-    }
-  }
+  supabaseAnonKey
 )
 
 // 서버 사이드에서 사용할 클라이언트 (Service Role Key 사용)
