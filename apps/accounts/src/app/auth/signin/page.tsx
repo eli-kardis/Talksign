@@ -14,7 +14,7 @@ export default function SignInPage() {
     if (!isLoading && user) {
       // 로그인 성공 시 메인 앱으로 리디렉션 (username 포함)
       const username = user.email.split('@')[0]
-      window.location.href = `https://app.talksign.co.kr/dashboard/${username}`
+      window.location.href = `https://app.talksign.co.kr/${username}/dashboard`
     }
   }, [user, isLoading])
 
@@ -23,7 +23,7 @@ export default function SignInPage() {
       // 메인 앱으로 리디렉션 (username 포함)
       if (user) {
         const username = user.email.split('@')[0]
-        window.location.href = `https://app.talksign.co.kr/dashboard/${username}`
+        window.location.href = `https://app.talksign.co.kr/${username}/dashboard`
       } else {
         window.location.href = 'https://app.talksign.co.kr/dashboard'
       }
