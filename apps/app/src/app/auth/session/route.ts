@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
     return response
   } catch (error) {
     console.error('[Session] Unexpected error:', error)
-    return NextResponse.redirect(`${requestUrl.origin}/auth/signin?error=session_error`)
+    const url = new URL(request.url)
+    return NextResponse.redirect(`${url.origin}/auth/signin?error=session_error`)
   }
 }
