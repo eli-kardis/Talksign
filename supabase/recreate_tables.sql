@@ -128,7 +128,3 @@ FROM pg_policies
 WHERE schemaname = 'public'
   AND tablename IN ('users', 'customers')
 ORDER BY tablename, policyname;
-
--- Step 13: 테이블 구조 확인
-\d public.users
-\d public.customers
