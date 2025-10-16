@@ -80,13 +80,20 @@ export async function GET(request: NextRequest) {
         return resetResponse
       }
 
-      // 이메일 인증 성공 - /dashboard로 리다이렉트 (page.tsx가 username 경로로 처리)
-      console.log('[Callback] Email verified, redirecting to dashboard')
+      // 이메일 인증 성공 - app 도메인의 세션 엔드포인트로 토큰 전달
+      console.log('[Callback] Email verified, redirecting to app with session')
 
-      const response = NextResponse.redirect(`https://app.talksign.co.kr/dashboard`)
-      console.log('[Callback] Redirecting to: /dashboard')
+      if (data.session) {
+        const sessionUrl = new URL('https://app.talksign.co.kr/auth/session')
+        sessionUrl.searchParams.set('access_token', data.session.access_token)
+        sessionUrl.searchParams.set('refresh_token', data.session.refresh_token)
 
-      return setCookiesOnResponse(response)
+        console.log('[Callback] Redirecting to app session endpoint')
+        return NextResponse.redirect(sessionUrl.toString())
+      }
+
+      // 세션이 없으면 에러
+      return NextResponse.redirect(`${requestUrl.origin}/auth/signin?error=no_session`)
     } catch (error) {
       console.error('[Callback] Exception:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -118,11 +125,18 @@ export async function GET(request: NextRequest) {
         return resetResponse
       }
 
-      // Google OAuth 로그인 - /dashboard로 리다이렉트 (page.tsx가 username 경로로 처리)
-      const response = NextResponse.redirect(`https://app.talksign.co.kr/dashboard`)
-      console.log('[Callback] Redirecting to: /dashboard')
+      // Google OAuth 로그인 - app 도메인의 세션 엔드포인트로 토큰 전달
+      if (data.session) {
+        const sessionUrl = new URL('https://app.talksign.co.kr/auth/session')
+        sessionUrl.searchParams.set('access_token', data.session.access_token)
+        sessionUrl.searchParams.set('refresh_token', data.session.refresh_token)
 
-      return setCookiesOnResponse(response)
+        console.log('[Callback] Redirecting to app session endpoint')
+        return NextResponse.redirect(sessionUrl.toString())
+      }
+
+      // 세션이 없으면 에러
+      return NextResponse.redirect(`${requestUrl.origin}/auth/signin?error=no_session`)
     } catch (error) {
       console.error('[Callback] Exception:', error)
       if (next === '/auth/reset-password') {
