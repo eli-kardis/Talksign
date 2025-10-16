@@ -182,10 +182,14 @@ export default function CustomersPage() {
         const response = await apiClient.post('/api/customers', formData);
         if (response.ok) {
           const serverCustomer = await response.json();
-          console.log('Customer also saved to server:', serverCustomer);
+          console.log('✅ Customer also saved to server:', serverCustomer);
+        } else {
+          const errorText = await response.text();
+          console.error('❌ Server save failed with status:', response.status);
+          console.error('❌ Error response:', errorText);
         }
       } catch (serverError) {
-        console.log('Server save failed, but localStorage save succeeded:', serverError);
+        console.error('❌ Server save failed, but localStorage save succeeded:', serverError);
       }
 
       setFormData({
