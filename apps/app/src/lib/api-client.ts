@@ -8,24 +8,41 @@ export class AuthenticatedApiClient {
     }
 
     try {
-      console.log('[AuthenticatedApiClient] Getting session...')
-      const { data: { session }, error } = await supabase.auth.getSession()
+      console.log('[AuthenticatedApiClient] Getting authenticated user...')
 
-      if (error) {
-        console.error('[AuthenticatedApiClient] Session error:', error)
+      // 보안 경고 해결: getSession() 대신 getUser() 사용
+      // getUser()는 서버에 인증을 요청하므로 더 안전함
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+      if (userError) {
+        console.error('[AuthenticatedApiClient] User authentication error:', userError)
+        return headers
+      }
+
+      if (!user) {
+        console.warn('[AuthenticatedApiClient] No authenticated user found')
+        return headers
+      }
+
+      console.log('[AuthenticatedApiClient] User authenticated:', user.email)
+
+      // 인증된 사용자가 있으면 세션에서 토큰 가져오기
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError) {
+        console.error('[AuthenticatedApiClient] Session error:', sessionError)
         return headers
       }
 
       if (session?.access_token) {
-        console.log('[AuthenticatedApiClient] Session found, adding Authorization header')
+        console.log('[AuthenticatedApiClient] Adding Authorization header')
         console.log('[AuthenticatedApiClient] Token preview:', session.access_token.substring(0, 20) + '...')
         headers['Authorization'] = `Bearer ${session.access_token}`
       } else {
-        console.warn('[AuthenticatedApiClient] No session or access_token found')
-        console.log('[AuthenticatedApiClient] Session data:', session)
+        console.warn('[AuthenticatedApiClient] No access_token in session')
       }
     } catch (error) {
-      console.error('[AuthenticatedApiClient] Failed to get session token:', error)
+      console.error('[AuthenticatedApiClient] Failed to get auth headers:', error)
     }
 
     return headers
