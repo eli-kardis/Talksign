@@ -103,24 +103,9 @@ export async function getUserFromRequest(request: NextRequest): Promise<string |
         if (userId && userId !== 'undefined') {
           console.log('[Auth] ✓ Valid authenticated user from token:', userId)
 
-          // 사용자 존재 확인 (선택적)
-          const supabase = createServerSupabaseClient()
-          const { data: user, error: userError } = await supabase
-            .from('users')
-            .select('id')
-            .eq('id', userId)
-            .single()
-
-          if (userError) {
-            console.error('[Auth] Error checking user in database:', userError)
-          }
-
-          if (user) {
-            console.log('[Auth] ✓ User exists in database:', user.id)
-            return user.id
-          } else {
-            console.warn('[Auth] ✗ User not found in database, will fall back to demo user')
-          }
+          // JWT 검증이 성공하면 바로 userId 반환 (public.users 확인 불필요)
+          // auth.users에 있다면 유효한 사용자임
+          return userId
         } else {
           console.warn('[Auth] ✗ Invalid or undefined userId from token')
         }
@@ -211,6 +196,9 @@ export function createUserSupabaseClient(request: NextRequest) {
   // Authorization 헤더에서 토큰 추출
   const authHeader = request.headers.get('authorization')
   const token = authHeader?.replace('Bearer ', '')
+
+  console.log('[createUserSupabaseClient] Creating client with token:', !!token)
+  console.log('[createUserSupabaseClient] Token preview:', token ? token.substring(0, 30) + '...' : 'NO TOKEN')
 
   const client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     auth: {

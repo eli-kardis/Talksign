@@ -26,23 +26,28 @@ export async function GET(request: NextRequest) {
     // RLS가 적용된 Supabase 클라이언트로 데이터 가져오기
     try {
       const supabase = createUserSupabaseClient(request)
-      console.log('Fetching customers for user:', userId)
-      
+      console.log('[GET /api/customers] Fetching customers for user:', userId)
+      console.log('[GET /api/customers] RLS should filter by user_id:', userId)
+
       const { data: customers, error } = await supabase
         .from('customers')
         .select('*')
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Supabase query error:', error)
-        console.log('Error details:', JSON.stringify(error, null, 2))
+        console.error('[GET /api/customers] Supabase query error:', error)
+        console.log('[GET /api/customers] Error details:', JSON.stringify(error, null, 2))
         // Supabase 연결 실패 시 mock 데이터 사용 (사용자별로)
         const customers = MockCustomerService.getAll()
         console.log('Using mock data, fetched customers:', customers.length)
         return NextResponse.json(customers)
       }
 
-      console.log('Successfully fetched customers from Supabase:', customers ? customers.length : 0)
+      console.log('[GET /api/customers] Successfully fetched customers from Supabase:', customers ? customers.length : 0)
+      if (customers && customers.length > 0) {
+        console.log('[GET /api/customers] First customer user_id:', customers[0].user_id)
+        console.log('[GET /api/customers] All customer user_ids:', customers.map(c => c.user_id))
+      }
       return NextResponse.json(customers || [])
     } catch (supabaseError) {
       console.error('Supabase connection exception:', supabaseError)
