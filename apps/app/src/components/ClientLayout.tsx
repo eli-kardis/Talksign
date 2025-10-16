@@ -38,7 +38,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   // 경로 분석
   const isAuthPage = pathname?.startsWith('/auth')
   const isRootPage = pathname === '/'
-  const isDashboardRoute = pathname?.startsWith('/dashboard')
+
+  // /{username}/dashboard, /{username}/documents 등의 패턴 인식
+  const usernamePattern = /^\/[^\/]+\/(dashboard|documents|finance|schedule|customers)/
+  const hasUsernameRoute = pathname ? usernamePattern.test(pathname) : false
+
+  const isDashboardRoute = pathname?.startsWith('/dashboard') || hasUsernameRoute
   const isProtectedRoute = isDashboardRoute || pathname?.startsWith('/documents') || pathname?.startsWith('/finance') || pathname?.startsWith('/schedule') || pathname?.startsWith('/customers') || isRootPage
 
   // 인증 페이지라면 헤더와 네비게이션 없이 렌더링
