@@ -45,11 +45,9 @@ export async function GET(request: NextRequest) {
       cookies.forEach(({ name, value, options }) => {
         response.cookies.set(name, value, {
           ...options,
-          domain: '.talksign.co.kr', // 크로스 도메인 설정
           path: '/',
           sameSite: 'lax',
           secure: true,
-          httpOnly: true,
         })
       })
       return response
