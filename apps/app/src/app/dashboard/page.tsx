@@ -20,7 +20,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isLoading && user) {
       const username = user.email.split('@')[0]
-      router.replace(`/dashboard/${username}`)
+      router.replace(`/${username}/dashboard`)
     }
   }, [user, isLoading, router])
 

@@ -81,12 +81,11 @@ export async function GET(request: NextRequest) {
         return resetResponse
       }
 
-      // 이메일 인증 성공 - username 기반 대시보드로 리다이렉트
+      // 이메일 인증 성공 - /dashboard로 리다이렉트 (page.tsx가 username 경로로 처리)
       console.log('[Callback] Email verified, redirecting to dashboard')
 
-      const username = data.user?.email ? data.user.email.split('@')[0] : 'user'
-      const response = NextResponse.redirect(`https://app.talksign.co.kr/${username}/dashboard`)
-      console.log('[Callback] Redirecting to:', `/${username}/dashboard`)
+      const response = NextResponse.redirect(`https://app.talksign.co.kr/dashboard`)
+      console.log('[Callback] Redirecting to: /dashboard')
 
       return setCookiesOnResponse(response)
     } catch (error) {
@@ -120,10 +119,9 @@ export async function GET(request: NextRequest) {
         return resetResponse
       }
 
-      // Google OAuth 로그인 - username 기반 대시보드로 리다이렉트
-      const username = data.user?.email ? data.user.email.split('@')[0] : 'user'
-      const response = NextResponse.redirect(`https://app.talksign.co.kr/${username}/dashboard`)
-      console.log('[Callback] Redirecting to:', `/${username}/dashboard`)
+      // Google OAuth 로그인 - /dashboard로 리다이렉트 (page.tsx가 username 경로로 처리)
+      const response = NextResponse.redirect(`https://app.talksign.co.kr/dashboard`)
+      console.log('[Callback] Redirecting to: /dashboard')
 
       return setCookiesOnResponse(response)
     } catch (error) {
