@@ -118,10 +118,14 @@ export function Signup({ onNavigate, onSignupSuccess }: SignupProps) {
     setError('')
 
     try {
+      const redirectUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/auth/callback`
+        : 'https://accounts.talksign.co.kr/auth/callback'
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'https://accounts.talksign.co.kr/auth/callback',
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -148,10 +152,14 @@ export function Signup({ onNavigate, onSignupSuccess }: SignupProps) {
     setError('')
 
     try {
+      const redirectUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/auth/callback`
+        : 'https://accounts.talksign.co.kr/auth/callback'
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
         options: {
-          redirectTo: 'https://accounts.talksign.co.kr/auth/callback',
+          redirectTo: redirectUrl,
         }
       })
 
