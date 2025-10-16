@@ -63,6 +63,21 @@ export default function Page() {
     }
   }
 
+  // 로그인한 사용자를 username 경로로 리다이렉트
+  useEffect(() => {
+    if (!isLoading && user) {
+      const username = user.email.split('@')[0]
+      router.replace(`/${username}/dashboard`)
+    }
+  }, [user, isLoading, router])
+
+  // 비로그인 사용자를 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    if (!isLoading && !user) {
+      window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
+    }
+  }, [user, isLoading])
+
   // 로딩 중일 때
   if (isLoading) {
     return (
@@ -72,22 +87,10 @@ export default function Page() {
     )
   }
 
-  // 로그인하지 않은 경우 accounts.talksign.co.kr로 리디렉션
-  if (!user) {
-    window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-
-  // 로그인한 사용자에게 대시보드 표시
+  // 리다이렉트 처리 중
   return (
-    <Dashboard
-      onNavigate={onNavigate}
-      schedules={schedules}
-      schedulesLoading={schedulesLoading}
-    />
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+    </div>
   )
 }
