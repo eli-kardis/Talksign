@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
       cookies.forEach(({ name, value, options }) => {
         response.cookies.set(name, value, {
           ...options,
+          domain: '.talksign.co.kr',
           path: '/',
           sameSite: 'lax',
           secure: true,
