@@ -41,23 +41,34 @@ async function verifySupabaseJWT(token: string): Promise<string | null> {
     console.log('[Auth] Verifying JWT token...')
     console.log('[Auth] Token preview:', token.substring(0, 30) + '...')
 
-    // ⚠️ 임시: JWT 검증을 간단하게 처리 (JWKS 없이)
-    // JWT를 디코딩만 하고 서명 검증은 스킵
-    const parts = token.split('.')
-    if (parts.length !== 3) {
-      console.error('[Auth] Invalid JWT format')
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl) {
+      console.error('[Auth] Missing NEXT_PUBLIC_SUPABASE_URL for JWT verification')
       return null
     }
 
-    // JWT payload 디코딩
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString())
-    console.log('[Auth] JWT decoded successfully')
+    if (!jwtSecret) {
+      console.error('[Auth] Missing JWT secret for verification')
+      return null
+    }
+
+    // JWT Secret을 사용한 검증 (JWKS 대신)
+    const secret = new TextEncoder().encode(jwtSecret)
+    const issuerUrl = `${supabaseUrl}/auth/v1`
+
+    const { payload } = await jwtVerify(token, secret, {
+      issuer: issuerUrl,
+      audience: 'authenticated',
+    })
+
+    console.log('[Auth] JWT verified successfully')
     console.log('[Auth] User ID from token:', payload.sub)
 
-    // 사용자 ID 반환
     return payload.sub || null
   } catch (error) {
-    console.error('[Auth] JWT decoding failed:', error)
+    console.error('[Auth] JWT verification failed:', error)
     if (error instanceof Error) {
       console.error('[Auth] Error name:', error.name)
       console.error('[Auth] Error message:', error.message)
@@ -121,18 +132,14 @@ export async function getUserFromRequest(request: NextRequest): Promise<string |
     }
 
     // 토큰이 없거나 검증 실패 시 처리
-    // ⚠️ 임시: 프로덕션에서도 데모 유저 허용 (인증 시스템 완성 전까지)
-    console.log('[Auth] → Falling back to demo user')
-    const demoUserId = await getOrCreateDemoUser()
-    console.log('[Auth] Demo user ID:', demoUserId)
-    return demoUserId
+    console.log('[Auth] ✗ No valid authentication found')
+
+    // 프로덕션에서는 인증 실패 시 null 반환
+    return null
 
   } catch (error) {
     console.error('[Auth] ✗ Error getting user from request:', error)
-
-    // ⚠️ 임시: 에러 발생 시에도 데모 사용자 반환
-    console.log('[Auth] → Falling back to demo user due to error')
-    return await getOrCreateDemoUser()
+    return null
   }
 }
 
