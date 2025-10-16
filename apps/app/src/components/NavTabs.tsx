@@ -50,39 +50,46 @@ export function NavTabs() {
     setOpenMobile = null;
   }
 
+  // 현재 경로에서 username 추출 (예: /dhtj1234/dashboard -> dhtj1234)
+  const usernameMatch = pathname?.match(/^\/([^\/]+)\/(dashboard|customers|documents|finance|schedule)/);
+  const username = usernameMatch ? usernameMatch[1] : null;
+
+  // username이 있으면 /{username} 형식으로, 없으면 basePath 사용
+  const effectiveBasePath = username ? `/${username}` : basePath;
+
   const items: NavItem[] = [
-    { 
-      href: `${basePath}/dashboard`, 
-      label: "대시보드", 
-      icon: LayoutDashboard 
+    {
+      href: `${effectiveBasePath}/dashboard`,
+      label: "대시보드",
+      icon: LayoutDashboard
     },
-    { 
-      href: `${basePath}/customers`, 
-      label: "고객", 
-      icon: Users 
+    {
+      href: `${effectiveBasePath}/customers`,
+      label: "고객",
+      icon: Users
     },
-    { 
-      href: `${basePath}/documents`, 
-      label: "문서관리", 
+    {
+      href: `${effectiveBasePath}/documents`,
+      label: "문서관리",
       icon: FileText,
       subItems: [
-        { href: `${basePath}/documents/quotes`, label: "견적서", icon: FileText },
-        { href: `${basePath}/documents/contracts`, label: "계약서", icon: FileSignature },
+        { href: `${effectiveBasePath}/documents/quotes`, label: "견적서", icon: FileText },
+        { href: `${effectiveBasePath}/documents/contracts`, label: "계약서", icon: FileSignature },
       ]
     },
-    { 
-      href: `${basePath}/finance`, 
-      label: "재무관리", 
+    {
+      href: `${effectiveBasePath}/finance`,
+      label: "재무관리",
       icon: DollarSign,
       subItems: [
-        { href: `${basePath}/finance/payments`, label: "결제", icon: CreditCard },
-        { href: `${basePath}/finance/tax-invoices`, label: "세금계산서", icon: Receipt },
+        { href: `${effectiveBasePath}/finance/payments`, label: "결제", icon: CreditCard },
+        { href: `${effectiveBasePath}/finance/tax-invoices`, label: "세금계산서", icon: Receipt },
       ]
     },
-    { 
-      href: `${basePath}/schedule`, 
-      label: "일정", 
-      icon: Calendar 
+    {
+      href: `${effectiveBasePath}/schedule`,
+      label: "일정",
+      icon: Calendar
     },
   ];
 

@@ -99,9 +99,7 @@ export async function middleware(request: NextRequest) {
 
         if (!session) {
           // 세션이 없으면 accounts 도메인 로그인 페이지로 리다이렉트
-          const redirectUrl = new URL('https://accounts.talksign.co.kr/auth/signin')
-          redirectUrl.searchParams.set('redirect', url.pathname)
-          return NextResponse.redirect(redirectUrl)
+          return NextResponse.redirect('https://accounts.talksign.co.kr/auth/signin')
         }
 
         // 세션이 있으면 username 검증
