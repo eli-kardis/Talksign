@@ -68,7 +68,12 @@ END $$;
 -- 8. user_id를 NOT NULL로 설정
 ALTER TABLE customers ALTER COLUMN user_id SET NOT NULL;
 
--- 9. 올바른 RLS 정책 생성
+-- 9. 올바른 RLS 정책 생성 (이미 존재하면 먼저 삭제)
+DROP POLICY IF EXISTS "Users can view own customers" ON customers;
+DROP POLICY IF EXISTS "Users can insert own customers" ON customers;
+DROP POLICY IF EXISTS "Users can update own customers" ON customers;
+DROP POLICY IF EXISTS "Users can delete own customers" ON customers;
+
 CREATE POLICY "Users can view own customers" ON customers
     FOR SELECT USING (auth.uid() = user_id);
 
