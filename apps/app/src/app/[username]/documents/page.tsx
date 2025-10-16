@@ -14,7 +14,7 @@ export default function UserDocumentsPage({ params }: { params: Promise<{ userna
   useEffect(() => {
     if (!isLoading && !user) {
       console.log('Documents: User not authenticated, redirecting to signin')
-      window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
+      window.location.href = 'https://account.talksign.co.kr/auth/signin'
     }
   }, [user, isLoading])
 

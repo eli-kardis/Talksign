@@ -15,7 +15,7 @@ export default function UserSchedulePage({ params }: { params: Promise<{ usernam
   useEffect(() => {
     if (!isLoading && !user) {
       console.log('Schedule: User not authenticated, redirecting to signin')
-      window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
+      window.location.href = 'https://account.talksign.co.kr/auth/signin'
     }
   }, [user, isLoading])
 

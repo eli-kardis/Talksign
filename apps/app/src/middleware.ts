@@ -20,7 +20,7 @@ export async function middleware(request: NextRequest) {
 
       // 인증 관련 라우트는 accounts 도메인으로 리다이렉트
       if (authRoutes.some(route => url.pathname.startsWith(route))) {
-        url.hostname = 'accounts.talksign.co.kr'
+        url.hostname = 'account.talksign.co.kr'
         url.pathname = url.pathname.replace('/auth', '') // /auth 접두사 제거
         return NextResponse.redirect(url)
       }
@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
       }
       break
 
-    case 'accounts.talksign.co.kr':
+    case 'account.talksign.co.kr':
       // 인증 도메인: 로그인/회원가입만 허용
       const allowedAuthPaths = ['/', '/login', '/signup', '/signin', '/forgot-password', '/reset-password', '/api', '/auth']
       if (!allowedAuthPaths.some(path => url.pathname.startsWith(path))) {
@@ -99,7 +99,7 @@ export async function middleware(request: NextRequest) {
 
         if (!session) {
           // 세션이 없으면 accounts 도메인 로그인 페이지로 리다이렉트
-          const redirectUrl = new URL('https://accounts.talksign.co.kr/auth/signin')
+          const redirectUrl = new URL('https://account.talksign.co.kr/auth/signin')
           redirectUrl.searchParams.set('redirect', url.pathname)
           return NextResponse.redirect(redirectUrl)
         }

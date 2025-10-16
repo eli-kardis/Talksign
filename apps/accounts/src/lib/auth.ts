@@ -27,7 +27,7 @@ export const auth = {
         email: userData.email,
         password: userData.password,
         options: {
-          emailRedirectTo: 'https://accounts.talksign.co.kr/auth/callback',
+          emailRedirectTo: 'https://account.talksign.co.kr/auth/callback',
           data: {
             name: userData.name,
             phone: userData.phone,

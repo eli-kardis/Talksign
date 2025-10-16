@@ -120,7 +120,7 @@ export function Signup({ onNavigate, onSignupSuccess }: SignupProps) {
     try {
       const redirectUrl = typeof window !== 'undefined'
         ? `${window.location.origin}/auth/callback`
-        : 'https://accounts.talksign.co.kr/auth/callback'
+        : 'https://account.talksign.co.kr/auth/callback'
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -154,7 +154,7 @@ export function Signup({ onNavigate, onSignupSuccess }: SignupProps) {
     try {
       const redirectUrl = typeof window !== 'undefined'
         ? `${window.location.origin}/auth/callback`
-        : 'https://accounts.talksign.co.kr/auth/callback'
+        : 'https://account.talksign.co.kr/auth/callback'
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',

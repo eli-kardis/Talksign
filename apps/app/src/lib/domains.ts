@@ -2,7 +2,7 @@
 
 export const DOMAINS = {
   LANDING: process.env.NEXT_PUBLIC_LANDING_DOMAIN || 'https://talksign.co.kr',
-  ACCOUNTS: process.env.NEXT_PUBLIC_ACCOUNTS_DOMAIN || 'https://accounts.talksign.co.kr',
+  ACCOUNTS: process.env.NEXT_PUBLIC_ACCOUNTS_DOMAIN || 'https://account.talksign.co.kr',
   APP: process.env.NEXT_PUBLIC_APP_DOMAIN || 'https://app.talksign.co.kr',
 } as const
 
@@ -50,7 +50,7 @@ export const getCurrentDomain = (): keyof typeof DOMAINS | null => {
 
   const hostname = window.location.hostname
 
-  if (hostname.includes('accounts.talksign.co.kr')) return 'ACCOUNTS'
+  if (hostname.includes('account.talksign.co.kr')) return 'ACCOUNTS'
   if (hostname.includes('app.talksign.co.kr')) return 'APP'
   if (hostname.includes('talksign.co.kr')) return 'LANDING'
 

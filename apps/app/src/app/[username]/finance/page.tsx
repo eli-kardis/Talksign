@@ -14,7 +14,7 @@ export default function UserFinancePage({ params }: { params: Promise<{ username
   useEffect(() => {
     if (!isLoading && !user) {
       console.log('Finance: User not authenticated, redirecting to signin')
-      window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
+      window.location.href = 'https://account.talksign.co.kr/auth/signin'
     }
   }, [user, isLoading])
 

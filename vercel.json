@@ -21,7 +21,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://app.talksign.co.kr, https://accounts.talksign.co.kr, https://talksign.co.kr, http://localhost:3000"
+          "value": "https://app.talksign.co.kr, https://account.talksign.co.kr, https://talksign.co.kr, http://localhost:3000"
         },
         {
           "key": "Access-Control-Allow-Methods",
