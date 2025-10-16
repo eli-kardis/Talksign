@@ -27,8 +27,8 @@ export default function UserDocumentsPage({ params }: { params: Promise<{ userna
       if (username !== userUsername) {
         router.replace(`/${userUsername}/documents`)
       } else {
-        // username이 올바르면 /documents/quotes로 리다이렉트
-        router.replace(`/${username}/documents/quotes`)
+        // username이 올바르면 /documents/quotes로 리다이렉트 (username 없는 경로)
+        router.replace(`/documents/quotes`)
       }
     }
   }, [user, isLoading, username, router])

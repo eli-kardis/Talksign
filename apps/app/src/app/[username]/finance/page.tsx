@@ -27,8 +27,8 @@ export default function UserFinancePage({ params }: { params: Promise<{ username
       if (username !== userUsername) {
         router.replace(`/${userUsername}/finance`)
       } else {
-        // username이 올바르면 /finance/payments로 리다이렉트
-        router.replace(`/${username}/finance/payments`)
+        // username이 올바르면 /finance/payments로 리다이렉트 (username 없는 경로)
+        router.replace(`/finance/payments`)
       }
     }
   }, [user, isLoading, username, router])
