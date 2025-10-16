@@ -55,15 +55,20 @@ export async function middleware(request: NextRequest) {
       // /[username]/* 형식의 라우트 감지
       const usernamePattern = /^\/[^\/]+\/(dashboard|documents|finance|schedule|customers)/
       const isProtectedRoute = usernamePattern.test(url.pathname)
-      
+
       // 공개 라우트 (인증 불필요)
-      const publicRoutes = ['/api', '/_next', '/favicon.ico']
+      const publicRoutes = ['/api', '/_next', '/favicon.ico', '/documents', '/finance']
       const isPublicRoute = publicRoutes.some(route => url.pathname.startsWith(route))
+
+      // 공개 라우트는 바로 통과
+      if (isPublicRoute) {
+        return NextResponse.next()
+      }
 
       if (isProtectedRoute) {
         // 서버 사이드에서 쿠키 기반 세션 확인
         let response = NextResponse.next()
-        
+
         const supabase = createServerClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -120,10 +125,7 @@ export async function middleware(request: NextRequest) {
         return response
       }
 
-      if (!isPublicRoute) {
-        return NextResponse.next()
-      }
-      
+      // protected도 public도 아닌 경로는 그냥 통과
       return NextResponse.next()
 
     default:
