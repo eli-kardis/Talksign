@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
     const { data: customers, error } = await supabase
       .from('customers')
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
     if (error) {
