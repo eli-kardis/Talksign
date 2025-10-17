@@ -88,7 +88,7 @@ export async function POST(
       .update({
         freelancer_signature_data: signaturePayload,
         updated_at: new Date().toISOString()
-      })
+      } as any)
       .eq('id', contractId)
       .select()
       .single()

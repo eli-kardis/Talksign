@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
           company_name: body.supplier_info.company_name,
           business_name: body.supplier_info.business_name,
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq('id', userId)
 
       if (updateError) {
