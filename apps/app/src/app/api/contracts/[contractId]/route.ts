@@ -345,29 +345,32 @@ export async function GET(
       return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
     }
 
+    // 타입 가드: contract가 존재함을 TypeScript에 알림
+    const validContract = contract as any
+
     // Transform the contract data to match the expected format
     const transformedContract = {
-      id: contract.id,
-      title: contract.title,
-      status: contract.status,
-      client_name: contract.client_name,
-      client_email: contract.client_email,
-      client_phone: contract.client_phone,
-      client_company: contract.client_company,
-      client_business_number: contract.client_business_number,
-      client_address: contract.client_address,
-      supplier: contract.supplier_info || null,
-      items: contract.items || [],
-      subtotal: contract.subtotal || 0,
-      tax_amount: contract.tax_amount || 0,
-      tax_rate: (contract.tax_rate || 10) / 100, // Convert percentage to decimal
-      total_amount: contract.total_amount || 0,
-      description: contract.project_description,
-      project_start_date: contract.project_start_date,
-      project_end_date: contract.project_end_date,
-      terms: contract.contract_terms || [],
-      created_at: contract.created_at,
-      signed_date: contract.signed_at
+      id: validContract.id,
+      title: validContract.title,
+      status: validContract.status,
+      client_name: validContract.client_name,
+      client_email: validContract.client_email,
+      client_phone: validContract.client_phone,
+      client_company: validContract.client_company,
+      client_business_number: validContract.client_business_number,
+      client_address: validContract.client_address,
+      supplier: validContract.supplier_info || null,
+      items: validContract.items || [],
+      subtotal: validContract.subtotal || 0,
+      tax_amount: validContract.tax_amount || 0,
+      tax_rate: (validContract.tax_rate || 10) / 100, // Convert percentage to decimal
+      total_amount: validContract.total_amount || 0,
+      description: validContract.project_description,
+      project_start_date: validContract.project_start_date,
+      project_end_date: validContract.project_end_date,
+      terms: validContract.contract_terms || [],
+      created_at: validContract.created_at,
+      signed_date: validContract.signed_at
     }
 
     console.log('Contract found:', transformedContract)

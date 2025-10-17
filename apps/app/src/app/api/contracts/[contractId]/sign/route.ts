@@ -62,8 +62,11 @@ export async function POST(
       )
     }
 
+    // 타입 가드: existingContract가 존재함을 TypeScript에 알림
+    const validContract = existingContract as any
+
     // draft 상태가 아니면 서명 불가
-    if (existingContract.status !== 'draft') {
+    if (validContract.status !== 'draft') {
       return NextResponse.json(
         { error: 'Only draft contracts can be signed' },
         { status: 400 }
