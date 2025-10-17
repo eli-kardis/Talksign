@@ -162,6 +162,7 @@ export async function DELETE(request: NextRequest) {
     const { error } = await supabase
       .from('customers')
       .delete()
+      .eq('user_id', userId)  // ✅ Defense in Depth: 명시적 user_id 필터 추가
       .in('id', customerIds)
 
     if (error) {

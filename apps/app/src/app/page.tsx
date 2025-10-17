@@ -63,36 +63,33 @@ export default function Page() {
     }
   }
 
-  // 로그인한 사용자를 username 경로로 리다이렉트
+  // ✅ 통합된 인증 플로우 (무한 루프 방지 + URL query parameter 방식)
   useEffect(() => {
-    if (!isLoading && user) {
+    if (isLoading) return
+
+    // URL에서 auth_callback 파라미터 확인 (accounts에서 왔는지 확인)
+    const params = new URLSearchParams(window.location.search)
+    const isAuthCallback = params.get('auth_callback') === 'true'
+
+    if (user) {
+      // ✅ 케이스 1: 로그인된 사용자 → username 경로로 리다이렉트
+      console.log('[Auth] User authenticated, redirecting to dashboard')
       const username = user.email.split('@')[0]
       router.replace(`/${username}/dashboard`)
+    } else {
+      // ✅ 케이스 2: 비로그인 사용자
+      if (isAuthCallback) {
+        // accounts에서 왔는데 user가 없으면 인증 실패
+        console.error('[Auth Error] Authentication failed after redirect from accounts')
+        console.error('[Auth Error] User should have been authenticated by now')
+        // 에러 페이지나 알림 표시 가능 (현재는 로그만)
+      } else {
+        // 첫 방문 → accounts로 리다이렉트
+        console.log('[Redirect] No user, redirecting to accounts.talksign.co.kr')
+        window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
+      }
     }
   }, [user, isLoading, router])
-
-  // 비로그인 사용자를 로그인 페이지로 리다이렉트 (무한 루프 방지)
-  useEffect(() => {
-    if (!isLoading && !user) {
-      // sessionStorage로 accounts에서 이미 왔는지 확인
-      const redirectAttempted = sessionStorage.getItem('auth_redirect_attempted')
-
-      if (!redirectAttempted) {
-        // 첫 번째 redirect 시도
-        sessionStorage.setItem('auth_redirect_attempted', 'true')
-        console.log('[Redirect] Redirecting to accounts.talksign.co.kr')
-        window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
-      } else {
-        // 이미 accounts에서 왔는데 여전히 user가 없으면 에러
-        console.error('[Auth Error] Authentication failed after redirect from accounts')
-        // sessionStorage 클리어 (다음 시도를 위해)
-        sessionStorage.removeItem('auth_redirect_attempted')
-      }
-    } else if (!isLoading && user) {
-      // 로그인 성공 시 redirect flag 클리어
-      sessionStorage.removeItem('auth_redirect_attempted')
-    }
-  }, [user, isLoading])
 
   // 로딩 중일 때
   if (isLoading) {

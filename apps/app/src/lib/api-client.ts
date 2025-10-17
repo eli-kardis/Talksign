@@ -50,9 +50,15 @@ export class AuthenticatedApiClient {
 
   static async get(url: string): Promise<Response> {
     const headers = await this.getAuthHeaders()
+    // ✅ 캐시 무효화: 항상 최신 데이터 가져오기 (사용자 격리 문제 해결)
+    headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    headers['Pragma'] = 'no-cache'
+    headers['Expires'] = '0'
+
     return fetch(url, {
       method: 'GET',
       headers,
+      cache: 'no-store',  // Next.js fetch 캐시 무효화
     })
   }
 
