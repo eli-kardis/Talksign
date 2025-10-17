@@ -4,7 +4,6 @@ import { createClient } from '@supabase/supabase-js'
 // 환경 변수에서 Supabase 설정 가져오기
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 // 런타임 환경 변수 검증 (브라우저에서만)
 if (typeof window !== 'undefined') {
@@ -14,10 +13,6 @@ if (typeof window !== 'undefined') {
   if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     console.error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
   }
-}
-
-if (!supabaseServiceKey) {
-  console.warn('Missing SUPABASE_SERVICE_ROLE_KEY - using anon key for service operations')
 }
 
 // 쿠키 도메인 설정 (프로덕션에서만 사용)
@@ -75,17 +70,44 @@ export const supabase = createBrowserClient(
   }
 )
 
-// 서버 사이드에서 사용할 클라이언트 (Service Role Key 사용)
-export const supabaseAdmin = createClient(
-  supabaseUrl,
-  supabaseServiceKey || supabaseAnonKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
+/**
+ * ⚠️ 서버 사이드 Admin 클라이언트
+ *
+ * Service Role Key를 사용하여 RLS를 우회하는 클라이언트입니다.
+ * 이 함수는 반드시 서버 사이드에서만 호출되어야 합니다.
+ *
+ * 사용 위치:
+ * - API Routes (app/api/**)
+ * - Server Components
+ * - Server Actions
+ *
+ * 절대 사용 금지:
+ * - Client Components
+ * - 브라우저에서 실행되는 코드
+ */
+export function createSupabaseAdmin() {
+  // 브라우저 환경에서 호출 시 에러
+  if (typeof window !== 'undefined') {
+    throw new Error('createSupabaseAdmin() can only be called on the server side')
   }
-)
+
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!serviceKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable is required for admin operations')
+  }
+
+  return createClient(
+    supabaseUrl,
+    serviceKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+}
 
 // 서버 API 호출을 위한 기본 URL
 export const API_BASE_URL = `${supabaseUrl}/functions/v1/make-server-e83d4894`

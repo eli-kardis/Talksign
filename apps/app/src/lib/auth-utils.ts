@@ -119,64 +119,12 @@ export async function getUserFromRequest(request: NextRequest): Promise<string |
     // 토큰이 없거나 검증 실패 시 처리
     console.log('[Auth] ✗ No valid authentication found')
 
-    // 프로덕션에서는 인증 실패 시 null 반환
+    // 인증 실패 시 null 반환 (데모 모드 제거)
     return null
 
   } catch (error) {
     console.error('[Auth] ✗ Error getting user from request:', error)
     return null
-  }
-}
-
-// 데모 사용자 생성 또는 기존 사용자 반환
-async function getOrCreateDemoUser(): Promise<string> {
-  try {
-    const supabase = createServerSupabaseClient()
-
-    // 기존 데모 사용자 확인
-    const { data: existingUsers } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', 'demo@talksign.app')
-      .limit(1)
-
-    if (existingUsers && existingUsers.length > 0) {
-      console.log('Using existing demo user:', existingUsers[0].id)
-      return existingUsers[0].id
-    }
-
-    // 데모 사용자 생성
-    const demoUserData = {
-      id: '80d20e48-7189-4874-b792-9e514aaa0572', // 고정 UUID
-      email: 'demo@talksign.app',
-      name: '데모 사용자',
-      phone: '010-1234-5678',
-      company_name: '데모 회사',
-      business_name: '데모 비즈니스',
-      business_registration_number: '123-45-67890',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-
-    const { data: newUser, error } = await supabase
-      .from('users')
-      .upsert(demoUserData, { onConflict: 'id' })
-      .select('id')
-      .single()
-
-    if (error) {
-      console.error('Failed to create demo user:', error)
-      // 실패해도 고정 ID 반환
-      return '80d20e48-7189-4874-b792-9e514aaa0572'
-    }
-
-    console.log('Created demo user:', newUser.id)
-    return newUser.id
-
-  } catch (error) {
-    console.error('Error in getOrCreateDemoUser:', error)
-    // 모든 것이 실패해도 고정 ID 반환
-    return '80d20e48-7189-4874-b792-9e514aaa0572'
   }
 }
 
@@ -216,20 +164,11 @@ export function createUserSupabaseClient(request: NextRequest) {
 }
 
 /**
- * 개발/프로덕션 환경에 맞는 Supabase 클라이언트를 생성합니다.
- * ⚠️ 임시: 토큰이 없으면 항상 Service Role Key 사용 (데모 모드)
- * TODO: 프로덕션에서 인증 필수로 변경 필요
+ * 사용자 인증 토큰을 사용하여 RLS가 적용된 Supabase 클라이언트를 생성합니다.
+ * 인증 토큰이 없으면 오류가 발생합니다.
  */
 export function createSupabaseClient(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  const hasToken = !!authHeader
-
-  // 토큰이 없으면 Service Role Key 사용 (데모 유저용)
-  if (!hasToken) {
-    return createServerSupabaseClient()
-  }
-
-  // 토큰이 있으면 User 클라이언트 사용 (RLS 적용)
+  // 항상 User 클라이언트 사용 (RLS 적용 - 보안 강화)
   return createUserSupabaseClient(request)
 }
 

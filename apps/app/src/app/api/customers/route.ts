@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
-import { MockCustomerService } from '@/lib/mockData'
 
 
 export async function GET(request: NextRequest) {
@@ -22,40 +21,32 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('Authenticated user:', userId)
-    
+
     // RLS가 적용된 Supabase 클라이언트로 데이터 가져오기
-    try {
-      const supabase = createUserSupabaseClient(request)
-      console.log('[GET /api/customers] Fetching customers for user:', userId)
-      console.log('[GET /api/customers] RLS should filter by user_id:', userId)
+    const supabase = createUserSupabaseClient(request)
+    console.log('[GET /api/customers] Fetching customers for user:', userId)
+    console.log('[GET /api/customers] RLS should filter by user_id:', userId)
 
-      const { data: customers, error } = await supabase
-        .from('customers')
-        .select('*')
-        .order('created_at', { ascending: false })
+    const { data: customers, error } = await supabase
+      .from('customers')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error('[GET /api/customers] Supabase query error:', error)
-        console.log('[GET /api/customers] Error details:', JSON.stringify(error, null, 2))
-        // Supabase 연결 실패 시 mock 데이터 사용 (사용자별로)
-        const customers = MockCustomerService.getAll()
-        console.log('Using mock data, fetched customers:', customers.length)
-        return NextResponse.json(customers)
-      }
-
-      console.log('[GET /api/customers] Successfully fetched customers from Supabase:', customers ? customers.length : 0)
-      if (customers && customers.length > 0) {
-        console.log('[GET /api/customers] First customer user_id:', customers[0].user_id)
-        console.log('[GET /api/customers] All customer user_ids:', customers.map(c => c.user_id))
-      }
-      return NextResponse.json(customers || [])
-    } catch (supabaseError) {
-      console.error('Supabase connection exception:', supabaseError)
-      // 연결 실패 시 mock 데이터 사용
-      const customers = MockCustomerService.getAll()
-      console.log('Using mock data, fetched customers:', customers.length)
-      return NextResponse.json(customers)
+    if (error) {
+      console.error('[GET /api/customers] Supabase query error:', error)
+      console.error('[GET /api/customers] Error details:', JSON.stringify(error, null, 2))
+      return NextResponse.json(
+        { error: 'Database query failed', details: error.message },
+        { status: 500 }
+      )
     }
+
+    console.log('[GET /api/customers] Successfully fetched customers from Supabase:', customers ? customers.length : 0)
+    if (customers && customers.length > 0) {
+      console.log('[GET /api/customers] First customer user_id:', customers[0].user_id)
+      console.log('[GET /api/customers] All customer user_ids:', customers.map(c => c.user_id))
+    }
+    return NextResponse.json(customers || [])
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -101,29 +92,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Supabase에 데이터 저장 (user_id 포함)
-    try {
-      const supabase = createUserSupabaseClient(request)
-      const { data: newCustomer, error } = await supabase
-        .from('customers')
-        .insert([
-          {
-            user_id: userId,
-            company_name: body.company_name.trim(),
-            representative_name: body.representative_name.trim(),
-            contact_person: body.contact_person?.trim() || null,
-            business_registration_number: body.business_registration_number?.trim() || null,
-            email: body.email.trim(),
-            phone: body.phone.trim(),
-            address: body.address?.trim() || null
-          } as any
-        ])
-        .select()
-        .single()
-
-      if (error) {
-        console.log('Supabase error, using mock data:', error.message)
-        // Supabase 실패 시 mock 데이터 사용
-        const newCustomer = MockCustomerService.create({
+    const supabase = createUserSupabaseClient(request)
+    const { data: newCustomer, error } = await supabase
+      .from('customers')
+      .insert([
+        {
+          user_id: userId,
           company_name: body.company_name.trim(),
           representative_name: body.representative_name.trim(),
           contact_person: body.contact_person?.trim() || null,
@@ -131,28 +105,21 @@ export async function POST(request: NextRequest) {
           email: body.email.trim(),
           phone: body.phone.trim(),
           address: body.address?.trim() || null
-        })
-        console.log('Customer created with mock data:', newCustomer)
-        return NextResponse.json(newCustomer, { status: 201 })
-      }
+        } as any
+      ])
+      .select()
+      .single()
 
-      console.log('Customer created in Supabase:', newCustomer)
-      return NextResponse.json(newCustomer, { status: 201 })
-    } catch (supabaseError) {
-      console.log('Supabase connection failed, using mock data:', supabaseError)
-      // Supabase 연결 실패 시 mock 데이터 사용
-      const newCustomer = MockCustomerService.create({
-        company_name: body.company_name.trim(),
-        representative_name: body.representative_name.trim(),
-        contact_person: body.contact_person?.trim() || null,
-        business_registration_number: body.business_registration_number?.trim() || null,
-        email: body.email.trim(),
-        phone: body.phone.trim(),
-        address: body.address?.trim() || null
-      })
-      console.log('Customer created with mock data:', newCustomer)
-      return NextResponse.json(newCustomer, { status: 201 })
+    if (error) {
+      console.error('Supabase error:', error.message)
+      return NextResponse.json(
+        { error: 'Failed to create customer', details: error.message },
+        { status: 500 }
+      )
     }
+
+    console.log('Customer created in Supabase:', newCustomer)
+    return NextResponse.json(newCustomer, { status: 201 })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json({ 
@@ -190,39 +157,25 @@ export async function DELETE(request: NextRequest) {
     }
 
     // RLS가 적용된 Supabase 클라이언트로 삭제 (사용자 소유 데이터만 삭제 가능)
-    try {
-      const supabase = createUserSupabaseClient(request)
-      const { error } = await supabase
-        .from('customers')
-        .delete()
-        .in('id', customerIds)
+    const supabase = createUserSupabaseClient(request)
+    const { error } = await supabase
+      .from('customers')
+      .delete()
+      .in('id', customerIds)
 
-      if (error) {
-        console.log('Supabase error, using mock data:', error.message)
-        // Supabase 실패 시 mock 데이터 사용
-        const deletedCount = MockCustomerService.delete(customerIds)
-        console.log('Customers deleted from mock data:', deletedCount)
-        return NextResponse.json({ 
-          message: `${deletedCount} customers deleted successfully`,
-          deletedCount: deletedCount 
-        }, { status: 200 })
-      }
-
-      console.log('Customers deleted from Supabase:', customerIds.length)
-      return NextResponse.json({ 
-        message: `${customerIds.length} customers deleted successfully`,
-        deletedCount: customerIds.length 
-      }, { status: 200 })
-    } catch (supabaseError) {
-      console.log('Supabase connection failed, using mock data:', supabaseError)
-      // Supabase 연결 실패 시 mock 데이터 사용
-      const deletedCount = MockCustomerService.delete(customerIds)
-      console.log('Customers deleted from mock data:', deletedCount)
-      return NextResponse.json({ 
-        message: `${deletedCount} customers deleted successfully`,
-        deletedCount: deletedCount 
-      }, { status: 200 })
+    if (error) {
+      console.error('Supabase error:', error.message)
+      return NextResponse.json(
+        { error: 'Failed to delete customers', details: error.message },
+        { status: 500 }
+      )
     }
+
+    console.log('Customers deleted from Supabase:', customerIds.length)
+    return NextResponse.json({
+      message: `${customerIds.length} customers deleted successfully`,
+      deletedCount: customerIds.length
+    }, { status: 200 })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json({ 
