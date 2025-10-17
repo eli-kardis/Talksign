@@ -69,21 +69,21 @@ export function NavTabs() {
       icon: Users
     },
     {
-      href: `/documents`,
+      href: `${effectiveBasePath}/documents`,
       label: "문서관리",
       icon: FileText,
       subItems: [
-        { href: `/documents/quotes`, label: "견적서", icon: FileText },
-        { href: `/documents/contracts`, label: "계약서", icon: FileSignature },
+        { href: `${effectiveBasePath}/documents/quotes`, label: "견적서", icon: FileText },
+        { href: `${effectiveBasePath}/documents/contracts`, label: "계약서", icon: FileSignature },
       ]
     },
     {
-      href: `/finance`,
+      href: `${effectiveBasePath}/finance`,
       label: "재무관리",
       icon: DollarSign,
       subItems: [
-        { href: `/finance/payments`, label: "결제", icon: CreditCard },
-        // { href: `/finance/tax-invoices`, label: "세금계산서", icon: Receipt }, // 프로덕션에서 임시 비활성화
+        { href: `${effectiveBasePath}/finance/payments`, label: "결제", icon: CreditCard },
+        // { href: `${effectiveBasePath}/finance/tax-invoices`, label: "세금계산서", icon: Receipt }, // 프로덕션에서 임시 비활성화
       ]
     },
     {
