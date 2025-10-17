@@ -206,6 +206,9 @@ export async function GET(
       return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
     }
 
+    // 타입 가드: quote가 존재함을 TypeScript에 알림
+    const validQuote = quote as Quote
+
     // 사용자 정보 조회 (공급자 정보로 사용)
     const { data: user } = await supabase
       .from('users')
@@ -216,7 +219,7 @@ export async function GET(
     const supplierInfo = user || {}
 
     // PDF 생성
-    const pdfBuffer = generateQuotePDF(quote, supplierInfo)
+    const pdfBuffer = generateQuotePDF(validQuote, supplierInfo)
 
     // Audit logging for sensitive operation (PDF export)
     await logSensitiveOperation(
@@ -227,7 +230,7 @@ export async function GET(
       {
         ...extractMetadata(request),
         export_type: 'pdf',
-        file_name: `quote-${quote.id}.pdf`
+        file_name: `quote-${validQuote.id}.pdf`
       }
     )
 
@@ -236,7 +239,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="quote-${quote.id}.pdf"`,
+        'Content-Disposition': `attachment; filename="quote-${validQuote.id}.pdf"`,
       },
     })
   } catch (error) {
