@@ -347,6 +347,9 @@ export async function GET(
       return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
     }
 
+    // 타입 가드: contract가 존재함을 TypeScript에 알림
+    const validContract = contract as Contract
+
     // 사용자 정보 조회 (공급자 정보로 사용)
     const { data: user } = await supabase
       .from('users')
@@ -356,15 +359,15 @@ export async function GET(
 
     const supplierInfo = user || {}
 
-    // PDF 생성 (타입 체크를 통과한 contract 사용)
-    const pdfBuffer = generateContractPDF(contract as Contract, supplierInfo)
+    // PDF 생성
+    const pdfBuffer = generateContractPDF(validContract, supplierInfo)
 
     // PDF 응답 반환
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="contract-${contract.id}.pdf"`,
+        'Content-Disposition': `attachment; filename="contract-${validContract.id}.pdf"`,
       },
     })
   } catch (error) {
