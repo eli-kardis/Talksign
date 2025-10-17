@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
+import type { Database } from '@/lib/supabase'
 
 
 export async function PUT(
@@ -46,18 +47,21 @@ export async function PUT(
 
     // RLS가 적용된 클라이언트로 업데이트 (사용자 소유 데이터만 업데이트 가능)
     const supabase = createUserSupabaseClient(request)
+
+    const updateData: Database['public']['Tables']['customers']['Update'] = {
+      company_name: body.company_name.trim(),
+      representative_name: body.representative_name.trim(),
+      contact_person: body.contact_person?.trim() || null,
+      business_registration_number: body.business_registration_number?.trim() || null,
+      email: body.email.trim(),
+      phone: body.phone.trim(),
+      address: body.address?.trim() || null,
+      updated_at: new Date().toISOString()
+    }
+
     const { data: updatedCustomer, error } = await supabase
       .from('customers')
-      .update({
-        company_name: body.company_name.trim(),
-        representative_name: body.representative_name.trim(),
-        contact_person: body.contact_person?.trim() || null,
-        business_registration_number: body.business_registration_number?.trim() || null,
-        email: body.email.trim(),
-        phone: body.phone.trim(),
-        address: body.address?.trim() || null,
-        updated_at: new Date().toISOString()
-      } as any)
+      .update(updateData)
       .eq('id', customerId)
       .select()
       .single()

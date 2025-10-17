@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logSensitiveOperation, extractMetadata } from '@/lib/audit-log'
+import type { Database } from '@/lib/supabase'
 
 /**
  * POST /api/contracts/[contractId]/sign
@@ -74,21 +75,22 @@ export async function POST(
     }
 
     // 서명 데이터 준비
-    const signaturePayload = {
-      data: signatureData,
-      signedAt: new Date().toISOString(),
-      signedBy: userId,
-      ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-      userAgent: request.headers.get('user-agent') || 'unknown'
+    const signaturePayload: Database['public']['Tables']['contracts']['Row']['freelancer_signature'] = {
+      signature_data: signatureData,
+      signed_by: userId,
+      signed_at: new Date().toISOString(),
+      ip_address: request.headers.get('x-forwarded-for') || undefined
     }
 
     // 계약서에 공급자 서명 추가
+    const updateData: Database['public']['Tables']['contracts']['Update'] = {
+      freelancer_signature: signaturePayload,
+      updated_at: new Date().toISOString()
+    }
+
     const { data: updatedContract, error: updateError } = await supabase
       .from('contracts')
-      .update({
-        freelancer_signature_data: signaturePayload,
-        updated_at: new Date().toISOString()
-      } as any)
+      .update(updateData)
       .eq('id', contractId)
       .select()
       .single()
