@@ -1,61 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
+import { type Contract, type SupplierInfo, type DigitalSignature, parseContractFromDb } from '@/lib/types'
 import jsPDF from 'jspdf'
 
 export const runtime = 'nodejs'
-
-interface ContractItem {
-  name: string
-  description?: string
-  quantity: number
-  unit_price: number
-  amount: number
-}
-
-interface SupplierInfo {
-  name?: string
-  phone?: string
-  business_registration_number?: string
-  company_name?: string
-  business_name?: string
-}
-
-interface SignatureData {
-  data: string
-  signedAt: string
-  signedBy: string
-  ipAddress: string
-  userAgent: string
-}
-
-interface Contract {
-  id: string
-  title: string
-  content?: string
-  client_name: string
-  client_email: string
-  client_phone?: string
-  client_company?: string
-  client_address?: string
-  client_business_number?: string
-  project_description?: string
-  project_start_date?: string
-  project_end_date?: string
-  items: ContractItem[]
-  subtotal: number
-  tax_amount: number
-  tax_rate: number
-  total_amount: number
-  contract_terms?: string[]
-  payment_terms?: string
-  payment_method?: string
-  additional_payment_terms?: string
-  status: string
-  created_at: string
-  signed_at?: string
-  freelancer_signature_data?: SignatureData
-  client_signature_data?: SignatureData
-}
 
 function generateContractPDF(contract: Contract, supplierInfo: SupplierInfo): Buffer {
   const pdf = new jsPDF('p', 'mm', 'a4')
@@ -283,14 +231,14 @@ function generateContractPDF(contract: Contract, supplierInfo: SupplierInfo): Bu
   yPosition += 10
 
   // 공급자 서명 이미지 또는 텍스트
-  if (contract.freelancer_signature_data?.data) {
+  if (contract.freelancer_signature?.signature_data) {
     try {
       // 서명 이미지를 PDF에 추가
-      const signatureImage = contract.freelancer_signature_data.data
+      const signatureImage = contract.freelancer_signature.signature_data
       pdf.addImage(signatureImage, 'PNG', 30, yPosition, 40, 15)
       yPosition += 18
       pdf.setFontSize(8)
-      pdf.text(`서명일: ${new Date(contract.freelancer_signature_data.signedAt).toLocaleDateString('ko-KR')}`, 30, yPosition)
+      pdf.text(`서명일: ${new Date(contract.freelancer_signature.signed_at).toLocaleDateString('ko-KR')}`, 30, yPosition)
       pdf.setFontSize(10)
     } catch (error) {
       console.error('Error adding supplier signature image:', error)
@@ -301,15 +249,15 @@ function generateContractPDF(contract: Contract, supplierInfo: SupplierInfo): Bu
   }
 
   // 고객 서명 이미지 또는 텍스트
-  const clientYPosition = yPosition - (contract.freelancer_signature_data?.data ? 18 : 0)
-  if (contract.client_signature_data?.data) {
+  const clientYPosition = yPosition - (contract.freelancer_signature?.signature_data ? 18 : 0)
+  if (contract.client_signature?.signature_data) {
     try {
       // 고객 서명 이미지를 PDF에 추가
-      const clientSignatureImage = contract.client_signature_data.data
+      const clientSignatureImage = contract.client_signature.signature_data
       pdf.addImage(clientSignatureImage, 'PNG', 130, clientYPosition, 40, 15)
       const clientSignDateY = clientYPosition + 18
       pdf.setFontSize(8)
-      pdf.text(`서명일: ${new Date(contract.client_signature_data.signedAt).toLocaleDateString('ko-KR')}`, 130, clientSignDateY)
+      pdf.text(`서명일: ${new Date(contract.client_signature.signed_at).toLocaleDateString('ko-KR')}`, 130, clientSignDateY)
       pdf.setFontSize(10)
     } catch (error) {
       console.error('Error adding client signature image:', error)
@@ -347,8 +295,8 @@ export async function GET(
       return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
     }
 
-    // 타입 가드: contract가 존재함을 TypeScript에 알림
-    const validContract = contract as Contract
+    // DB 타입을 애플리케이션 타입으로 변환
+    const validContract = parseContractFromDb(contract)
 
     // 사용자 정보 조회 (공급자 정보로 사용)
     const { data: user } = await supabase

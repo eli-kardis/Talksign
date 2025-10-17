@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logSensitiveOperation, extractMetadata } from '@/lib/audit-log'
-import type { Database } from '@/lib/database.types'
+import type { Database, DbContract, DigitalSignature, ContractUpdate } from '@/lib/types'
 
 /**
  * POST /api/contracts/[contractId]/sign
@@ -63,11 +63,8 @@ export async function POST(
       )
     }
 
-    // 타입 가드: existingContract가 존재함을 TypeScript에 알림
-    const validContract = existingContract as any
-
     // draft 상태가 아니면 서명 불가
-    if (validContract.status !== 'draft') {
+    if (existingContract.status !== 'draft') {
       return NextResponse.json(
         { error: 'Only draft contracts can be signed' },
         { status: 400 }
@@ -75,7 +72,7 @@ export async function POST(
     }
 
     // 서명 데이터 준비
-    const signaturePayload: Database['public']['Tables']['contracts']['Row']['freelancer_signature'] = {
+    const signaturePayload: DigitalSignature = {
       signature_data: signatureData,
       signed_by: userId,
       signed_at: new Date().toISOString(),
@@ -83,12 +80,14 @@ export async function POST(
     }
 
     // 계약서에 공급자 서명 추가
+    const updatePayload: ContractUpdate = {
+      freelancer_signature: signaturePayload as any, // Json 타입으로 자동 변환
+      updated_at: new Date().toISOString()
+    }
+
     const { data: updatedContract, error: updateError } = await supabase
       .from('contracts')
-      .update({
-        freelancer_signature: signaturePayload,
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('id', contractId)
       .select()
       .single()

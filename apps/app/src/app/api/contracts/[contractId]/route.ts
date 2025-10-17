@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logDelete, extractMetadata } from '@/lib/audit-log'
+import { parseContractFromDb } from '@/lib/types'
 import type { Database } from '@/lib/database.types'
 
 // Mock contract data with detailed information
@@ -345,32 +346,32 @@ export async function GET(
       return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
     }
 
-    // 타입 가드: contract가 존재함을 TypeScript에 알림
-    const validContract = contract as any
+    // DB 타입을 애플리케이션 타입으로 변환
+    const parsedContract = parseContractFromDb(contract)
 
     // Transform the contract data to match the expected format
     const transformedContract = {
-      id: validContract.id,
-      title: validContract.title,
-      status: validContract.status,
-      client_name: validContract.client_name,
-      client_email: validContract.client_email,
-      client_phone: validContract.client_phone,
-      client_company: validContract.client_company,
-      client_business_number: validContract.client_business_number,
-      client_address: validContract.client_address,
-      supplier: validContract.supplier_info || null,
-      items: validContract.items || [],
-      subtotal: validContract.subtotal || 0,
-      tax_amount: validContract.tax_amount || 0,
-      tax_rate: (validContract.tax_rate || 10) / 100, // Convert percentage to decimal
-      total_amount: validContract.total_amount || 0,
-      description: validContract.project_description,
-      project_start_date: validContract.project_start_date,
-      project_end_date: validContract.project_end_date,
-      terms: validContract.contract_terms || [],
-      created_at: validContract.created_at,
-      signed_date: validContract.signed_at
+      id: parsedContract.id,
+      title: parsedContract.title,
+      status: parsedContract.status,
+      client_name: parsedContract.client_name,
+      client_email: parsedContract.client_email,
+      client_phone: parsedContract.client_phone,
+      client_company: parsedContract.client_company,
+      client_business_number: parsedContract.client_business_number,
+      client_address: parsedContract.client_address,
+      supplier: parsedContract.supplier_info || null,
+      items: parsedContract.items || [],
+      subtotal: parsedContract.subtotal || 0,
+      tax_amount: parsedContract.tax_amount || 0,
+      tax_rate: parsedContract.tax_rate ? parsedContract.tax_rate / 100 : 0.1, // Convert percentage to decimal
+      total_amount: parsedContract.total_amount || 0,
+      description: parsedContract.project_description,
+      project_start_date: parsedContract.project_start_date,
+      project_end_date: parsedContract.project_end_date,
+      terms: parsedContract.contract_terms || [],
+      created_at: parsedContract.created_at,
+      signed_date: parsedContract.signed_at
     }
 
     console.log('Contract found:', transformedContract)

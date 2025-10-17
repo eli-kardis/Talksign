@@ -55,10 +55,7 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // 타입 가드: user가 존재함을 TypeScript에 알림
-    const validUser = user as any
-
-    return NextResponse.json(validUser)
+    return NextResponse.json(user)
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

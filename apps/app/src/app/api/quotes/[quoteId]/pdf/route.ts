@@ -2,42 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logSensitiveOperation, extractMetadata } from '@/lib/audit-log'
+import { type Quote, type SupplierInfo, parseQuoteFromDb } from '@/lib/types'
 import jsPDF from 'jspdf'
 
 export const runtime = 'nodejs'
-
-interface QuoteItem {
-  name: string
-  description?: string
-  quantity: number
-  unit_price: number
-  amount: number
-}
-
-interface SupplierInfo {
-  name?: string
-  phone?: string
-  business_registration_number?: string
-  company_name?: string
-  business_name?: string
-}
-
-interface Quote {
-  id: string
-  title: string
-  client_name: string
-  client_email: string
-  client_phone?: string
-  client_company?: string
-  client_address?: string
-  client_business_number?: string
-  description?: string
-  items: QuoteItem[]
-  subtotal: number
-  status: string
-  expires_at?: string
-  created_at: string
-}
 
 function generateQuotePDF(quote: Quote, supplierInfo: SupplierInfo): Buffer {
   const pdf = new jsPDF('p', 'mm', 'a4')
@@ -206,8 +174,8 @@ export async function GET(
       return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
     }
 
-    // 타입 가드: quote가 존재함을 TypeScript에 알림
-    const validQuote = quote as Quote
+    // DB 타입을 애플리케이션 타입으로 변환
+    const validQuote = parseQuoteFromDb(quote)
 
     // 사용자 정보 조회 (공급자 정보로 사용)
     const { data: user } = await supabase
