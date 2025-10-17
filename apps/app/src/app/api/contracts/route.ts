@@ -11,7 +11,7 @@ interface ContractSelectResult {
   client_phone: string | null
   total_amount: number | null
   status: string | null
-  created_at: string
+  created_at: string | null
   signed_at: string | null
   contract_url: string | null
 }

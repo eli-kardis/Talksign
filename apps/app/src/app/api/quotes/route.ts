@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     // 견적서 생성
     const expiresAt = body.valid_until ? new Date(body.valid_until).toISOString() : (body.expires_at ? new Date(body.expires_at).toISOString() : null)
     
-    const quoteData: Partial<QuoteInsert> = {
+    const quoteData: QuoteInsert = {
       user_id: userId,
       client_name: body.client_name,
       client_email: body.client_email,
@@ -125,7 +125,6 @@ export async function POST(request: NextRequest) {
       expires_at: expiresAt ?? undefined,
       client_business_number: body.client_business_number || undefined,
       client_address: body.client_address || undefined,
-      client_logo_url: body.client_logo_url || undefined,
     }
     
     console.log('Quote data to insert:', JSON.stringify(quoteData, null, 2))

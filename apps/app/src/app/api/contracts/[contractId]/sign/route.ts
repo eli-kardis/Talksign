@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logSensitiveOperation, extractMetadata } from '@/lib/audit-log'
-import type { Database, DbContract, DigitalSignature, ContractUpdate } from '@/lib/types'
+import type { DigitalSignature, ContractUpdate } from '@/lib/types'
 
 /**
  * POST /api/contracts/[contractId]/sign

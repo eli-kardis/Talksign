@@ -306,29 +306,7 @@ export async function GET(
     // Get contract from Supabase (RLS 정책으로 본인 계약서만 조회 가능)
     const { data: contract, error } = await supabase
       .from('contracts')
-      .select(`
-        id,
-        title,
-        status,
-        client_name,
-        client_email,
-        client_phone,
-        client_company,
-        client_business_number,
-        client_address,
-        supplier_info,
-        items,
-        subtotal,
-        tax_amount,
-        tax_rate,
-        total_amount,
-        project_description,
-        project_start_date,
-        project_end_date,
-        contract_terms,
-        created_at,
-        signed_at
-      `)
+      .select('*')
       .eq('id', contractId)
       .single()
 
