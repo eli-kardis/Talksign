@@ -27,7 +27,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Supabase 클라이언트 생성
-    const response = NextResponse.redirect(`${requestUrl.origin}/dashboard`)
+    // ✅ accounts에서 왔음을 표시하는 auth_callback 파라미터 추가 (무한 루프 방지)
+    const response = NextResponse.redirect(`${requestUrl.origin}/?auth_callback=true`)
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
