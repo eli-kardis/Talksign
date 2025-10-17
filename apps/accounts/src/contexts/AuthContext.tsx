@@ -108,21 +108,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.warn('Network/timeout error, treating as no session')
             setUser(null)
           } else if (error.message?.includes('Refresh Token') || error.message?.includes('Invalid Refresh Token') || error.message?.includes('refresh_token_not_found')) {
-            console.log('Clearing invalid refresh token from storage')
+            // ✅ refresh token 에러 시 localStorage 지우지 않고 세션만 종료
+            console.warn('Invalid refresh token detected, clearing session only (not localStorage)')
             try {
-              // 로컬 스토리지에서 Supabase 세션 데이터 제거
-              localStorage.removeItem(`sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`)
+              // 세션만 종료 (localStorage는 보존)
               await supabase.auth.signOut({ scope: 'local' })
             } catch (signOutError) {
               console.error('Error signing out:', signOutError)
-              // 강제로 로컬 스토리지 클리어
-              try {
-                Object.keys(localStorage).forEach(key => {
-                  if (key.startsWith('sb-')) localStorage.removeItem(key)
-                })
-              } catch (storageError) {
-                console.error('Error clearing localStorage:', storageError)
-              }
             }
             setUser(null)
           } else {

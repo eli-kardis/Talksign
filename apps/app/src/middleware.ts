@@ -57,8 +57,9 @@ export async function middleware(request: NextRequest) {
       const isProtectedRoute = usernamePattern.test(url.pathname)
 
       // 공개 라우트 (인증 불필요)
-      // API와 정적 리소스만 인증 없이 접근 가능
-      const publicRoutes = ['/api', '/_next', '/favicon.ico']
+      // API, 정적 리소스, 루트 경로(/) 인증 없이 접근 가능
+      // ✅ 루트 경로 추가: accounts 로그인 후 리다이렉트 시 필요
+      const publicRoutes = ['/api', '/_next', '/favicon.ico', '/']
       const isPublicRoute = publicRoutes.some(route => url.pathname.startsWith(route))
 
       // 공개 라우트는 바로 통과
