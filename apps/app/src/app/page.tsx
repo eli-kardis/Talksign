@@ -71,10 +71,26 @@ export default function Page() {
     }
   }, [user, isLoading, router])
 
-  // 비로그인 사용자를 로그인 페이지로 리다이렉트
+  // 비로그인 사용자를 로그인 페이지로 리다이렉트 (무한 루프 방지)
   useEffect(() => {
     if (!isLoading && !user) {
-      window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
+      // sessionStorage로 accounts에서 이미 왔는지 확인
+      const redirectAttempted = sessionStorage.getItem('auth_redirect_attempted')
+
+      if (!redirectAttempted) {
+        // 첫 번째 redirect 시도
+        sessionStorage.setItem('auth_redirect_attempted', 'true')
+        console.log('[Redirect] Redirecting to accounts.talksign.co.kr')
+        window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
+      } else {
+        // 이미 accounts에서 왔는데 여전히 user가 없으면 에러
+        console.error('[Auth Error] Authentication failed after redirect from accounts')
+        // sessionStorage 클리어 (다음 시도를 위해)
+        sessionStorage.removeItem('auth_redirect_attempted')
+      }
+    } else if (!isLoading && user) {
+      // 로그인 성공 시 redirect flag 클리어
+      sessionStorage.removeItem('auth_redirect_attempted')
     }
   }, [user, isLoading])
 
