@@ -356,8 +356,8 @@ export async function GET(
 
     const supplierInfo = user || {}
 
-    // PDF 생성
-    const pdfBuffer = generateContractPDF(contract, supplierInfo)
+    // PDF 생성 (타입 체크를 통과한 contract 사용)
+    const pdfBuffer = generateContractPDF(contract as Contract, supplierInfo)
 
     // PDF 응답 반환
     return new NextResponse(new Uint8Array(pdfBuffer), {
