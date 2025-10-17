@@ -109,7 +109,12 @@ export async function POST(request: NextRequest) {
       tax_amount: body.tax_amount || body.vatAmount || 0,
       total_amount: body.total_amount,
       issue_date: body.issue_date || new Date().toISOString().split('T')[0],
-      status: body.status || 'draft'
+      supply_date: body.supply_date || new Date().toISOString().split('T')[0],
+      status: body.status || 'draft',
+      buyer_name: body.buyer_name || 'Unknown',
+      supplier_name: body.supplier_name || 'Unknown',
+      supplier_address: body.supplier_address || 'Unknown',
+      supplier_business_number: body.supplier_business_number || 'Unknown',
     }
 
     console.log('Creating tax invoice:', taxInvoiceData)
@@ -117,7 +122,7 @@ export async function POST(request: NextRequest) {
     // 세금계산서 생성 (RLS 정책으로 본인 세금계산서만 생성 가능)
     const { data: taxInvoice, error } = await supabase
       .from('tax_invoices')
-      .insert([taxInvoiceData])
+      .insert(taxInvoiceData)
       .select()
       .single()
 

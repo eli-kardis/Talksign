@@ -101,19 +101,19 @@ export interface ScheduleItem {
 export function parseContractFromDb(dbContract: DbContract): Contract {
   return {
     ...dbContract,
-    items: (dbContract.items as ContractItem[]) || [],
-    supplier_info: (dbContract.supplier_info as SupplierInfo) || undefined,
-    freelancer_signature: (dbContract.freelancer_signature as DigitalSignature) || undefined,
-    client_signature: (dbContract.client_signature as DigitalSignature) || undefined,
-    contract_terms: (dbContract.contract_terms as string[]) || undefined,
+    items: (dbContract.items as unknown as ContractItem[]) || [],
+    supplier_info: (dbContract.supplier_info as unknown as SupplierInfo) || undefined,
+    freelancer_signature: (dbContract.freelancer_signature as unknown as DigitalSignature) || undefined,
+    client_signature: (dbContract.client_signature as unknown as DigitalSignature) || undefined,
+    contract_terms: (dbContract.contract_terms as unknown as string[]) || undefined,
   }
 }
 
 export function parseQuoteFromDb(dbQuote: DbQuote): Quote {
   return {
     ...dbQuote,
-    items: (dbQuote.items as QuoteItem[]) || [],
-    supplier_info: (dbQuote.supplier_info as SupplierInfo) || undefined,
+    items: (dbQuote.items as unknown as QuoteItem[]) || [],
+    supplier_info: (dbQuote.supplier_info as unknown as SupplierInfo) || undefined,
   }
 }
 

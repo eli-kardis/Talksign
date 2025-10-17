@@ -1,5 +1,5 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import type { Database, DbContract } from '@/lib/types'
+import { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/database.types'
 import { parseContractFromDb, type Contract } from '@/lib/types'
 
 /**
@@ -138,6 +138,6 @@ export class ContractService {
       return { exists: false }
     }
 
-    return { exists: true, status: data.status }
+    return { exists: true, status: data.status || undefined }
   }
 }

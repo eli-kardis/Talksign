@@ -59,13 +59,12 @@ export async function createAuditLog(entry: AuditLogEntry): Promise<boolean> {
       .insert({
         user_id: entry.user_id,
         action: entry.action,
-        resource_type: entry.resource_type,
-        resource_id: entry.resource_id,
-        changes: entry.changes || null,
-        metadata: entry.metadata || null,
-        status: entry.status,
-        error_message: entry.error_message || null,
-        timestamp: entry.timestamp || new Date().toISOString()
+        entity_type: entry.resource_type,
+        entity_id: entry.resource_id,
+        old_values: entry.changes?.old || null,
+        new_values: entry.changes?.new || entry.changes?.deleted || entry.changes || null,
+        ip_address: entry.metadata?.ip || null,
+        user_agent: entry.metadata?.user_agent || null,
       })
 
     if (error) {
