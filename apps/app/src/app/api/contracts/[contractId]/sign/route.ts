@@ -83,14 +83,12 @@ export async function POST(
     }
 
     // 계약서에 공급자 서명 추가
-    const updateData: Database['public']['Tables']['contracts']['Update'] = {
-      freelancer_signature: signaturePayload,
-      updated_at: new Date().toISOString()
-    }
-
     const { data: updatedContract, error: updateError } = await supabase
       .from('contracts')
-      .update(updateData)
+      .update({
+        freelancer_signature: signaturePayload,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', contractId)
       .select()
       .single()

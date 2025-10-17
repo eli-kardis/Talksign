@@ -91,17 +91,15 @@ export async function POST(request: NextRequest) {
 
     // 공급자 정보로 사용자 프로필 업데이트 (필요시)
     if (body.supplier_info) {
-      const userUpdateData: Database['public']['Tables']['users']['Update'] = {
-        name: body.supplier_info.name,
-        phone: body.supplier_info.phone,
-        business_number: body.supplier_info.business_registration_number,
-        business_name: body.supplier_info.business_name,
-        updated_at: new Date().toISOString()
-      }
-
       const { error: updateError } = await supabase
         .from('users')
-        .update(userUpdateData)
+        .update({
+          name: body.supplier_info.name,
+          phone: body.supplier_info.phone,
+          business_number: body.supplier_info.business_registration_number,
+          business_name: body.supplier_info.business_name,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', userId)
 
       if (updateError) {
