@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import type { Database } from '@/lib/supabase'
+import type { Database } from '@/lib/database.types'
 
 // 서버 사이드에서 사용할 Supabase 클라이언트 생성
 function createServerSupabaseClient() {

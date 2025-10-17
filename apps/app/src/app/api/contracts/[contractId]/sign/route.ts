@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logSensitiveOperation, extractMetadata } from '@/lib/audit-log'
-import type { Database } from '@/lib/supabase'
+import type { Database } from '@/lib/database.types'
 
 /**
  * POST /api/contracts/[contractId]/sign

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
-import type { Database } from '@/lib/supabase'
+import type { Database } from '@/lib/database.types'
 
 
 export async function PUT(

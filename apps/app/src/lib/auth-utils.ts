@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { jwtVerify, createRemoteJWKSet } from 'jose'
-import type { Database } from './supabase'
+import type { Database } from './database.types'
 
 // 서버 사이드에서 인증된 Supabase 클라이언트 생성
 export function createAuthenticatedSupabaseClient(request: NextRequest) {
@@ -129,7 +129,7 @@ export async function getUserFromRequest(request: NextRequest): Promise<string |
 }
 
 // RLS가 적용된 Supabase 클라이언트 생성 (사용자 토큰 사용)
-export function createUserSupabaseClient(request: NextRequest) {
+export function createUserSupabaseClient(request: NextRequest): ReturnType<typeof createClient<Database>> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
