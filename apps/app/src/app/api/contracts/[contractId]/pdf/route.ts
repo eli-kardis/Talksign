@@ -20,7 +20,9 @@ function generateContractPDF(contract: Contract, supplierInfo: SupplierInfo): Bu
   // 계약서 정보
   pdf.setFontSize(10)
   pdf.text(`계약서 번호: ${contract.id}`, 20, yPosition)
-  pdf.text(`작성일: ${new Date(contract.created_at).toLocaleDateString('ko-KR')}`, 140, yPosition)
+  if (contract.created_at) {
+    pdf.text(`작성일: ${new Date(contract.created_at).toLocaleDateString('ko-KR')}`, 140, yPosition)
+  }
   yPosition += 10
 
   if (contract.signed_at) {
@@ -153,12 +155,12 @@ function generateContractPDF(contract: Contract, supplierInfo: SupplierInfo): Bu
   }
 
   pdf.setFontSize(10)
-  pdf.text(`소계: ${contract.subtotal.toLocaleString('ko-KR')}원`, 20, yPosition)
+  pdf.text(`소계: ${(contract.subtotal || 0).toLocaleString('ko-KR')}원`, 20, yPosition)
   yPosition += 6
-  pdf.text(`부가세(${contract.tax_rate}%): ${contract.tax_amount.toLocaleString('ko-KR')}원`, 20, yPosition)
+  pdf.text(`부가세(${contract.tax_rate || 0}%): ${(contract.tax_amount || 0).toLocaleString('ko-KR')}원`, 20, yPosition)
   yPosition += 6
   pdf.setFontSize(12)
-  pdf.text(`총 계약금액: ${contract.total_amount.toLocaleString('ko-KR')}원`, 20, yPosition)
+  pdf.text(`총 계약금액: ${(contract.total_amount || 0).toLocaleString('ko-KR')}원`, 20, yPosition)
   yPosition += 15
 
   // 결제 조건

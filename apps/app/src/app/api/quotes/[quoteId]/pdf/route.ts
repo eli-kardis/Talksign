@@ -23,7 +23,9 @@ function generateQuotePDF(quote: Quote, supplierInfo: SupplierInfo): Buffer {
   // 견적서 정보
   pdf.setFontSize(10)
   pdf.text(`견적서 번호: ${quote.id}`, 20, yPosition)
-  pdf.text(`작성일: ${new Date(quote.created_at).toLocaleDateString('ko-KR')}`, 140, yPosition)
+  if (quote.created_at) {
+    pdf.text(`작성일: ${new Date(quote.created_at).toLocaleDateString('ko-KR')}`, 140, yPosition)
+  }
   yPosition += 10
 
   if (quote.expires_at) {
@@ -138,7 +140,7 @@ function generateQuotePDF(quote: Quote, supplierInfo: SupplierInfo): Buffer {
 
   // 총액
   pdf.setFontSize(12)
-  pdf.text(`총 금액: ${quote.subtotal.toLocaleString('ko-KR')}원`, 150, yPosition, { align: 'right' })
+  pdf.text(`총 금액: ${(quote.subtotal || 0).toLocaleString('ko-KR')}원`, 150, yPosition, { align: 'right' })
 
   return Buffer.from(pdf.output('arraybuffer'))
 }
