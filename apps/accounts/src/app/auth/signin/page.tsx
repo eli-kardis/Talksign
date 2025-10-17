@@ -9,14 +9,7 @@ export default function SignInPage() {
   const { user, isLoading } = useAuth()
   const router = useRouter()
 
-
-  useEffect(() => {
-    if (!isLoading && user) {
-      // 로그인 성공 시 메인 앱으로 리디렉션 (username 포함)
-      const username = user.email.split('@')[0]
-      window.location.href = `https://app.talksign.co.kr/${username}/dashboard`
-    }
-  }, [user, isLoading])
+  // ✅ 자동 리다이렉트 제거 - Login.tsx에서 /auth/session 플로우로 처리
 
   const handleNavigate = async (newView: string) => {
     if (newView === 'dashboard') {

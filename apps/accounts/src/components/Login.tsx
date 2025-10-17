@@ -29,12 +29,25 @@ export function Login({ onNavigate }: LoginProps) {
     const result = await signIn(email, password)
 
     if (result.success) {
-      onNavigate('dashboard')
+      // ✅ OAuth처럼 /auth/session으로 토큰 전달하여 app 도메인에 쿠키 설정
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session) {
+        console.error('[Login] Failed to get session:', sessionError)
+        setError('세션 정보를 가져올 수 없습니다.')
+        setIsLoading(false)
+        return
+      }
+
+      console.log('[Login] Email login successful, redirecting to /auth/session')
+      const sessionUrl = new URL('https://app.talksign.co.kr/auth/session')
+      sessionUrl.searchParams.set('access_token', session.access_token)
+      sessionUrl.searchParams.set('refresh_token', session.refresh_token)
+      window.location.href = sessionUrl.toString()
     } else {
       setError(result.error || '로그인에 실패했습니다.')
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   const handleGoogleLogin = async () => {
