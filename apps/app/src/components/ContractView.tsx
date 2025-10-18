@@ -143,13 +143,14 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
       try {
         setLoading(true);
         const response = await AuthenticatedApiClient.get('/api/contracts');
-        
+
         if (!response.ok) {
           throw new Error(`Failed to fetch contracts: ${response.status}`);
         }
-        
-        const data = await response.json();
-        setContracts(data);
+
+        const responseData = await response.json();
+        const contracts = responseData.data || [];
+        setContracts(contracts);
       } catch (err) {
         console.error('Error loading contracts:', err);
         setError(err instanceof Error ? err.message : 'Failed to load contracts');

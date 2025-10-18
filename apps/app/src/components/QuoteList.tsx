@@ -247,12 +247,13 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
         setError(null);
 
         const response = await AuthenticatedApiClient.get('/api/quotes');
-        
+
         if (!response.ok) {
           throw new Error(`Failed to fetch quotes: ${response.status}`);
         }
-        
-        const dbQuotes: DatabaseQuote[] = await response.json();
+
+        const responseData = await response.json();
+        const dbQuotes: DatabaseQuote[] = responseData.data || [];
         const transformedQuotes = dbQuotes.map(transformQuote);
         setQuotes(transformedQuotes);
       } catch (err) {
