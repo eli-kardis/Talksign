@@ -8,9 +8,10 @@ import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
 import { Separator } from './ui/separator'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
-import { ArrowLeft, MessageSquare, Save, AlertTriangle, Edit3 } from 'lucide-react'
+import { ArrowLeft, MessageSquare, Save, AlertTriangle, User } from 'lucide-react'
 import { QuoteItemsTable } from './QuoteItemsTable'
 import { CustomerSelector } from './CustomerSelector'
+import { ClientInfoForm, SupplierInfoForm } from './contracts'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatPhoneNumber, formatBusinessNumber, formatNumber } from '@/lib/formatters'
 import { AuthenticatedApiClient } from '@/lib/api-client'
@@ -473,168 +474,29 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
             </div>
           </Card>
           {/* 공급자 정보 */}
-          <Card className="p-4 md:p-6 bg-card border-border">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-              <h3 className="font-medium text-foreground">공급자 정보 (본인)</h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditingSupplier(!isEditingSupplier)}
-                className="border-border w-fit"
-              >
-                <Edit3 className="w-4 h-4 mr-2" />
-                {isEditingSupplier ? '저장' : '수정'}
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="supplierName" className="text-foreground">대표자명 *</Label>
-                <Input
-                  id="supplierName"
-                  value={supplierInfo.name}
-                  onChange={(e) => setSupplierInfo({ ...supplierInfo, name: e.target.value })}
-                  placeholder={isEditingSupplier ? "홍길동" : ""}
-                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingSupplier}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="supplierEmail" className="text-foreground">이메일 *</Label>
-                <Input
-                  id="supplierEmail"
-                  type="email"
-                  value={supplierInfo.email}
-                  onChange={(e) => setSupplierInfo({ ...supplierInfo, email: e.target.value })}
-                  placeholder={isEditingSupplier ? "supplier@example.com" : ""}
-                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingSupplier}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="supplierPhone" className="text-foreground">연락처 *</Label>
-                <Input
-                  id="supplierPhone"
-                  value={supplierInfo.phone}
-                  onChange={(e) => setSupplierInfo({ ...supplierInfo, phone: formatPhoneNumber(e.target.value) })}
-                  placeholder={isEditingSupplier ? "010-1234-5678" : ""}
-                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingSupplier}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="supplierBusinessNumber" className="text-foreground">사업자등록번호</Label>
-                <Input
-                  id="supplierBusinessNumber"
-                  value={supplierInfo.businessRegistrationNumber}
-                  onChange={(e) => setSupplierInfo({ ...supplierInfo, businessRegistrationNumber: formatBusinessNumber(e.target.value) })}
-                  placeholder={isEditingSupplier ? "123-12-12345" : ""}
-                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingSupplier}
-                />
-              </div>
-
-              {supplierInfo.businessRegistrationNumber && (
-                <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="supplierCompanyName" className="text-foreground">회사명 *</Label>
-                  <Input
-                    id="supplierCompanyName"
-                    value={supplierInfo.companyName}
-                    onChange={(e) => setSupplierInfo({ ...supplierInfo, companyName: e.target.value })}
-                    placeholder={isEditingSupplier ? "(주)회사명 또는 개인사업자명" : ""}
-                    className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                    disabled={!isEditingSupplier}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                💡 이 정보는 견적서와 계약서에 공급자 정보로 자동 삽입됩니다. 필요시 수정하세요.
-              </p>
-            </div>
-          </Card>
+          <SupplierInfoForm
+            supplierInfo={supplierInfo}
+            isEditing={isEditingSupplier}
+            onSupplierInfoChange={setSupplierInfo}
+            onEditToggle={() => setIsEditingSupplier(!isEditingSupplier)}
+          />
 
           {/* 고객 정보 */}
           <Card className="p-4 md:p-6 bg-card border-border">
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mb-4">
-              <h3 className="font-medium text-foreground">고객 정보</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-primary" />
+                <h3 className="font-medium text-foreground">고객 정보</h3>
+              </div>
               <CustomerSelector onCustomerSelect={handleCustomerSelect} />
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="clientName" className="text-foreground">고객명 *</Label>
-                <Input
-                  id="clientName"
-                  value={clientInfo.name}
-                  onChange={(e) => setClientInfo({ ...clientInfo, name: e.target.value })}
-                  placeholder="홍길동"
-                  className="bg-input-background border-border"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="company" className="text-foreground">회사명 *</Label>
-                <Input
-                  id="company"
-                  value={clientInfo.company}
-                  onChange={(e) => setClientInfo({ ...clientInfo, company: e.target.value })}
-                  placeholder="(주)회사명"
-                  className="bg-input-background border-border"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="businessNumber" className="text-foreground">사업자등록번호</Label>
-                <Input
-                  id="businessNumber"
-                  value={clientInfo.businessNumber}
-                  onChange={(e) => setClientInfo({ ...clientInfo, businessNumber: formatBusinessNumber(e.target.value) })}
-                  placeholder="123-45-67890"
-                  className="bg-input-background border-border"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-foreground">연락처 *</Label>
-                <Input
-                  id="phone"
-                  value={clientInfo.phone}
-                  onChange={(e) => setClientInfo({ ...clientInfo, phone: formatPhoneNumber(e.target.value) })}
-                  placeholder="010-1234-5678"
-                  className="bg-input-background border-border"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-foreground">이메일 *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={clientInfo.email}
-                  onChange={(e) => setClientInfo({ ...clientInfo, email: e.target.value })}
-                  placeholder="client@example.com"
-                  className="bg-input-background border-border"
-                />
-              </div>
-
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="address" className="text-foreground">주소</Label>
-                <Input
-                  id="address"
-                  value={clientInfo.address}
-                  onChange={(e) => setClientInfo({ ...clientInfo, address: e.target.value })}
-                  placeholder="도로명 주소"
-                  className="bg-input-background border-border"
-                />
-              </div>
-            </div>
+            <ClientInfoForm
+              clientInfo={clientInfo}
+              isEditing={true}
+              onClientInfoChange={setClientInfo}
+              onEditToggle={() => {}}
+              hideWrapper={true}
+            />
           </Card>
 
 

@@ -19,6 +19,7 @@ interface ClientInfoFormProps {
   onClientInfoChange: (info: any) => void
   onEditToggle: () => void
   onSelectFromCustomers?: () => void
+  hideWrapper?: boolean // Option to render without Card wrapper
 }
 
 export function ClientInfoForm({
@@ -27,39 +28,10 @@ export function ClientInfoForm({
   onClientInfoChange,
   onEditToggle,
   onSelectFromCustomers,
+  hideWrapper = false,
 }: ClientInfoFormProps) {
-  return (
-    <Card className="p-4 md:p-6 bg-card border-border">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <User className="w-5 h-5 text-primary" />
-          <h3 className="font-medium text-foreground">발주처 정보</h3>
-        </div>
-        <div className="flex items-center gap-2">
-          {onSelectFromCustomers && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onSelectFromCustomers}
-              className="text-xs"
-            >
-              고객 선택
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onEditToggle}
-            className="p-2"
-          >
-            <Edit3 className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+  const formContent = (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
         <div className="space-y-2">
           <Label htmlFor="clientName" className="text-foreground">
             고객명 *
@@ -187,6 +159,44 @@ export function ClientInfoForm({
           />
         </div>
       </div>
+  )
+
+  if (hideWrapper) {
+    return formContent
+  }
+
+  return (
+    <Card className="p-4 md:p-6 bg-card border-border">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <User className="w-5 h-5 text-primary" />
+          <h3 className="font-medium text-foreground">발주처 정보</h3>
+        </div>
+        <div className="flex items-center gap-2">
+          {onSelectFromCustomers && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onSelectFromCustomers}
+              className="text-xs"
+            >
+              고객 선택
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onEditToggle}
+            className="p-2"
+          >
+            <Edit3 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {formContent}
 
       <div className="mt-4 p-3 bg-muted/30 rounded-lg">
         <p className="text-sm text-muted-foreground">
