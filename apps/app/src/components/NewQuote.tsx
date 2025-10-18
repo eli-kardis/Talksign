@@ -317,25 +317,22 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
 
       const quoteData = {
         client_name: clientInfo.name.trim(),
-        client_email: clientInfo.email.trim(),
-        client_phone: clientInfo.phone.trim() || null,
-        client_company: clientInfo.company.trim() || null,
+        client_email: clientInfo.email.trim() || '',
+        client_phone: clientInfo.phone.trim() || '',
+        client_company: clientInfo.company.trim() || '',
+        client_business_number: clientInfo.businessNumber.trim() || '',
         title: quoteTitle.trim() || '견적서',
-        description: null,
-        valid_until: validUntil || null,
-        items: items.map(item => ({
-          id: item.id,
-          name: item.name.trim(),
-          description: item.description.trim(),
-          unit_price: item.unitPrice,
-          quantity: item.quantity,
-          unit: item.unit.trim(),
-          amount: item.amount
-        })),
-        subtotal: subtotal,
-        tax_rate: taxRate,
+        issue_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+        expiry_date: validUntil || '',
         status,
-        // 공급자 정보 추가
+        items: items.map(item => ({
+          description: `${item.name.trim()} - ${item.description.trim()}`,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          amount: item.amount,
+        })),
+        notes: '',
+        // 공급자 정보 추가 (user profile update용)
         supplier_info: {
           name: supplierInfo.name.trim(),
           email: supplierInfo.email.trim(),
@@ -344,11 +341,6 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
           company_name: supplierInfo.companyName.trim() || null,
           business_name: supplierInfo.businessName.trim() || null,
         },
-        // 추가 메타데이터 (필요시)
-        client_business_number: clientInfo.businessNumber.trim() || null,
-        client_address: clientInfo.address.trim() || null,
-        due_date: null,
-        notes: null,
       }
 
       const url = isEdit && editQuoteId ? `/api/quotes/${editQuoteId}` : '/api/quotes'

@@ -68,10 +68,10 @@ export function CustomerSelector({
   }, [isOpen]);
 
   const filteredCustomers = customers.filter(customer =>
-    customer.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.representative_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone.includes(searchTerm)
+    customer.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.representative_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.phone?.includes(searchTerm)
   );
 
   const handleCustomerSelect = (customer: Customer) => {
