@@ -10,11 +10,11 @@ export default function UserDocumentsPage({ params }: { params: Promise<{ userna
   const router = useRouter()
   const { user, isLoading } = useAuth()
 
-  // 비로그인 사용자는 accounts 도메인 로그인 페이지로 리다이렉트
+  // 비로그인 사용자는 로그인 페이지로 리다이렉트
   useEffect(() => {
     if (!isLoading && !user) {
       console.log('Documents: User not authenticated, redirecting to signin')
-      window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
+      window.location.href = '/auth/signin'
     }
   }, [user, isLoading])
 
@@ -25,10 +25,10 @@ export default function UserDocumentsPage({ params }: { params: Promise<{ userna
 
       // URL의 username과 실제 user의 username이 다르면 올바른 경로로 리디렉션
       if (username !== userUsername) {
-        router.replace(`/${userUsername}/documents`)
+        router.replace(`/${userUsername}/documents/quotes`)
       } else {
-        // username이 올바르면 /documents/quotes로 리다이렉트 (username 없는 경로)
-        router.replace(`/documents/quotes`)
+        // username이 올바르면 /documents/quotes로 리다이렉트 (username 포함)
+        router.replace(`/${userUsername}/documents/quotes`)
       }
     }
   }, [user, isLoading, username, router])
