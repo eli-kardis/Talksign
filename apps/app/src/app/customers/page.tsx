@@ -179,7 +179,18 @@ export default function CustomersPage() {
 
       // 백그라운드에서 서버에도 저장 시도 (실패해도 무시)
       try {
-        const response = await apiClient.post('/api/customers', formData);
+        // API 스키마에 맞게 필드명 변환
+        const apiPayload = {
+          name: formData.representative_name.trim(),  // representative_name → name
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          company: formData.company_name.trim() || undefined,  // company_name → company
+          businessRegistrationNumber: formData.business_registration_number.trim() || undefined,
+          address: formData.address.trim() || undefined,
+          notes: formData.contact_person.trim() || undefined  // contact_person을 notes에 저장
+        };
+
+        const response = await apiClient.post('/api/customers', apiPayload);
         if (response.ok) {
           const serverCustomer = await response.json();
           console.log('✅ Customer also saved to server:', serverCustomer);
