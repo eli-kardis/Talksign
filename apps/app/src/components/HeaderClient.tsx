@@ -38,7 +38,7 @@ export default function HeaderClient() {
 
   return (
     <header className="bg-background border-b border-border px-4 sm:px-6 py-2 sm:py-4">
-      <div className={`lg:max-w-7xl mx-auto ${isMobile ? 'grid grid-cols-3 items-center' : 'flex items-center justify-between'}`}>
+      <div className={`w-full ${isMobile ? 'grid grid-cols-3 items-center' : 'flex items-center justify-between'}`}>
         {/* 왼쪽 영역 */}
         <div className="flex items-center gap-2 sm:gap-4">
           {isMobile && (
