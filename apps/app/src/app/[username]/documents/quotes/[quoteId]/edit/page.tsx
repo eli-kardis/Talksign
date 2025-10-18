@@ -151,14 +151,26 @@ export default function EditQuotePage() {
       title: quoteData.title,
       notes: quoteData.notes || ''
     },
-    items: quoteData.items.map((item, index) => ({
-      id: `${index + 1}`,
-      name: item.name || '',
-      description: item.description || '',
-      quantity: item.quantity || 1,
-      unitPrice: item.unit_price || 0,
-      amount: item.amount || 0
-    })),
+    items: quoteData.items.map((item, index) => {
+      // Backward compatibility: split name from description if needed
+      let itemName = item.name;
+      let itemDesc = item.description;
+
+      if (!itemName && itemDesc && itemDesc.includes(' - ')) {
+        const [name, ...descParts] = itemDesc.split(' - ');
+        itemName = name;
+        itemDesc = descParts.join(' - ');
+      }
+
+      return {
+        id: `${index + 1}`,
+        name: itemName || '',
+        description: itemDesc || '',
+        quantity: item.quantity || 1,
+        unitPrice: item.unit_price || 0,
+        amount: item.amount || 0
+      };
+    }),
     expiryDate: quoteData.expiry_date || '',
     supplier: quoteData.supplier_info || null
   }
