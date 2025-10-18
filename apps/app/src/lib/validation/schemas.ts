@@ -144,7 +144,8 @@ export const customerUpdateSchema = customerCreateSchema.partial()
  * Quote item schema
  */
 export const quoteItemSchema = z.object({
-  description: z.string().min(1, 'Item description is required').max(500),
+  name: z.string().min(1, 'Item name is required').max(200),
+  description: z.string().max(500).optional().or(z.literal('')),
   quantity: positiveNumberSchema.min(0.01, 'Quantity must be at least 0.01'),
   unit_price: positiveNumberSchema,
   amount: positiveNumberSchema,
@@ -185,7 +186,8 @@ export const quoteUpdateSchema = quoteCreateSchema.partial().extend({
  * Contract item schema
  */
 export const contractItemSchema = z.object({
-  description: z.string().min(1, 'Item description is required').max(500),
+  name: z.string().min(1, 'Item name is required').max(200),
+  description: z.string().max(500).optional().or(z.literal('')),
   quantity: positiveNumberSchema.min(0.01, 'Quantity must be at least 0.01'),
   unit_price: positiveNumberSchema,
   amount: positiveNumberSchema,
