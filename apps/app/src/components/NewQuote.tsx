@@ -80,7 +80,6 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
     phone: '',
     email: '',
     address: '',
-    logoUrl: '',          // ✅ Cursor 보강 유지
   })
 
   const [projectInfo, setProjectInfo] = useState({
@@ -131,7 +130,6 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         company: initialData.client.company,
         businessNumber: initialData.client.businessNumber || '',
         address: initialData.client.address || '',
-        logoUrl: '',
       }
       
       const newProjectInfo = {
@@ -178,7 +176,6 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
           company: initialData.client.company,
           businessNumber: initialData.client.businessNumber || '',
           address: initialData.client.address || '',
-          logoUrl: '',
         },
         projectInfo: {
           title: initialData.project.title,
@@ -261,7 +258,6 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
       phone: customer.phone || '',
       email: customer.email || '',
       address: customer.address || '',
-      logoUrl: '',
     })
     setHasUnsavedChanges(true)
   }
@@ -350,7 +346,6 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         // 추가 메타데이터 (필요시)
         client_business_number: clientInfo.businessNumber.trim() || null,
         client_address: clientInfo.address.trim() || null,
-        client_logo_url: clientInfo.logoUrl.trim() || null,
         due_date: null,
         notes: null,
       }
@@ -500,7 +495,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                   id="supplierName"
                   value={supplierInfo.name}
                   onChange={(e) => setSupplierInfo({ ...supplierInfo, name: e.target.value })}
-                  placeholder="홍길동"
+                  placeholder={isEditingSupplier ? "홍길동" : ""}
                   className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
                   disabled={!isEditingSupplier}
                 />
@@ -513,7 +508,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                   type="email"
                   value={supplierInfo.email}
                   onChange={(e) => setSupplierInfo({ ...supplierInfo, email: e.target.value })}
-                  placeholder="supplier@example.com"
+                  placeholder={isEditingSupplier ? "supplier@example.com" : ""}
                   className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
                   disabled={!isEditingSupplier}
                 />
@@ -525,7 +520,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                   id="supplierPhone"
                   value={supplierInfo.phone}
                   onChange={(e) => setSupplierInfo({ ...supplierInfo, phone: formatPhoneNumber(e.target.value) })}
-                  placeholder="010-1234-5678"
+                  placeholder={isEditingSupplier ? "010-1234-5678" : ""}
                   className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
                   disabled={!isEditingSupplier}
                 />
@@ -537,7 +532,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                   id="supplierBusinessNumber"
                   value={supplierInfo.businessRegistrationNumber}
                   onChange={(e) => setSupplierInfo({ ...supplierInfo, businessRegistrationNumber: formatBusinessNumber(e.target.value) })}
-                  placeholder="123-12-12345"
+                  placeholder={isEditingSupplier ? "123-12-12345" : ""}
                   className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
                   disabled={!isEditingSupplier}
                 />
@@ -550,7 +545,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                     id="supplierCompanyName"
                     value={supplierInfo.companyName}
                     onChange={(e) => setSupplierInfo({ ...supplierInfo, companyName: e.target.value })}
-                    placeholder="(주)회사명 또는 개인사업자명"
+                    placeholder={isEditingSupplier ? "(주)회사명 또는 개인사업자명" : ""}
                     className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
                     disabled={!isEditingSupplier}
                   />

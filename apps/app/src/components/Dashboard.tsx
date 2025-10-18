@@ -4,7 +4,6 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import { Badge } from './ui/badge';
-import { ImageWithFallback } from './ui/ImageWithFallback';
 import { FileText, CreditCard, CheckCircle, Clock, TrendingUp, Users, Calendar, CalendarClock, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ScheduleDetailPopup } from './ScheduleDetailPopup';

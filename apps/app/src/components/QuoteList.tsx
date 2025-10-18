@@ -13,7 +13,6 @@ import { Checkbox } from "./ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { ImageWithFallback } from "./ui/ImageWithFallback";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthenticatedApiClient } from "@/lib/api-client";
 import { DemoModeNotice } from "./DemoModeNotice";
@@ -76,7 +75,6 @@ interface Quote {
   date: string;
   dueDate?: string;
   phone?: string;
-  clientLogo?: string;
   company?: string;
 }
 
@@ -97,7 +95,6 @@ const transformQuote = (dbQuote: DatabaseQuote): Quote => ({
   dueDate: dbQuote.expires_at ? new Date(dbQuote.expires_at).toLocaleDateString('ko-KR') : undefined,
   phone: dbQuote.client_phone || undefined,
   company: dbQuote.client_company || undefined,
-  clientLogo: undefined, // 빈 문자열 대신 undefined 사용
 });
 
 type TabKey = "all" | "draft" | "sent" | "approved" | "rejected" | "expired";

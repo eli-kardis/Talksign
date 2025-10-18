@@ -44,7 +44,6 @@ async function ensureUserExists(authUser: any) {
         business_name: authUser.user_metadata?.business_name || null,
         business_registration_number: authUser.user_metadata?.business_registration_number || null,
         company_name: authUser.user_metadata?.company_name || null,
-        role: 'freelancer'
       }
       
       console.log('Inserting user data:', userData)
