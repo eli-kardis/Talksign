@@ -347,7 +347,7 @@ export async function GET(
       description: parsedContract.project_description,
       project_start_date: parsedContract.project_start_date,
       project_end_date: parsedContract.project_end_date,
-      terms: parsedContract.contract_terms || [],
+      terms: parsedContract.terms || '',
       created_at: parsedContract.created_at,
       signed_date: parsedContract.signed_at
     }

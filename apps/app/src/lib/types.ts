@@ -57,17 +57,15 @@ export interface DigitalSignature {
 }
 
 // DB Row 타입을 애플리케이션 타입으로 변환
-export interface Contract extends Omit<DbContract, 'items' | 'supplier_info' | 'freelancer_signature' | 'client_signature' | 'contract_terms'> {
+export interface Contract extends Omit<DbContract, 'items' | 'supplier_info'> {
   items: ContractItem[]
   supplier_info?: SupplierInfo
-  freelancer_signature?: DigitalSignature
-  client_signature?: DigitalSignature
-  contract_terms?: string[]
+  // Note: freelancer_signature, client_signature, additional_payment_terms
+  // are not in the database schema - use contract_signatures table instead
 }
 
-export interface Quote extends Omit<DbQuote, 'items' | 'supplier_info'> {
+export interface Quote extends Omit<DbQuote, 'items'> {
   items: QuoteItem[]
-  supplier_info?: SupplierInfo
 }
 
 // API 응답 타입
@@ -103,9 +101,7 @@ export function parseContractFromDb(dbContract: DbContract): Contract {
     ...dbContract,
     items: (dbContract.items as unknown as ContractItem[]) || [],
     supplier_info: (dbContract.supplier_info as unknown as SupplierInfo) || undefined,
-    freelancer_signature: (dbContract.freelancer_signature as unknown as DigitalSignature) || undefined,
-    client_signature: (dbContract.client_signature as unknown as DigitalSignature) || undefined,
-    contract_terms: (dbContract.contract_terms as unknown as string[]) || undefined,
+    // Note: Signatures are stored in contract_signatures table, not in the contract record
   }
 }
 
@@ -113,7 +109,7 @@ export function parseQuoteFromDb(dbQuote: DbQuote): Quote {
   return {
     ...dbQuote,
     items: (dbQuote.items as unknown as QuoteItem[]) || [],
-    supplier_info: (dbQuote.supplier_info as unknown as SupplierInfo) || undefined,
+    // Note: supplier_info is not stored in quotes table
   }
 }
 

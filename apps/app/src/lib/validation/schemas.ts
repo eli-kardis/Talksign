@@ -88,8 +88,8 @@ export const signupSchema = z.object({
   businessRegistrationNumber: businessNumberSchema,
   companyName: z.string().max(200, 'Company name must not exceed 200 characters').optional(),
   businessName: z.string().max(200, 'Business name must not exceed 200 characters').optional(),
-  agreeTerms: z.literal(true, { errorMap: () => ({ message: 'You must agree to the terms' }) }),
-  agreePrivacy: z.literal(true, { errorMap: () => ({ message: 'You must agree to the privacy policy' }) }),
+  agreeTerms: z.literal(true, 'You must agree to the terms'),
+  agreePrivacy: z.literal(true, 'You must agree to the privacy policy'),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
@@ -294,7 +294,7 @@ export function validate<T>(schema: z.ZodSchema<T>, data: unknown): { success: t
     return { success: true, data: validated }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const messages = error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ')
+      const messages = error.issues.map(err => `${err.path.join('.')}: ${err.message}`).join(', ')
       return { success: false, error: messages }
     }
     return { success: false, error: 'Validation failed' }
@@ -317,7 +317,7 @@ export function safeParse<T>(schema: z.ZodSchema<T>, data: unknown) {
   if (!result.success) {
     const formattedErrors: Record<string, string> = {}
 
-    result.error.errors.forEach(err => {
+    result.error.issues.forEach(err => {
       const path = err.path.join('.')
       formattedErrors[path] = err.message
     })

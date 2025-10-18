@@ -4,6 +4,7 @@ import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logCreate, extractMetadata } from '@/lib/audit-log'
 import { logger } from '@/lib/logger'
 import { contractCreateSchema, paginationSchema, safeParse } from '@/lib/validation/schemas'
+import { ContractInsert, ContractStatus } from '@/types/database'
 
 // Type for selected contract fields from Supabase
 interface ContractSelectResult {
@@ -12,7 +13,7 @@ interface ContractSelectResult {
   client_name: string | null
   client_phone: string | null
   total_amount: number | null
-  status: string | null
+  status: ContractStatus | null
   created_at: string | null
   signed_at: string | null
   contract_url: string | null
@@ -94,12 +95,12 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform data to match frontend expectations
-    const transformedContracts = (contracts && Array.isArray(contracts)) ? contracts.map((contract: ContractSelectResult) => ({
+    const transformedContracts = (contracts && Array.isArray(contracts)) ? contracts.map(contract => ({
       id: contract.id,
       client: contract.client_name || 'Unknown Client',
       project: contract.title || 'Untitled Project',
       amount: contract.total_amount || 0,
-      status: contract.status || 'draft',
+      status: (contract.status as ContractStatus) || 'draft',
       createdDate: contract.created_at ? new Date(contract.created_at).toISOString().split('T')[0] : '',
       signedDate: contract.signed_at ? new Date(contract.signed_at).toISOString().split('T')[0] : undefined,
       contractUrl: contract.contract_url || '#',
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare contract data for Supabase
     // user_id는 인증된 userId 사용 (절대 클라이언트에서 받지 않음)
-    const contractData = {
+    const contractData: ContractInsert = {
       title: validatedData.title,
       content: body.description || '',
       status: validatedData.status || 'draft',
@@ -187,10 +188,9 @@ export async function POST(request: NextRequest) {
       tax_amount: body.taxAmount || body.tax_amount || 0,
       tax_rate: body.tax_rate || 10.0,
       total_amount: body.total || body.total_amount || 0,
-      contract_terms: validatedData.terms || null,
+      terms: validatedData.terms || null,  // ✅ Fixed: 'terms' not 'contract_terms'
       payment_terms: body.payment_terms || null,
       payment_method: body.payment_method || null,
-      additional_payment_terms: body.additional_terms || null,
       notes: validatedData.notes || null,
       contract_url: '#'
     }

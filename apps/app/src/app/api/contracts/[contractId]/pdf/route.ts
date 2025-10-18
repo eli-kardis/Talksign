@@ -175,21 +175,17 @@ function generateContractPDF(contract: Contract, supplierInfo: SupplierInfo): Bu
       yPosition += 6
     }
     if (contract.payment_terms) {
-      pdf.text(`결제 조건: ${contract.payment_terms}`, 20, yPosition)
+      pdf.text('결제 조건:', 20, yPosition)
       yPosition += 6
-    }
-    if (contract.additional_payment_terms) {
-      pdf.text('추가 결제 조건:', 20, yPosition)
-      yPosition += 6
-      const additionalLines = pdf.splitTextToSize(contract.additional_payment_terms, 170)
-      pdf.text(additionalLines, 20, yPosition)
-      yPosition += additionalLines.length * 6
+      const paymentLines = pdf.splitTextToSize(contract.payment_terms, 170)
+      pdf.text(paymentLines, 20, yPosition)
+      yPosition += paymentLines.length * 6
     }
     yPosition += 10
   }
 
   // 계약 조건
-  if (contract.contract_terms && contract.contract_terms.length > 0) {
+  if (contract.terms) {
     if (yPosition > 220) {
       pdf.addPage()
       yPosition = 20
@@ -200,14 +196,15 @@ function generateContractPDF(contract: Contract, supplierInfo: SupplierInfo): Bu
     yPosition += 10
 
     pdf.setFontSize(10)
-    contract.contract_terms.forEach((term, index) => {
+    const termsLines = pdf.splitTextToSize(contract.terms, 170)
+    termsLines.forEach((line: string) => {
       if (yPosition > 250) {
         pdf.addPage()
         yPosition = 20
       }
 
-      pdf.text(`${index + 1}. ${term}`, 20, yPosition)
-      yPosition += 8
+      pdf.text(line, 20, yPosition)
+      yPosition += 6
     })
     yPosition += 10
   }
@@ -232,41 +229,21 @@ function generateContractPDF(contract: Contract, supplierInfo: SupplierInfo): Bu
   pdf.text('을 (고객)', 130, yPosition)
   yPosition += 10
 
-  // 공급자 서명 이미지 또는 텍스트
-  if (contract.freelancer_signature?.signature_data) {
-    try {
-      // 서명 이미지를 PDF에 추가
-      const signatureImage = contract.freelancer_signature.signature_data
-      pdf.addImage(signatureImage, 'PNG', 30, yPosition, 40, 15)
-      yPosition += 18
-      pdf.setFontSize(8)
-      pdf.text(`서명일: ${new Date(contract.freelancer_signature.signed_at).toLocaleDateString('ko-KR')}`, 30, yPosition)
-      pdf.setFontSize(10)
-    } catch (error) {
-      console.error('Error adding supplier signature image:', error)
-      pdf.text(`서명: ${supplierInfo?.name || '_______________'}`, 30, yPosition)
-    }
-  } else {
-    pdf.text(`서명: ${supplierInfo?.name || '_______________'}`, 30, yPosition)
+  // 공급자 서명란
+  // Note: Signature data is stored in contract_signatures table, not embedded in contract
+  pdf.text(`서명: ${supplierInfo?.name || '_______________'}`, 30, yPosition)
+  if (contract.signed_at) {
+    pdf.setFontSize(8)
+    pdf.text(`서명일: ${new Date(contract.signed_at).toLocaleDateString('ko-KR')}`, 30, yPosition + 6)
+    pdf.setFontSize(10)
   }
 
-  // 고객 서명 이미지 또는 텍스트
-  const clientYPosition = yPosition - (contract.freelancer_signature?.signature_data ? 18 : 0)
-  if (contract.client_signature?.signature_data) {
-    try {
-      // 고객 서명 이미지를 PDF에 추가
-      const clientSignatureImage = contract.client_signature.signature_data
-      pdf.addImage(clientSignatureImage, 'PNG', 130, clientYPosition, 40, 15)
-      const clientSignDateY = clientYPosition + 18
-      pdf.setFontSize(8)
-      pdf.text(`서명일: ${new Date(contract.client_signature.signed_at).toLocaleDateString('ko-KR')}`, 130, clientSignDateY)
-      pdf.setFontSize(10)
-    } catch (error) {
-      console.error('Error adding client signature image:', error)
-      pdf.text(`서명: ${contract.client_name}`, 130, clientYPosition)
-    }
-  } else {
-    pdf.text(`서명: _______________`, 130, clientYPosition)
+  // 고객 서명란
+  pdf.text(`서명: ${contract.client_name || '_______________'}`, 130, yPosition)
+  if (contract.signed_at) {
+    pdf.setFontSize(8)
+    pdf.text(`서명일: ${new Date(contract.signed_at).toLocaleDateString('ko-KR')}`, 130, yPosition + 6)
+    pdf.setFontSize(10)
   }
 
   return Buffer.from(pdf.output('arraybuffer'))

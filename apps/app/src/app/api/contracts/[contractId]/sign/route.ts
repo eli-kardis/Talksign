@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logSensitiveOperation, extractMetadata } from '@/lib/audit-log'
-import type { DigitalSignature, ContractUpdate } from '@/lib/types'
 
 /**
  * POST /api/contracts/[contractId]/sign
@@ -71,31 +70,49 @@ export async function POST(
       )
     }
 
-    // 서명 데이터 준비
-    const signaturePayload: DigitalSignature = {
-      signature_data: signatureData,
-      signed_by: userId,
-      signed_at: new Date().toISOString(),
-      ip_address: request.headers.get('x-forwarded-for') || undefined
+    // Get user info for signature
+    const { data: userData } = await supabase
+      .from('users')
+      .select('name, email')
+      .eq('id', userId)
+      .single()
+
+    // 서명을 contract_signatures 테이블에 저장
+    const { error: signatureError } = await supabase
+      .from('contract_signatures')
+      .insert({
+        contract_id: contractId,
+        signer_type: 'supplier',
+        signer_name: userData?.name || 'Unknown',
+        signer_email: userData?.email || null,
+        signature_data: signatureData,
+        signed_at: new Date().toISOString(),
+        ip_address: request.headers.get('x-forwarded-for') || null
+      })
+
+    if (signatureError) {
+      console.error('Error inserting signature:', signatureError)
+      return NextResponse.json(
+        { error: 'Failed to save signature' },
+        { status: 500 }
+      )
     }
 
-    // 계약서에 공급자 서명 추가
-    const updatePayload: ContractUpdate = {
-      freelancer_signature: signaturePayload as any, // Json 타입으로 자동 변환
-      updated_at: new Date().toISOString()
-    }
-
+    // 계약서 상태를 'pending'으로 업데이트
     const { data: updatedContract, error: updateError } = await supabase
       .from('contracts')
-      .update(updatePayload)
+      .update({
+        status: 'pending',
+        updated_at: new Date().toISOString()
+      })
       .eq('id', contractId)
       .select()
       .single()
 
     if (updateError) {
-      console.error('Error updating contract with signature:', updateError)
+      console.error('Error updating contract status:', updateError)
       return NextResponse.json(
-        { error: 'Failed to add signature to contract' },
+        { error: 'Failed to update contract status' },
         { status: 500 }
       )
     }

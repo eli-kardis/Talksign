@@ -126,9 +126,42 @@ export type Database = {
           metadata?: Json | null
           user_agent?: string | null
         }
+        Relationships: []
+      }
+      contract_items: {
+        Row: {
+          amount: number
+          contract_id: string
+          created_at: string | null
+          description: string
+          id: string
+          quantity: number
+          sort_order: number | null
+          unit_price: number
+        }
+        Insert: {
+          amount?: number
+          contract_id: string
+          created_at?: string | null
+          description: string
+          id?: string
+          quantity?: number
+          sort_order?: number | null
+          unit_price?: number
+        }
+        Update: {
+          amount?: number
+          contract_id?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          quantity?: number
+          sort_order?: number | null
+          unit_price?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "contract_activities_contract_id_fkey"
+            foreignKeyName: "contract_items_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
@@ -136,52 +169,43 @@ export type Database = {
           },
         ]
       }
-      contract_items: {
+      contract_signatures: {
         Row: {
-          amount: number | null
-          category: string | null
           contract_id: string
           created_at: string | null
-          description: string | null
           id: string
-          name: string
-          quantity: number | null
-          sort_order: number | null
-          unit: string | null
-          unit_price: number
-          updated_at: string | null
+          ip_address: string | null
+          signature_data: string
+          signed_at: string | null
+          signer_email: string | null
+          signer_name: string
+          signer_type: string
         }
         Insert: {
-          amount?: number | null
-          category?: string | null
           contract_id: string
           created_at?: string | null
-          description?: string | null
           id?: string
-          name: string
-          quantity?: number | null
-          sort_order?: number | null
-          unit?: string | null
-          unit_price?: number
-          updated_at?: string | null
+          ip_address?: string | null
+          signature_data: string
+          signed_at?: string | null
+          signer_email?: string | null
+          signer_name: string
+          signer_type: string
         }
         Update: {
-          amount?: number | null
-          category?: string | null
           contract_id?: string
           created_at?: string | null
-          description?: string | null
           id?: string
-          name?: string
-          quantity?: number | null
-          sort_order?: number | null
-          unit?: string | null
-          unit_price?: number
-          updated_at?: string | null
+          ip_address?: string | null
+          signature_data?: string
+          signed_at?: string | null
+          signer_email?: string | null
+          signer_name?: string
+          signer_type?: string
         }
         Relationships: [
           {
-            foreignKeyName: "contract_items_contract_id_fkey"
+            foreignKeyName: "contract_signatures_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
@@ -220,149 +244,137 @@ export type Database = {
           term_type?: string | null
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "contract_terms_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       contracts: {
         Row: {
-          additional_payment_terms: string | null
-          attachments: Json | null
           client_address: string | null
           client_business_number: string | null
           client_company: string | null
           client_email: string | null
-          client_name: string | null
+          client_name: string
           client_phone: string | null
-          client_signature: Json | null
-          client_signature_data: Json | null
-          client_viewed_at: string | null
-          content: string
-          contract_terms: Json | null
+          content: string | null
+          contract_number: string | null
           contract_url: string | null
           created_at: string | null
-          freelancer_signature: Json | null
-          freelancer_signature_data: Json | null
+          customer_id: string | null
+          end_date: string | null
           id: string
-          items: Json | null
-          last_modified_by: string | null
+          issue_date: string
+          items: Json
+          notes: string | null
           payment_method: string | null
           payment_terms: string | null
           project_description: string | null
           project_end_date: string | null
           project_start_date: string | null
           quote_id: string | null
-          sent_at: string | null
           signed_at: string | null
-          signing_ip_address: unknown | null
-          status: Database["public"]["Enums"]["contract_status"] | null
+          start_date: string
+          status: string | null
           subtotal: number | null
           supplier_info: Json | null
           tax_amount: number | null
           tax_rate: number | null
-          terms_and_conditions: string | null
+          terms: string | null
           title: string
           total_amount: number | null
           updated_at: string | null
           user_id: string
-          version: number | null
         }
         Insert: {
-          additional_payment_terms?: string | null
-          attachments?: Json | null
           client_address?: string | null
           client_business_number?: string | null
           client_company?: string | null
           client_email?: string | null
-          client_name?: string | null
+          client_name: string
           client_phone?: string | null
-          client_signature?: Json | null
-          client_signature_data?: Json | null
-          client_viewed_at?: string | null
-          content: string
-          contract_terms?: Json | null
+          content?: string | null
+          contract_number?: string | null
           contract_url?: string | null
           created_at?: string | null
-          freelancer_signature?: Json | null
-          freelancer_signature_data?: Json | null
+          customer_id?: string | null
+          end_date?: string | null
           id?: string
-          items?: Json | null
-          last_modified_by?: string | null
+          issue_date: string
+          items?: Json
+          notes?: string | null
           payment_method?: string | null
           payment_terms?: string | null
           project_description?: string | null
           project_end_date?: string | null
           project_start_date?: string | null
           quote_id?: string | null
-          sent_at?: string | null
           signed_at?: string | null
-          signing_ip_address?: unknown | null
-          status?: Database["public"]["Enums"]["contract_status"] | null
+          start_date: string
+          status?: string | null
           subtotal?: number | null
           supplier_info?: Json | null
           tax_amount?: number | null
           tax_rate?: number | null
-          terms_and_conditions?: string | null
+          terms?: string | null
           title: string
           total_amount?: number | null
           updated_at?: string | null
           user_id: string
-          version?: number | null
         }
         Update: {
-          additional_payment_terms?: string | null
-          attachments?: Json | null
           client_address?: string | null
           client_business_number?: string | null
           client_company?: string | null
           client_email?: string | null
-          client_name?: string | null
+          client_name?: string
           client_phone?: string | null
-          client_signature?: Json | null
-          client_signature_data?: Json | null
-          client_viewed_at?: string | null
-          content?: string
-          contract_terms?: Json | null
+          content?: string | null
+          contract_number?: string | null
           contract_url?: string | null
           created_at?: string | null
-          freelancer_signature?: Json | null
-          freelancer_signature_data?: Json | null
+          customer_id?: string | null
+          end_date?: string | null
           id?: string
-          items?: Json | null
-          last_modified_by?: string | null
+          issue_date?: string
+          items?: Json
+          notes?: string | null
           payment_method?: string | null
           payment_terms?: string | null
           project_description?: string | null
           project_end_date?: string | null
           project_start_date?: string | null
           quote_id?: string | null
-          sent_at?: string | null
           signed_at?: string | null
-          signing_ip_address?: unknown | null
-          status?: Database["public"]["Enums"]["contract_status"] | null
+          start_date?: string
+          status?: string | null
           subtotal?: number | null
           supplier_info?: Json | null
           tax_amount?: number | null
           tax_rate?: number | null
-          terms_and_conditions?: string | null
+          terms?: string | null
           title?: string
           total_amount?: number | null
           updated_at?: string | null
           user_id?: string
-          version?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contracts_quote_id_fkey"
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -371,43 +383,51 @@ export type Database = {
         Row: {
           address: string | null
           business_registration_number: string | null
-          company_name: string
-          contact_person: string | null
+          company: string | null
           created_at: string | null
-          email: string
+          email: string | null
           id: string
-          phone: string
-          representative_name: string
+          name: string
+          notes: string | null
+          phone: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           address?: string | null
           business_registration_number?: string | null
-          company_name: string
-          contact_person?: string | null
+          company?: string | null
           created_at?: string | null
-          email: string
+          email?: string | null
           id?: string
-          phone: string
-          representative_name: string
+          name: string
+          notes?: string | null
+          phone?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           address?: string | null
           business_registration_number?: string | null
-          company_name?: string
-          contact_person?: string | null
+          company?: string | null
           created_at?: string | null
-          email?: string
+          email?: string | null
           id?: string
-          phone?: string
-          representative_name?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       kv_store_e83d4894: {
         Row: {
@@ -475,24 +495,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "notifications_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "notifications_payment_id_fkey"
             columns: ["payment_id"]
             isOneToOne: false
             referencedRelation: "payments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_quote_id_fkey"
-            columns: ["quote_id"]
-            isOneToOne: false
-            referencedRelation: "quotes"
             referencedColumns: ["id"]
           },
         ]
@@ -549,96 +555,132 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
+        Relationships: []
+      }
+      quote_items: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string
+          id: string
+          quantity: number
+          quote_id: string
+          sort_order: number | null
+          unit_price: number
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          description: string
+          id?: string
+          quantity?: number
+          quote_id: string
+          sort_order?: number | null
+          unit_price?: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string
+          id?: string
+          quantity?: number
+          quote_id?: string
+          sort_order?: number | null
+          unit_price?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "payments_contract_id_fkey"
-            columns: ["contract_id"]
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
             isOneToOne: false
-            referencedRelation: "contracts"
+            referencedRelation: "quotes"
             referencedColumns: ["id"]
           },
         ]
       }
       quotes: {
         Row: {
-          approved_at: string | null
-          client_address: string | null
           client_business_number: string | null
           client_company: string | null
-          client_email: string
+          client_email: string | null
           client_name: string
           client_phone: string | null
           created_at: string | null
-          description: string | null
-          due_date: string | null
-          expires_at: string | null
+          customer_id: string | null
+          expiry_date: string | null
           id: string
+          issue_date: string
           items: Json
           notes: string | null
-          status: Database["public"]["Enums"]["quote_status"] | null
-          subtotal: number
-          supplier_info: Json | null
-          tax_amount: number | null
-          tax_rate: number | null
+          quote_number: string | null
+          status: string | null
+          subtotal: number | null
+          tax: number | null
           title: string
-          total_amount: number | null
+          total: number | null
           updated_at: string | null
           user_id: string
-          valid_until: string | null
         }
         Insert: {
-          approved_at?: string | null
-          client_address?: string | null
           client_business_number?: string | null
           client_company?: string | null
-          client_email: string
+          client_email?: string | null
           client_name: string
           client_phone?: string | null
           created_at?: string | null
-          description?: string | null
-          due_date?: string | null
-          expires_at?: string | null
+          customer_id?: string | null
+          expiry_date?: string | null
           id?: string
+          issue_date: string
           items?: Json
           notes?: string | null
-          status?: Database["public"]["Enums"]["quote_status"] | null
-          subtotal?: number
-          supplier_info?: Json | null
-          tax_amount?: number | null
-          tax_rate?: number | null
+          quote_number?: string | null
+          status?: string | null
+          subtotal?: number | null
+          tax?: number | null
           title: string
-          total_amount?: number | null
+          total?: number | null
           updated_at?: string | null
           user_id: string
-          valid_until?: string | null
         }
         Update: {
-          approved_at?: string | null
-          client_address?: string | null
           client_business_number?: string | null
           client_company?: string | null
-          client_email?: string
+          client_email?: string | null
           client_name?: string
           client_phone?: string | null
           created_at?: string | null
-          description?: string | null
-          due_date?: string | null
-          expires_at?: string | null
+          customer_id?: string | null
+          expiry_date?: string | null
           id?: string
+          issue_date?: string
           items?: Json
           notes?: string | null
-          status?: Database["public"]["Enums"]["quote_status"] | null
-          subtotal?: number
-          supplier_info?: Json | null
-          tax_amount?: number | null
-          tax_rate?: number | null
+          quote_number?: string | null
+          status?: string | null
+          subtotal?: number | null
+          tax?: number | null
           title?: string
-          total_amount?: number | null
+          total?: number | null
           updated_at?: string | null
           user_id?: string
-          valid_until?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quotes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recurring_payments: {
         Row: {
@@ -686,15 +728,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "recurring_payments_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       schedules: {
         Row: {
@@ -763,22 +797,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "schedules_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "schedules_quote_id_fkey"
-            columns: ["quote_id"]
-            isOneToOne: false
-            referencedRelation: "quotes"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       tax_invoices: {
         Row: {
@@ -883,7 +902,7 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
-          name: string | null
+          name: string
           phone: string | null
           updated_at: string | null
         }
@@ -894,7 +913,7 @@ export type Database = {
           created_at?: string | null
           email: string
           id: string
-          name?: string | null
+          name: string
           phone?: string | null
           updated_at?: string | null
         }
@@ -905,7 +924,7 @@ export type Database = {
           created_at?: string | null
           email?: string
           id?: string
-          name?: string | null
+          name?: string
           phone?: string | null
           updated_at?: string | null
         }

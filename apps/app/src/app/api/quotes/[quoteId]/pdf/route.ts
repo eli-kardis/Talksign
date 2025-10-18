@@ -28,8 +28,8 @@ function generateQuotePDF(quote: Quote, supplierInfo: SupplierInfo): Buffer {
   }
   yPosition += 10
 
-  if (quote.expires_at) {
-    pdf.text(`유효기한: ${new Date(quote.expires_at).toLocaleDateString('ko-KR')}`, 140, yPosition)
+  if (quote.expiry_date) {
+    pdf.text(`유효기한: ${new Date(quote.expiry_date).toLocaleDateString('ko-KR')}`, 140, yPosition)
     yPosition += 15
   } else {
     yPosition += 10
@@ -74,10 +74,6 @@ function generateQuotePDF(quote: Quote, supplierInfo: SupplierInfo): Buffer {
     pdf.text(`회사명: ${quote.client_company}`, 20, yPosition)
     yPosition += 6
   }
-  if (quote.client_address) {
-    pdf.text(`주소: ${quote.client_address}`, 20, yPosition)
-    yPosition += 6
-  }
   yPosition += 10
 
   // 프로젝트 정보
@@ -89,8 +85,8 @@ function generateQuotePDF(quote: Quote, supplierInfo: SupplierInfo): Buffer {
   pdf.text(`제목: ${quote.title}`, 20, yPosition)
   yPosition += 6
 
-  if (quote.description) {
-    const lines = pdf.splitTextToSize(`설명: ${quote.description}`, 170)
+  if (quote.notes) {
+    const lines = pdf.splitTextToSize(`설명: ${quote.notes}`, 170)
     pdf.text(lines, 20, yPosition)
     yPosition += lines.length * 6
   }

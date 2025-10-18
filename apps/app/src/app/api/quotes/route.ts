@@ -4,9 +4,7 @@ import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logCreate, extractMetadata } from '@/lib/audit-log'
 import { logger } from '@/lib/logger'
 import { quoteCreateSchema, paginationSchema, safeParse } from '@/lib/validation/schemas'
-import type { Database } from '@/lib/database.types'
-
-type QuoteInsert = Database['public']['Tables']['quotes']['Insert']
+import { QuoteInsert } from '@/types/database'
 
 export async function GET(request: NextRequest) {
   try {
@@ -178,7 +176,7 @@ export async function POST(request: NextRequest) {
       quote_number: validatedData.quote_number || undefined,
       title: validatedData.title,
       issue_date: validatedData.issue_date,
-      expires_at: expiresAt ?? undefined,
+      expiry_date: expiresAt ?? undefined,
       items: validatedData.items,
       subtotal: subtotal,
       status: validatedData.status || 'draft',
