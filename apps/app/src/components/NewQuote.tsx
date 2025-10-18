@@ -312,8 +312,10 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
     setIsLoading(true)
 
     try {
-      // 총 소계 계산 (tax_amount와 total_amount는 데이터베이스에서 자동 계산됨)
+      // 총 소계, 부가세, 총액 계산
       const subtotal = items.reduce((sum, item) => sum + item.amount, 0)
+      const tax = Math.round(subtotal * 0.1) // 10% 부가세
+      const total = subtotal + tax
 
       const quoteData = {
         client_name: (clientInfo.name || '').trim(),
@@ -332,6 +334,9 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
           unit_price: item.unitPrice,
           amount: item.amount,
         })),
+        subtotal,
+        tax,
+        total,
         notes: '',
         // 공급자 정보 추가 (user profile update용)
         supplier_info: {

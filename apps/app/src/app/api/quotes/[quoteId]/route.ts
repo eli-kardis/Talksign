@@ -38,16 +38,21 @@ export async function GET(
       .eq('id', quoteId)
       .single()
 
-    // 공급자 정보 별도 조회
+    // supplier_info가 DB에 저장되어 있으면 사용, 없으면 users 테이블에서 조회
     if (quote && !error) {
-      const { data: supplier } = await supabase
-        .from('users')
-        .select('name, email, phone, business_name, business_registration_number, company_name, business_address')
-        .eq('id', quote.user_id)
-        .single()
+      const quoteWithSupplier = quote as any
+      if (!quoteWithSupplier.supplier_info) {
+        const { data: supplier } = await supabase
+          .from('users')
+          .select('name, email, phone, business_name, business_registration_number, company_name, business_address')
+          .eq('id', quote.user_id)
+          .single()
 
-      if (supplier) {
-        (quote as any).supplier = supplier
+        if (supplier) {
+          quoteWithSupplier.supplier = supplier
+        }
+      } else {
+        quoteWithSupplier.supplier = quoteWithSupplier.supplier_info
       }
     }
 

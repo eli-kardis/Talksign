@@ -437,9 +437,6 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
           <div className="text-center pt-6 border-t border-gray-300">
             <div className="space-y-2 text-sm">
               <p className="text-gray-700">본 견적서는 <span className="text-black font-medium">{new Date(quote.created_at).toLocaleDateString('ko-KR')}</span>에 작성되었습니다.</p>
-              {quote.expiry_date && (
-                <p className="text-gray-700">견적서 승인은 <span className="text-black font-medium">{new Date(quote.expiry_date).toLocaleDateString('ko-KR')}</span>까지 가능합니다.</p>
-              )}
             </div>
           </div>
         </div>
