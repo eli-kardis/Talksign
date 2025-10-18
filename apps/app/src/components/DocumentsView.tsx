@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { QuoteList } from "./QuoteList";
 import { ContractView } from "./ContractView";
 import { useTenant } from "@/contexts/TenantContext";
@@ -22,6 +23,7 @@ export function DocumentsView({
   onTabChange,
 }: DocumentsViewProps) {
   const { basePath } = useTenant();
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<DocTab>(initialTab);
 
@@ -43,11 +45,11 @@ export function DocumentsView({
           onNewQuote={() => onNavigate("new-quote")}
           onViewQuote={(quoteId) => {
             // Navigate to the quote detail page with the specific quote ID
-            window.location.href = `${basePath}/documents/quotes/${quoteId}`;
+            router.push(`${basePath}/documents/quotes/${quoteId}`);
           }}
           onEditQuote={(quoteId) => {
             // Navigate to the quote edit page
-            window.location.href = `${basePath}/documents/quotes/${quoteId}/edit`;
+            router.push(`${basePath}/documents/quotes/${quoteId}/edit`);
           }}
         />
       )}

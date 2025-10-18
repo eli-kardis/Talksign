@@ -7,10 +7,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  ArrowLeft, 
-  Download, 
-  Edit, 
+import { AuthenticatedApiClient } from "@/lib/api-client";
+import {
+  ArrowLeft,
+  Download,
+  Edit,
   Calendar,
   Building2,
   Mail,
@@ -90,7 +91,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/quotes/${quoteId}`);
+        const response = await AuthenticatedApiClient.get(`/api/quotes/${quoteId}`);
         
         if (!response.ok) {
           if (response.status === 404) {
