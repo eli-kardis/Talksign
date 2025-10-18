@@ -6,6 +6,14 @@ import { useAuth } from '@/contexts/AuthContext'
 import { NewQuote } from '@/components/NewQuote'
 import { AuthenticatedApiClient } from '@/lib/api-client'
 
+interface QuoteItem {
+  name: string
+  description?: string
+  quantity: number
+  unit_price: number
+  amount: number
+}
+
 interface QuoteData {
   id: string
   user_id: string
@@ -13,18 +21,18 @@ interface QuoteData {
   client_email: string
   client_phone?: string
   client_company?: string
+  client_business_number?: string
   title: string
-  description?: string
-  items: Array<{ id: string; name: string; amount: number; }>
+  items: QuoteItem[]
   subtotal: number
-  tax_rate: number
-  tax_amount: number
-  total_amount: number
+  tax: number
+  total: number
   status: "draft" | "sent" | "approved" | "rejected" | "expired"
-  expires_at?: string
-  approved_at?: string
+  expiry_date?: string
+  notes?: string
   created_at: string
   updated_at: string
+  supplier_info?: any
 }
 
 export default function EditQuotePage() {
@@ -137,20 +145,22 @@ export default function EditQuotePage() {
       email: quoteData.client_email,
       phone: quoteData.client_phone || '',
       company: quoteData.client_company || '',
-      businessNumber: (quoteData as any).client_business_number || '',
-      address: (quoteData as any).client_address || ''
+      businessNumber: quoteData.client_business_number || ''
     },
     project: {
       title: quoteData.title,
-      description: quoteData.description || ''
+      notes: quoteData.notes || ''
     },
-    items: quoteData.items.map(item => ({
-      id: item.id,
-      description: item.name,
-      amount: item.amount
+    items: quoteData.items.map((item, index) => ({
+      id: `${index + 1}`,
+      name: item.name || '',
+      description: item.description || '',
+      quantity: item.quantity || 1,
+      unitPrice: item.unit_price || 0,
+      amount: item.amount || 0
     })),
-    taxRate: quoteData.tax_rate,
-    expiresAt: quoteData.expires_at || (quoteData as any).valid_until || ''
+    expiryDate: quoteData.expiry_date || '',
+    supplier: quoteData.supplier_info || null
   }
 
   return (

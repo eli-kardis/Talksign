@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
         .update({
           name: body.supplier_info.name,
           phone: body.supplier_info.phone,
-          business_number: body.supplier_info.business_registration_number,
+          business_registration_number: body.supplier_info.business_registration_number,
           business_name: body.supplier_info.business_name,
           updated_at: new Date().toISOString()
         })
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
     // 견적서 생성
     const expiresAt = validatedData.expiry_date ? new Date(validatedData.expiry_date).toISOString() : null
 
-    const quoteData: QuoteInsert = {
+    const quoteData: any = {
       user_id: userId,
       customer_id: validatedData.customer_id || null,
       client_name: validatedData.client_name,
@@ -181,6 +181,7 @@ export async function POST(request: NextRequest) {
       subtotal: subtotal,
       status: validatedData.status || 'draft',
       notes: validatedData.notes || null,
+      supplier_info: body.supplier_info || null,
     }
 
     logger.db.query('quotes', 'INSERT')

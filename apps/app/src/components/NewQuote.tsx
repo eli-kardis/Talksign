@@ -37,19 +37,21 @@ interface NewQuoteProps {
       phone: string
       company: string
       businessNumber?: string
-      address?: string
     }
     project: {
       title: string
-      description: string
+      notes?: string
     }
     items: Array<{
       id: string
+      name: string
       description: string
+      quantity: number
+      unitPrice: number
       amount: number
     }>
-    taxRate: number
-    expiresAt: string
+    expiryDate?: string
+    supplier?: any
   }
 }
 
@@ -121,54 +123,56 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
   }, [user?.id])
 
 
-  // 수정 모드일 때 초기 데이터 설정
+  // 초기 폼 데이터 설정 (수정 모드에서만)
   useEffect(() => {
     if (isEdit && initialData) {
-      const newClientInfo = {
+      // 공급자 정보 설정
+      if (initialData.supplier) {
+        setSupplierInfo({
+          name: initialData.supplier.name || '',
+          email: initialData.supplier.email || '',
+          phone: initialData.supplier.phone || '',
+          businessRegistrationNumber: initialData.supplier.business_registration_number || '',
+          businessName: initialData.supplier.business_name || '',
+          companyName: initialData.supplier.company_name || '',
+        })
+      }
+
+      // 수신자 정보 설정
+      setClientInfo({
         name: initialData.client.name,
         email: initialData.client.email,
         phone: initialData.client.phone,
         company: initialData.client.company,
         businessNumber: initialData.client.businessNumber || '',
-        address: initialData.client.address || '',
-      }
-      
-      const newProjectInfo = {
-        title: initialData.project.title,
-        description: initialData.project.description,
-        dueDate: '',
-        notes: '',
-      }
+        address: '',
+      })
 
-      const newQuoteTitle = initialData.project.title
-      const newValidUntil = initialData.expiresAt ? initialData.expiresAt.split('T')[0] : ''
-      
-      // items 변환
-      const transformedItems = initialData.items.map((item, index) => ({
+      // 프로젝트 정보 설정
+      setProjectInfo({
+        title: initialData.project.title,
+        description: '',
+        dueDate: '',
+        notes: initialData.project.notes || '',
+      })
+
+      // 견적서 제목 및 유효기간 설정
+      setQuoteTitle(initialData.project.title)
+      setValidUntil(initialData.expiryDate ? initialData.expiryDate.split('T')[0] : '')
+
+      // 견적 항목 설정
+      const loadedItems = initialData.items.map((item, index) => ({
         id: index + 1,
-        name: item.description,
+        name: item.name,
         description: item.description,
-        unitPrice: item.amount,
-        quantity: 1,
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
         unit: '개',
         amount: item.amount
       }))
-      
-      setClientInfo(newClientInfo)
-      setProjectInfo(newProjectInfo)
-      setQuoteTitle(newQuoteTitle)
-      setValidUntil(newValidUntil)
-      
-      if (transformedItems.length > 0) {
-        setItems(transformedItems)
-      }
-    }
-  }, [isEdit, initialData])
+      setItems(loadedItems)
 
-  // 초기 폼 데이터 설정 (수정 모드에서만)
-  useEffect(() => {
-    if (isEdit && initialData && supplierInfo.name) {
-      // 공급자 정보가 로드된 후에 초기 데이터 설정
+      // 초기 form data 저장 (변경사항 감지용)
       setInitialFormData({
         clientInfo: {
           name: initialData.client.name,
@@ -176,29 +180,21 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
           phone: initialData.client.phone,
           company: initialData.client.company,
           businessNumber: initialData.client.businessNumber || '',
-          address: initialData.client.address || '',
+          address: '',
         },
         projectInfo: {
           title: initialData.project.title,
-          description: initialData.project.description,
+          description: '',
           dueDate: '',
-          notes: '',
+          notes: initialData.project.notes || '',
         },
         quoteTitle: initialData.project.title,
-        validUntil: initialData.expiresAt ? initialData.expiresAt.split('T')[0] : '',
-        items: initialData.items.map((item, index) => ({
-          id: index + 1,
-          name: item.description,
-          description: item.description,
-          unitPrice: item.amount,
-          quantity: 1,
-          unit: '개',
-          amount: item.amount
-        })),
-        supplierInfo
+        validUntil: initialData.expiryDate ? initialData.expiryDate.split('T')[0] : '',
+        items: loadedItems,
+        supplierInfo: initialData.supplier || supplierInfo
       })
     }
-  }, [isEdit, initialData, supplierInfo.name])
+  }, [isEdit, initialData])
 
   // 변경사항 감지
   useEffect(() => {

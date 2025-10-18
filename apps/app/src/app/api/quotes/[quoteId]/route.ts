@@ -107,31 +107,41 @@ export async function PUT(
     // RLS가 적용된 클라이언트 사용 (사용자 본인 데이터만 수정 가능)
     const supabase = createUserSupabaseClient(request)
 
-    // 견적서 아이템들의 subtotal 계산
+    // 견적서 아이템들의 subtotal, tax, total 계산
     const subtotal = body.items?.reduce((sum: number, item: { unit_price: number; quantity: number }) => {
       return sum + (item.unit_price * item.quantity)
     }, 0) || 0
 
-    console.log('Calculated subtotal:', subtotal)
+    const tax = Math.round(subtotal * 0.1) // 10% VAT
+    const total = subtotal + tax
 
-    // expires_at 처리
-    const expiresAt = body.valid_until ? new Date(body.valid_until).toISOString() : (body.expires_at ? new Date(body.expires_at).toISOString() : null)
+    console.log('Calculated amounts:', { subtotal, tax, total })
+
+    // expiry_date 처리
+    const expiryDate = body.expiry_date ? new Date(body.expiry_date).toISOString() :
+                       (body.valid_until ? new Date(body.valid_until).toISOString() : null)
 
     // 견적서 업데이트 데이터 준비
-    const quoteData = {
+    const quoteData: any = {
       client_name: body.client_name,
       client_email: body.client_email,
       client_phone: body.client_phone,
       client_company: body.client_company,
       title: body.title,
-      description: body.description,
       items: body.items,
       subtotal: subtotal,
+      tax: tax,
+      total: total,
       status: body.status || 'draft',
-      expires_at: expiresAt,
+      expiry_date: expiryDate,
       client_business_number: body.client_business_number || null,
-      client_address: body.client_address || null,
+      notes: body.notes || null,
       updated_at: new Date().toISOString()
+    }
+
+    // supplier_info가 제공되면 업데이트
+    if (body.supplier_info) {
+      quoteData.supplier_info = body.supplier_info
     }
 
     console.log('Quote data to update:', quoteData)
