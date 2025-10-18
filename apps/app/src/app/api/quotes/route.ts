@@ -140,7 +140,9 @@ export async function POST(request: NextRequest) {
 
     // 견적서 항목 총합 계산
     const subtotal = validatedData.items.reduce((sum, item) => sum + item.amount, 0)
-    logger.debug('Calculated quote subtotal', { subtotal })
+    const tax = Math.round(subtotal * 0.1) // 10% VAT
+    const total = subtotal + tax
+    logger.debug('Calculated quote amounts', { subtotal, tax, total })
 
     // 공급자 정보로 사용자 프로필 업데이트 (필요시)
     if (body.supplier_info) {
@@ -179,6 +181,8 @@ export async function POST(request: NextRequest) {
       expiry_date: expiresAt ?? undefined,
       items: validatedData.items,
       subtotal: subtotal,
+      tax: tax,
+      total: total,
       status: validatedData.status || 'draft',
       notes: validatedData.notes || null,
       supplier_info: body.supplier_info || null,

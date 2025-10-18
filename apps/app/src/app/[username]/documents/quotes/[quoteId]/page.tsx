@@ -65,17 +65,19 @@ interface Quote {
   supplier?: SupplierInfo;
 }
 
-export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId: string }> }) {
+export default function QuoteDetailPage({ params }: { params: Promise<{ username: string; quoteId: string }> }) {
   const router = useRouter();
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quoteId, setQuoteId] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
     const unwrapParams = async () => {
       const resolvedParams = await params;
       setQuoteId(resolvedParams.quoteId);
+      setUsername(resolvedParams.username);
     };
 
     unwrapParams();
@@ -177,7 +179,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
 
     // UTF-8 안전한 Base64 인코딩
     const encodedData = btoa(encodeURIComponent(JSON.stringify(quoteData)));
-    router.push(`/documents/contracts/new?from=quote&data=${encodedData}`);
+    router.push(`/${username}/documents/contracts/new?from=quote&data=${encodedData}`);
   };
 
   return (
@@ -206,7 +208,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
         </div>
 
         <div className="flex items-center gap-2">
-          <Button onClick={() => router.push(`/documents/quotes/${quoteId}/edit`)}>
+          <Button onClick={() => router.push(`/${username}/documents/quotes/${quoteId}/edit`)}>
             <Edit className="w-4 h-4 mr-2" />
             수정
           </Button>
