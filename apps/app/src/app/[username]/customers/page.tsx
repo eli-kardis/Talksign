@@ -11,11 +11,11 @@ export default function UserCustomersPage({ params }: { params: Promise<{ userna
   const router = useRouter()
   const { user, isLoading } = useAuth()
 
-  // 비로그인 사용자는 accounts 도메인 로그인 페이지로 리다이렉트
+  // 비로그인 사용자는 로그인 페이지로 리다이렉트
   useEffect(() => {
     if (!isLoading && !user) {
       console.log('Customers: User not authenticated, redirecting to signin')
-      window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
+      window.location.href = '/auth/signin'
     }
   }, [user, isLoading])
 
