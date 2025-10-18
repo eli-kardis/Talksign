@@ -44,15 +44,18 @@ export function CustomerSelector({
     try {
       setLoading(true);
       const response = await AuthenticatedApiClient.get('/api/customers');
-      
+
       if (response.ok) {
-        const data = await response.json();
-        setCustomers(data);
+        const result = await response.json();
+        // API returns { data: [...], pagination: {...} }
+        setCustomers(result.data || []);
       } else {
         console.error('Failed to fetch customers:', response.status);
+        setCustomers([]);
       }
     } catch (error) {
       console.error('Error fetching customers:', error);
+      setCustomers([]);
     } finally {
       setLoading(false);
     }
