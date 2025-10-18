@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { NewContract } from '@/components/NewContract'
+import { AuthenticatedApiClient } from '@/lib/api-client'
 
 interface ContractData {
   id: string
@@ -49,10 +50,10 @@ export default function EditContractPage() {
   useEffect(() => {
     async function fetchContract() {
       if (!contractId) return;
-      
+
       try {
         setLoading(true)
-        const response = await fetch(`/api/contracts/${contractId}`)
+        const response = await AuthenticatedApiClient.get(`/api/contracts/${contractId}`)
         
         if (response.status === 404) {
           setError('계약서를 찾을 수 없습니다.')

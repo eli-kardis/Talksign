@@ -253,8 +253,8 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
 
   const handleCustomerSelect = (customer: any) => {
     setClientInfo({
-      name: customer.representative_name || '',
-      company: customer.company_name || '',
+      name: customer.name || '',
+      company: customer.company || '',
       businessNumber: customer.business_registration_number || '',
       phone: customer.phone || '',
       email: customer.email || '',

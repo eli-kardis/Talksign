@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { NewQuote } from '@/components/NewQuote'
+import { AuthenticatedApiClient } from '@/lib/api-client'
 
 interface QuoteData {
   id: string
@@ -51,12 +52,12 @@ export default function EditQuotePage() {
   const fetchQuoteData = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/quotes/${quoteId}`)
-      
+      const response = await AuthenticatedApiClient.get(`/api/quotes/${quoteId}`)
+
       if (!response.ok) {
         throw new Error('견적서를 불러올 수 없습니다.')
       }
-      
+
       const data = await response.json()
       setQuoteData(data)
     } catch (err) {

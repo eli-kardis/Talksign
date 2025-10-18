@@ -11,15 +11,16 @@ import { AuthenticatedApiClient } from '@/lib/api-client';
 
 interface Customer {
   id: string;
-  company_name: string;
-  representative_name: string;
-  contact_person?: string;
+  company: string;
+  name: string;
   business_registration_number?: string;
   email: string;
   phone: string;
   address?: string;
+  notes?: string;
   created_at: string;
   updated_at?: string;
+  user_id: string;
 }
 
 interface CustomerSelectorProps {
@@ -68,8 +69,8 @@ export function CustomerSelector({
   }, [isOpen]);
 
   const filteredCustomers = customers.filter(customer =>
-    customer.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.representative_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phone?.includes(searchTerm)
   );
@@ -119,19 +120,16 @@ export function CustomerSelector({
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-medium text-foreground">{customer.company_name}</h3>
+                      <h3 className="font-medium text-foreground">{customer.company}</h3>
                       <Badge variant="secondary" className="text-xs">
                         {new Date(customer.created_at).toLocaleDateString('ko-KR')}
                       </Badge>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <User className="w-3 h-3" />
-                        <span><strong>대표자:</strong> {customer.representative_name}</span>
-                        {customer.contact_person && (
-                          <span className="text-xs">({customer.contact_person})</span>
-                        )}
+                        <span><strong>대표자:</strong> {customer.name}</span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Phone className="w-3 h-3" />
