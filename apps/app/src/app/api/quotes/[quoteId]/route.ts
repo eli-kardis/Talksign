@@ -107,6 +107,18 @@ export async function PUT(
     // RLS가 적용된 클라이언트 사용 (사용자 본인 데이터만 수정 가능)
     const supabase = createUserSupabaseClient(request)
 
+    // 기존 견적서 조회 (상태 확인용)
+    const { data: existingQuote, error: fetchError } = await supabase
+      .from('quotes')
+      .select('status')
+      .eq('id', quoteId)
+      .single()
+
+    if (fetchError) {
+      console.error('Error fetching quote:', fetchError)
+      return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
+    }
+
     // 견적서 아이템들의 subtotal, tax, total 계산
     const subtotal = body.items?.reduce((sum: number, item: { unit_price: number; quantity: number }) => {
       return sum + (item.unit_price * item.quantity)
@@ -139,9 +151,19 @@ export async function PUT(
       updated_at: new Date().toISOString()
     }
 
-    // supplier_info가 제공되면 업데이트
+    // supplier_info 업데이트 (발송된 견적서는 수정 불가)
     if (body.supplier_info) {
-      quoteData.supplier_info = body.supplier_info
+      // 발송되지 않은 견적서(draft, rejected, expired)만 supplier_info 수정 가능
+      const isNotSent = existingQuote.status === 'draft' ||
+                        existingQuote.status === 'rejected' ||
+                        existingQuote.status === 'expired'
+
+      if (isNotSent) {
+        quoteData.supplier_info = body.supplier_info
+      } else {
+        console.log('Quote is sent/approved - supplier_info update blocked')
+        // 발송된 견적서는 supplier_info 수정 불가 (무시)
+      }
     }
 
     console.log('Quote data to update:', quoteData)
