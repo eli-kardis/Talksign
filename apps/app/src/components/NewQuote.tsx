@@ -316,17 +316,18 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
       const subtotal = items.reduce((sum, item) => sum + item.amount, 0)
 
       const quoteData = {
-        client_name: clientInfo.name.trim(),
-        client_email: clientInfo.email.trim() || '',
-        client_phone: clientInfo.phone.trim() || '',
-        client_company: clientInfo.company.trim() || '',
-        client_business_number: clientInfo.businessNumber.trim() || '',
-        title: quoteTitle.trim() || '견적서',
+        client_name: (clientInfo.name || '').trim(),
+        client_email: (clientInfo.email || '').trim() || '',
+        client_phone: (clientInfo.phone || '').trim() || '',
+        client_company: (clientInfo.company || '').trim() || '',
+        client_business_number: (clientInfo.businessNumber || '').trim() || '',
+        title: (quoteTitle || '').trim() || '견적서',
         issue_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
         expiry_date: validUntil || '',
         status,
         items: items.map(item => ({
-          description: `${item.name.trim()} - ${item.description.trim()}`,
+          name: (item.name || '').trim(),
+          description: (item.description || '').trim(),
           quantity: item.quantity,
           unit_price: item.unitPrice,
           amount: item.amount,
@@ -334,12 +335,12 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         notes: '',
         // 공급자 정보 추가 (user profile update용)
         supplier_info: {
-          name: supplierInfo.name.trim(),
-          email: supplierInfo.email.trim(),
-          phone: supplierInfo.phone.trim(),
-          business_registration_number: supplierInfo.businessRegistrationNumber.trim() || null,
-          company_name: supplierInfo.companyName.trim() || null,
-          business_name: supplierInfo.businessName.trim() || null,
+          name: (supplierInfo.name || '').trim(),
+          email: (supplierInfo.email || '').trim(),
+          phone: (supplierInfo.phone || '').trim(),
+          business_registration_number: (supplierInfo.businessRegistrationNumber || '').trim() || null,
+          company_name: (supplierInfo.companyName || '').trim() || null,
+          business_name: (supplierInfo.businessName || '').trim() || null,
         },
       }
 

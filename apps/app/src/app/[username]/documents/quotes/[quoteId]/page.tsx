@@ -56,12 +56,10 @@ interface Quote {
   description?: string;
   items: QuoteItem[];
   subtotal: number;
-  tax_rate: number;
-  tax_amount: number;
-  total_amount: number;
+  tax: number;
+  total: number;
   status: "draft" | "sent" | "approved" | "rejected" | "expired";
-  expires_at?: string;
-  approved_at?: string;
+  expiry_date?: string;
   created_at: string;
   updated_at: string;
   supplier?: SupplierInfo;
@@ -173,9 +171,8 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
       supplier: quote.supplier,
       items: quote.items,
       subtotal: quote.subtotal,
-      taxAmount: quote.tax_amount,
-      taxRate: quote.tax_rate,
-      totalAmount: quote.total_amount
+      tax: quote.tax,
+      total: quote.total
     };
 
     // UTF-8 안전한 Base64 인코딩
@@ -312,7 +309,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
           </div>
 
           {/* 5. 견적 유효기간 */}
-          {quote.expires_at && (
+          {quote.expiry_date && (
             <div>
               <h3 className="text-lg font-semibold text-black mb-4">
                 견적 유효기간
@@ -320,7 +317,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
               <Card className="bg-gray-50 border-gray-300">
                 <div className="p-4 md:p-5">
                   <p className="font-semibold text-black mb-2">
-                    {new Date(quote.expires_at).toLocaleDateString('ko-KR')}까지 유효
+                    {new Date(quote.expiry_date).toLocaleDateString('ko-KR')}까지 유효
                   </p>
                   <p className="text-sm text-gray-700">
                     해당 날짜 이후에는 견적이 자동으로 만료됩니다.
@@ -349,32 +346,44 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
                     </tr>
                   </thead>
                   <tbody>
-                    {quote.items.map((item, index) => (
-                      <tr key={item.id || index} className="hover:bg-gray-50 transition-colors border-b border-gray-200">
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-black text-sm">{item.name}</p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <p className="text-sm text-gray-700">{item.description || '-'}</p>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <p className="text-sm text-black">{item.quantity || 1}</p>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <p className="text-sm text-black">{item.unit || '개'}</p>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="text-sm text-black">
-                            ₩{new Intl.NumberFormat('ko-KR').format(item.unit_price || item.amount)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="font-semibold text-black text-sm">
-                            ₩{new Intl.NumberFormat('ko-KR').format(item.amount)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {quote.items.map((item, index) => {
+                      // 기존 데이터 호환: name이 없으면 description에서 분리
+                      let itemName = item.name;
+                      let itemDesc = item.description;
+
+                      if (!itemName && itemDesc && itemDesc.includes(' - ')) {
+                        const [name, ...descParts] = itemDesc.split(' - ');
+                        itemName = name;
+                        itemDesc = descParts.join(' - ');
+                      }
+
+                      return (
+                        <tr key={item.id || index} className="hover:bg-gray-50 transition-colors border-b border-gray-200">
+                          <td className="px-4 py-3">
+                            <p className="font-medium text-black text-sm">{itemName || '-'}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="text-sm text-gray-700">{itemDesc || '-'}</p>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <p className="text-sm text-black">{item.quantity || 1}</p>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <p className="text-sm text-black">{item.unit || '개'}</p>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="text-sm text-black">
+                              ₩{new Intl.NumberFormat('ko-KR').format(item.unit_price || item.amount)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="font-semibold text-black text-sm">
+                              ₩{new Intl.NumberFormat('ko-KR').format(item.amount)}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -404,10 +413,10 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
                   <span className="text-gray-700">소계</span>
                   <span className="text-black font-semibold">₩{new Intl.NumberFormat('ko-KR').format(quote.subtotal)}</span>
                 </div>
-                {quote.tax_amount > 0 && (
+                {quote.tax > 0 && (
                   <div className="flex justify-between items-center text-base">
-                    <span className="text-gray-700">부가세 ({(quote.tax_rate * 100).toFixed(0)}%)</span>
-                    <span className="text-black font-semibold">₩{new Intl.NumberFormat('ko-KR').format(quote.tax_amount)}</span>
+                    <span className="text-gray-700">부가세 (10%)</span>
+                    <span className="text-black font-semibold">₩{new Intl.NumberFormat('ko-KR').format(quote.tax)}</span>
                   </div>
                 )}
                 <Separator className="bg-gray-300" />
@@ -415,7 +424,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
                   <span className="text-xl font-bold text-black">총 금액</span>
                   <div className="text-right">
                     <span className="text-3xl font-bold text-black">
-                      ₩{new Intl.NumberFormat('ko-KR').format(quote.total_amount)}
+                      ₩{new Intl.NumberFormat('ko-KR').format(quote.total)}
                     </span>
                     <p className="text-sm text-gray-700 mt-1">부가세 포함</p>
                   </div>
@@ -425,16 +434,11 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ quoteId:
           </div>
 
           {/* Footer */}
-          <div className="text-center pt-6 border-t border-border">
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <div className="w-2 h-2 rounded-full bg-black"></div>
-                <span className="text-xs font-medium text-black">LinkFlow Quote System</span>
-                <div className="w-2 h-2 rounded-full bg-black"></div>
-              </div>
+          <div className="text-center pt-6 border-t border-gray-300">
+            <div className="space-y-2 text-sm">
               <p className="text-gray-700">본 견적서는 <span className="text-black font-medium">{new Date(quote.created_at).toLocaleDateString('ko-KR')}</span>에 작성되었습니다.</p>
-              {quote.expires_at && (
-                <p className="text-gray-700">견적서 승인은 <span className="text-black font-medium">{new Date(quote.expires_at).toLocaleDateString('ko-KR')}</span>까지 가능합니다.</p>
+              {quote.expiry_date && (
+                <p className="text-gray-700">견적서 승인은 <span className="text-black font-medium">{new Date(quote.expiry_date).toLocaleDateString('ko-KR')}</span>까지 가능합니다.</p>
               )}
             </div>
           </div>
