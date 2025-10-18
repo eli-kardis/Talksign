@@ -223,12 +223,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await auth.signOut()
       setUser(null)
-      window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
+      window.location.href = '/auth/signin'
     } catch (error) {
       console.error('SignOut error:', error)
       // 에러가 있어도 로컬 상태는 클리어
       setUser(null)
-      window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
+      window.location.href = '/auth/signin'
     }
   }
 
