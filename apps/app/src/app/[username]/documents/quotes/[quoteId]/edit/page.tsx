@@ -152,14 +152,21 @@ export default function EditQuotePage() {
       notes: quoteData.notes || ''
     },
     items: quoteData.items.map((item, index) => {
-      // Backward compatibility: split name from description if needed
+      // Backward compatibility: handle legacy data where name doesn't exist
       let itemName = item.name;
       let itemDesc = item.description;
 
-      if (!itemName && itemDesc && itemDesc.includes(' - ')) {
-        const [name, ...descParts] = itemDesc.split(' - ');
-        itemName = name;
-        itemDesc = descParts.join(' - ');
+      if (!itemName && itemDesc) {
+        if (itemDesc.includes(' - ')) {
+          // Split if " - " separator exists
+          const [name, ...descParts] = itemDesc.split(' - ');
+          itemName = name;
+          itemDesc = descParts.join(' - ');
+        } else {
+          // Use description as name if no separator
+          itemName = itemDesc;
+          itemDesc = '';
+        }
       }
 
       return {

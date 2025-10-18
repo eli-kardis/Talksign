@@ -349,14 +349,21 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
                   </thead>
                   <tbody>
                     {quote.items.map((item, index) => {
-                      // 기존 데이터 호환: name이 없으면 description에서 분리
+                      // 기존 데이터 호환: name이 없으면 description을 name으로 사용
                       let itemName = item.name;
                       let itemDesc = item.description;
 
-                      if (!itemName && itemDesc && itemDesc.includes(' - ')) {
-                        const [name, ...descParts] = itemDesc.split(' - ');
-                        itemName = name;
-                        itemDesc = descParts.join(' - ');
+                      if (!itemName && itemDesc) {
+                        if (itemDesc.includes(' - ')) {
+                          // " - "로 구분되어 있으면 분리
+                          const [name, ...descParts] = itemDesc.split(' - ');
+                          itemName = name;
+                          itemDesc = descParts.join(' - ');
+                        } else {
+                          // " - "가 없으면 description을 name으로 사용
+                          itemName = itemDesc;
+                          itemDesc = '';
+                        }
                       }
 
                       return (
