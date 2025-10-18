@@ -30,24 +30,26 @@ export async function GET(
     // RLS가 적용된 클라이언트 사용 (사용자 본인 데이터만 접근 가능)
     const supabase = createUserSupabaseClient(request)
 
-    // 특정 견적서 조회 (공급자 정보 포함)
+    // 특정 견적서 조회
     // RLS 정책으로 user_id가 자동으로 필터링됨
     const { data: quote, error } = await supabase
       .from('quotes')
-      .select(`
-        *,
-        supplier:user_id (
-          name,
-          email,
-          phone,
-          business_name,
-          business_registration_number,
-          company_name,
-          business_address
-        )
-      `)
+      .select('*')
       .eq('id', quoteId)
       .single()
+
+    // 공급자 정보 별도 조회
+    if (quote && !error) {
+      const { data: supplier } = await supabase
+        .from('users')
+        .select('name, email, phone, business_name, business_number, company_name, business_address')
+        .eq('id', quote.user_id)
+        .single()
+
+      if (supplier) {
+        (quote as any).supplier = supplier
+      }
+    }
 
     if (error) {
       console.error('Error fetching quote:', error)
