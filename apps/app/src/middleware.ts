@@ -18,10 +18,18 @@ export async function middleware(request: NextRequest) {
       const authRoutes = ['/auth', '/login', '/signup', '/signin']
       const appRoutes = ['/dashboard', '/documents', '/finance', '/schedule', '/customers']
 
-      // 인증 관련 라우트는 accounts 도메인으로 리다이렉트
+      // 인증 관련 라우트는 app 도메인의 auth로 리다이렉트
       if (authRoutes.some(route => url.pathname.startsWith(route))) {
-        url.hostname = 'accounts.talksign.co.kr'
-        url.pathname = url.pathname.replace('/auth', '') // /auth 접두사 제거
+        url.hostname = 'app.talksign.co.kr'
+        // /login, /signup, /signin은 /auth/signin 또는 /auth/signup으로 변환
+        if (url.pathname === '/login' || url.pathname === '/signin') {
+          url.pathname = '/auth/signin'
+        } else if (url.pathname === '/signup') {
+          url.pathname = '/auth/signup'
+        } else if (!url.pathname.startsWith('/auth/')) {
+          // /auth로 시작하지 않으면 /auth/ 추가
+          url.pathname = '/auth' + url.pathname
+        }
         return NextResponse.redirect(url)
       }
 
@@ -40,16 +48,6 @@ export async function middleware(request: NextRequest) {
       }
       break
 
-    case 'accounts.talksign.co.kr':
-      // 인증 도메인: 로그인/회원가입만 허용
-      const allowedAuthPaths = ['/', '/login', '/signup', '/signin', '/forgot-password', '/reset-password', '/api', '/auth']
-      if (!allowedAuthPaths.some(path => url.pathname.startsWith(path))) {
-        // 허용되지 않은 경로는 로그인 페이지로 리다이렉트
-        url.pathname = '/auth/signin'
-        return NextResponse.redirect(url)
-      }
-      break
-
     case 'app.talksign.co.kr':
       // 앱 도메인: 인증 체크 후 보호된 라우트 처리
       // /[username]/* 형식의 라우트 감지
@@ -57,9 +55,8 @@ export async function middleware(request: NextRequest) {
       const isProtectedRoute = usernamePattern.test(url.pathname)
 
       // 공개 라우트 (인증 불필요)
-      // API, 정적 리소스, 루트 경로(/) 인증 없이 접근 가능
-      // ✅ 루트 경로 추가: accounts 로그인 후 리다이렉트 시 필요
-      const publicRoutes = ['/api', '/_next', '/favicon.ico', '/']
+      // API, 정적 리소스, 루트 경로(/), 인증 라우트(/auth/*) 인증 없이 접근 가능
+      const publicRoutes = ['/api', '/_next', '/favicon.ico', '/', '/auth']
       const isPublicRoute = publicRoutes.some(route => url.pathname.startsWith(route))
 
       // 공개 라우트는 바로 통과
@@ -105,8 +102,8 @@ export async function middleware(request: NextRequest) {
         const { data: { session } } = await supabase.auth.getSession()
 
         if (!session) {
-          // 세션이 없으면 accounts 도메인 로그인 페이지로 리다이렉트
-          return NextResponse.redirect('https://accounts.talksign.co.kr/auth/signin')
+          // 세션이 없으면 로그인 페이지로 리다이렉트
+          return NextResponse.redirect(new URL('/auth/signin', request.url))
         }
 
         // 세션이 있으면 username 검증

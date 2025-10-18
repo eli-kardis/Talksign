@@ -6,14 +6,14 @@ import type { Database } from './database.types'
 // 서버 사이드에서 인증된 Supabase 클라이언트 생성
 export function createAuthenticatedSupabaseClient(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+    throw new Error('Missing required environment variable: NEXT_PUBLIC_SUPABASE_URL')
   }
 
   if (!supabaseServiceKey) {
-    throw new Error('Missing Supabase service role key')
+    throw new Error('Missing required environment variable: SUPABASE_SERVICE_ROLE_KEY. This is required for authenticated server operations.')
   }
 
   // Authorization 헤더에서 토큰 추출
@@ -38,20 +38,15 @@ export function createAuthenticatedSupabaseClient(request: NextRequest) {
 // JWT 토큰 검증 함수
 async function verifySupabaseJWT(token: string): Promise<string | null> {
   try {
-    console.log('[Auth] Verifying JWT token...')
-    console.log('[Auth] Token preview:', token.substring(0, 30) + '...')
-
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const jwtSecret = process.env.SUPABASE_JWT_SECRET || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET
 
     if (!supabaseUrl) {
-      console.error('[Auth] Missing NEXT_PUBLIC_SUPABASE_URL for JWT verification')
-      return null
+      throw new Error('Missing required environment variable: NEXT_PUBLIC_SUPABASE_URL')
     }
 
     if (!jwtSecret) {
-      console.error('[Auth] Missing JWT secret for verification')
-      return null
+      throw new Error('Missing required environment variable: SUPABASE_JWT_SECRET. This is required for JWT verification.')
     }
 
     // JWT Secret을 사용한 검증 (JWKS 대신)
@@ -63,16 +58,9 @@ async function verifySupabaseJWT(token: string): Promise<string | null> {
       audience: 'authenticated',
     })
 
-    console.log('[Auth] JWT verified successfully')
-    console.log('[Auth] User ID from token:', payload.sub)
-
     return payload.sub || null
   } catch (error) {
-    console.error('[Auth] JWT verification failed:', error)
-    if (error instanceof Error) {
-      console.error('[Auth] Error name:', error.name)
-      console.error('[Auth] Error message:', error.message)
-    }
+    // 에러 로깅은 logger로 대체 예정
     return null
   }
 }

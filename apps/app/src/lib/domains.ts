@@ -2,7 +2,6 @@
 
 export const DOMAINS = {
   LANDING: process.env.NEXT_PUBLIC_LANDING_DOMAIN || 'https://talksign.co.kr',
-  ACCOUNTS: process.env.NEXT_PUBLIC_ACCOUNTS_DOMAIN || 'https://accounts.talksign.co.kr',
   APP: process.env.NEXT_PUBLIC_APP_DOMAIN || 'https://app.talksign.co.kr',
 } as const
 
@@ -15,16 +14,14 @@ export const ROUTES = {
     ABOUT: '/about',
     CONTACT: '/contact',
   },
-  // 인증 페이지 라우트
-  ACCOUNTS: {
-    LOGIN: '/login',
-    SIGNUP: '/signup',
-    SIGNIN: '/signin',
-    FORGOT_PASSWORD: '/forgot-password',
-    RESET_PASSWORD: '/reset-password',
-  },
-  // 앱 라우트
+  // 앱 라우트 (인증 포함)
   APP: {
+    // 인증
+    SIGNIN: '/auth/signin',
+    SIGNUP: '/auth/signup',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
+    // 메인 기능
     DASHBOARD: '/dashboard',
     DOCUMENTS: '/documents',
     CUSTOMERS: '/customers',
@@ -38,7 +35,6 @@ export const ROUTES = {
  */
 export const createUrl = {
   landing: (path: string = '/') => `${DOMAINS.LANDING}${path}`,
-  accounts: (path: string = '/') => `${DOMAINS.ACCOUNTS}${path}`,
   app: (path: string = '/') => `${DOMAINS.APP}${path}`,
 }
 
@@ -50,7 +46,6 @@ export const getCurrentDomain = (): keyof typeof DOMAINS | null => {
 
   const hostname = window.location.hostname
 
-  if (hostname.includes('accounts.talksign.co.kr')) return 'ACCOUNTS'
   if (hostname.includes('app.talksign.co.kr')) return 'APP'
   if (hostname.includes('talksign.co.kr')) return 'LANDING'
 
@@ -62,10 +57,10 @@ export const getCurrentDomain = (): keyof typeof DOMAINS | null => {
  */
 export const redirect = {
   toLogin: () => {
-    window.location.href = createUrl.accounts(ROUTES.ACCOUNTS.LOGIN)
+    window.location.href = createUrl.app(ROUTES.APP.SIGNIN)
   },
   toSignup: () => {
-    window.location.href = createUrl.accounts(ROUTES.ACCOUNTS.SIGNUP)
+    window.location.href = createUrl.app(ROUTES.APP.SIGNUP)
   },
   toApp: (path: string = ROUTES.APP.DASHBOARD) => {
     window.location.href = createUrl.app(path)
@@ -87,7 +82,7 @@ export const redirectToAppAfterAuth = (returnTo?: string) => {
  * 인증 실패 시 로그인으로 리다이렉트
  */
 export const redirectToLoginIfNotAuth = (returnTo?: string) => {
-  const loginUrl = createUrl.accounts(ROUTES.ACCOUNTS.LOGIN)
+  const loginUrl = createUrl.app(ROUTES.APP.SIGNIN)
   const redirectUrl = returnTo ? `${loginUrl}?returnTo=${encodeURIComponent(returnTo)}` : loginUrl
   window.location.href = redirectUrl
 }

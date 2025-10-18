@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
+import { customerCreateSchema, paginationSchema, safeParse } from '@/lib/validation/schemas'
 
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('API Route: GET /api/customers called')
+    logger.api.request('GET', '/api/customers')
 
     // 사용자 인증 확인
     const userId = await getUserFromRequest(request)
     if (!userId) {
-      console.log('Unauthorized access attempt')
+      logger.warn('Unauthorized access attempt to GET /api/customers')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -20,45 +22,84 @@ export async function GET(request: NextRequest) {
       return rateLimitError
     }
 
-    console.log('Authenticated user:', userId)
+    // Pagination 파라미터 파싱
+    const { searchParams } = new URL(request.url)
+    const paginationParams = {
+      page: searchParams.get('page'),
+      limit: searchParams.get('limit')
+    }
+
+    const paginationValidation = safeParse(paginationSchema, paginationParams)
+    const { page, limit } = paginationValidation.success
+      ? paginationValidation.data
+      : { page: 1, limit: 20 }
+
+    logger.debug('Fetching customers', { userId, page, limit })
 
     // RLS가 적용된 Supabase 클라이언트로 데이터 가져오기
     const supabase = createUserSupabaseClient(request)
-    console.log('[GET /api/customers] Fetching customers for user:', userId)
-    console.log('[GET /api/customers] RLS should filter by user_id:', userId)
+    logger.db.query('customers', 'SELECT')
 
+    // Calculate offset for pagination
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    // Get total count for pagination metadata
+    const { count } = await supabase
+      .from('customers')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+
+    // Get paginated data
     const { data: customers, error } = await supabase
       .from('customers')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
+      .range(from, to)
 
     if (error) {
-      console.error('[GET /api/customers] Supabase query error:', error)
-      console.error('[GET /api/customers] Error details:', JSON.stringify(error, null, 2))
+      logger.db.error('customers', 'SELECT', error)
       return NextResponse.json(
-        { error: 'Database query failed', details: error.message },
+        { error: 'Database query failed' },
         { status: 500 }
       )
     }
 
-    console.log('[GET /api/customers] Successfully fetched customers from Supabase:', customers ? customers.length : 0)
-    if (customers && customers.length > 0) {
-      console.log('[GET /api/customers] First customer user_id:', customers[0].user_id)
-      console.log('[GET /api/customers] All customer user_ids:', customers.map(c => c.user_id))
-    }
-    return NextResponse.json(customers || [])
+    const totalPages = count ? Math.ceil(count / limit) : 0
+
+    logger.debug('Customers fetched successfully', {
+      count: customers?.length || 0,
+      total: count,
+      page,
+      totalPages
+    })
+
+    return NextResponse.json({
+      data: customers || [],
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    })
   } catch (error) {
-    console.error('Unexpected error:', error)
+    logger.api.error('GET', '/api/customers', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    logger.api.request('POST', '/api/customers')
+
     // 사용자 인증 확인
     const userId = await getUserFromRequest(request)
     if (!userId) {
+      logger.warn('Unauthorized access attempt to POST /api/customers')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -69,72 +110,68 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    console.log('API Route: POST /api/customers called for user:', userId)
-    console.log('Request body:', body)
+    logger.debug('Creating new customer', { userId })
 
-    // 입력값 검증
-    const requiredFields = ['company_name', 'representative_name', 'email', 'phone']
-    const missingFields = requiredFields.filter(field => !body[field]?.trim())
-    
-    if (missingFields.length > 0) {
+    // Zod 스키마로 입력값 검증
+    const validation = safeParse(customerCreateSchema, body)
+
+    if (!validation.success) {
+      logger.warn('Customer validation failed', { errors: validation.errors })
       return NextResponse.json(
-        { error: `Missing required fields: ${missingFields.join(', ')}` },
+        { error: 'Validation failed', details: validation.errors },
         { status: 400 }
       )
     }
 
-    // 이메일 형식 검증
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(body.email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      )
-    }
+    const validatedData = validation.data
 
     // Supabase에 데이터 저장 (user_id 포함)
     const supabase = createUserSupabaseClient(request)
+    logger.db.query('customers', 'INSERT')
+
     const { data: newCustomer, error } = await supabase
       .from('customers')
       .insert([
         {
           user_id: userId,
-          company_name: body.company_name.trim(),
-          representative_name: body.representative_name.trim(),
-          contact_person: body.contact_person?.trim() || null,
-          business_registration_number: body.business_registration_number?.trim() || null,
-          email: body.email.trim(),
-          phone: body.phone.trim(),
-          address: body.address?.trim() || null
+          name: validatedData.name,
+          email: validatedData.email || null,
+          phone: validatedData.phone || null,
+          company: validatedData.company || null,
+          business_registration_number: validatedData.businessRegistrationNumber || null,
+          address: validatedData.address || null,
+          notes: validatedData.notes || null
         } as any
       ])
       .select()
       .single()
 
     if (error) {
-      console.error('Supabase error:', error.message)
+      logger.db.error('customers', 'INSERT', error)
       return NextResponse.json(
-        { error: 'Failed to create customer', details: error.message },
+        { error: 'Failed to create customer' },
         { status: 500 }
       )
     }
 
-    console.log('Customer created in Supabase:', newCustomer)
+    logger.info('Customer created successfully', { customerId: newCustomer.id })
     return NextResponse.json(newCustomer, { status: 201 })
   } catch (error) {
-    console.error('Unexpected error:', error)
-    return NextResponse.json({ 
-      error: 'Internal server error', 
-      details: error instanceof Error ? error.message : 'Unknown error' 
+    logger.api.error('POST', '/api/customers', error)
+    return NextResponse.json({
+      error: 'Internal server error'
     }, { status: 500 })
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
+    logger.api.request('DELETE', '/api/customers')
+
     // 사용자 인증 확인
     const userId = await getUserFromRequest(request)
     if (!userId) {
+      logger.warn('Unauthorized access attempt to DELETE /api/customers')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -147,10 +184,10 @@ export async function DELETE(request: NextRequest) {
     const body = await request.json()
     const { customerIds } = body
 
-    console.log('API Route: DELETE /api/customers called for user:', userId)
-    console.log('Customer IDs to delete:', customerIds)
+    logger.debug('Deleting customers', { userId, count: customerIds?.length })
 
     if (!customerIds || !Array.isArray(customerIds) || customerIds.length === 0) {
+      logger.warn('Invalid customer IDs provided for deletion')
       return NextResponse.json(
         { error: 'Customer IDs array is required' },
         { status: 400 }
@@ -159,6 +196,8 @@ export async function DELETE(request: NextRequest) {
 
     // RLS가 적용된 Supabase 클라이언트로 삭제 (사용자 소유 데이터만 삭제 가능)
     const supabase = createUserSupabaseClient(request)
+    logger.db.query('customers', 'DELETE')
+
     const { error } = await supabase
       .from('customers')
       .delete()
@@ -166,23 +205,22 @@ export async function DELETE(request: NextRequest) {
       .in('id', customerIds)
 
     if (error) {
-      console.error('Supabase error:', error.message)
+      logger.db.error('customers', 'DELETE', error)
       return NextResponse.json(
-        { error: 'Failed to delete customers', details: error.message },
+        { error: 'Failed to delete customers' },
         { status: 500 }
       )
     }
 
-    console.log('Customers deleted from Supabase:', customerIds.length)
+    logger.info('Customers deleted successfully', { count: customerIds.length })
     return NextResponse.json({
       message: `${customerIds.length} customers deleted successfully`,
       deletedCount: customerIds.length
     }, { status: 200 })
   } catch (error) {
-    console.error('Unexpected error:', error)
-    return NextResponse.json({ 
-      error: 'Internal server error', 
-      details: error instanceof Error ? error.message : 'Unknown error' 
+    logger.api.error('DELETE', '/api/customers', error)
+    return NextResponse.json({
+      error: 'Internal server error'
     }, { status: 500 })
   }
 }

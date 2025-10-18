@@ -51,43 +51,29 @@ export default function Page() {
         // 이미 메인에 있으므로 아무것도 하지 않음
         break
       case 'login':
-        // 로그인은 accounts 도메인으로
-        window.location.href = 'https://accounts.talksign.co.kr/login'
+        router.push('/auth/signin')
         break
       case 'signup':
-        // 회원가입은 accounts 도메인으로
-        window.location.href = 'https://accounts.talksign.co.kr/signup'
+        router.push('/auth/signup')
         break
       default:
         console.warn('Unknown navigation view:', view)
     }
   }
 
-  // ✅ 통합된 인증 플로우 (무한 루프 방지 + URL query parameter 방식)
+  // 인증 플로우: 로그인된 사용자는 대시보드로, 아니면 로그인 페이지로
   useEffect(() => {
     if (isLoading) return
 
-    // URL에서 auth_callback 파라미터 확인 (accounts에서 왔는지 확인)
-    const params = new URLSearchParams(window.location.search)
-    const isAuthCallback = params.get('auth_callback') === 'true'
-
-    if (user) {
-      // ✅ 케이스 1: 로그인된 사용자 → username 경로로 리다이렉트
+    if (user?.email) {
+      // 로그인된 사용자 → username 경로로 리다이렉트
       console.log('[Auth] User authenticated, redirecting to dashboard')
       const username = user.email.split('@')[0]
       router.replace(`/${username}/dashboard`)
     } else {
-      // ✅ 케이스 2: 비로그인 사용자
-      if (isAuthCallback) {
-        // accounts에서 왔는데 user가 없으면 인증 실패
-        console.error('[Auth Error] Authentication failed after redirect from accounts')
-        console.error('[Auth Error] User should have been authenticated by now')
-        // 에러 페이지나 알림 표시 가능 (현재는 로그만)
-      } else {
-        // 첫 방문 → accounts로 리다이렉트
-        console.log('[Redirect] No user, redirecting to accounts.talksign.co.kr')
-        window.location.href = 'https://accounts.talksign.co.kr/auth/signin'
-      }
+      // 비로그인 사용자 → 로그인 페이지로 리다이렉트
+      console.log('[Redirect] No user, redirecting to /auth/signin')
+      router.replace('/auth/signin')
     }
   }, [user, isLoading, router])
 

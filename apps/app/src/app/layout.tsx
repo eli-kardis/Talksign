@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { TenantProvider } from "@/contexts/TenantContext";
+import { QueryProvider } from "@/lib/react-query/QueryProvider";
 import ClientLayout from "@/components/ClientLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -34,15 +35,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <ErrorBoundary>
-          <ThemeProvider>
-            <AuthProvider>
-              <TenantProvider tenant={null}>
-                <ClientLayout>
-                  {children}
-                </ClientLayout>
-              </TenantProvider>
-            </AuthProvider>
-          </ThemeProvider>
+          <QueryProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <TenantProvider tenant={null}>
+                  <ClientLayout>
+                    {children}
+                  </ClientLayout>
+                </TenantProvider>
+              </AuthProvider>
+            </ThemeProvider>
+          </QueryProvider>
         </ErrorBoundary>
       </body>
     </html>

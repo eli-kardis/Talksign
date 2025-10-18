@@ -2,16 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseClient, getUserFromRequest } from '@/lib/auth-utils'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logCreate, extractMetadata } from '@/lib/audit-log'
+import { logger } from '@/lib/logger'
+import { quoteCreateSchema, paginationSchema, safeParse } from '@/lib/validation/schemas'
 import type { Database } from '@/lib/database.types'
 
 type QuoteInsert = Database['public']['Tables']['quotes']['Insert']
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('API Route: GET /api/quotes called')
+    logger.api.request('GET', '/api/quotes')
+
     // 사용자 인증 확인
     const userId = await getUserFromRequest(request)
     if (!userId) {
+      logger.warn('Unauthorized access attempt to GET /api/quotes')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -21,42 +25,92 @@ export async function GET(request: NextRequest) {
       return rateLimitError
     }
 
-    console.log('Fetching quotes for user:', userId)
+    // Pagination 파라미터 파싱
+    const { searchParams } = new URL(request.url)
+    const paginationParams = {
+      page: searchParams.get('page'),
+      limit: searchParams.get('limit')
+    }
+
+    const paginationValidation = safeParse(paginationSchema, paginationParams)
+    const { page, limit } = paginationValidation.success
+      ? paginationValidation.data
+      : { page: 1, limit: 20 }
+
+    logger.debug('Fetching quotes', { userId, page, limit })
 
     // 환경에 맞는 Supabase 클라이언트 생성
     const supabase = createSupabaseClient(request)
+    logger.db.query('quotes', 'SELECT')
 
+    // Calculate offset for pagination
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    // Get total count
+    const { count } = await supabase
+      .from('quotes')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+
+    // Get paginated data
     const { data: quotes, error } = await supabase
       .from('quotes')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
+      .range(from, to)
 
     if (error) {
-      console.error('Error fetching quotes:', error)
-      // Supabase 에러 시 빈 배열 반환 (RLS 정책으로 인한 접근 제한일 수 있음)
-      console.log('Returning empty array due to database error')
-      return NextResponse.json([])
+      logger.db.error('quotes', 'SELECT', error)
+      // Supabase 에러 시 빈 응답 반환
+      return NextResponse.json({
+        data: [],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false
+        }
+      })
     }
 
-    console.log('Raw quotes from database:', JSON.stringify(quotes, null, 2))
-    console.log('Number of quotes found:', quotes?.length || 0)
+    const totalPages = count ? Math.ceil(count / limit) : 0
 
-    // 견적서가 없으면 빈 배열 반환 (정상적인 상황)
-    return NextResponse.json(quotes || [])
+    logger.debug('Quotes fetched successfully', {
+      count: quotes?.length || 0,
+      total: count,
+      page,
+      totalPages
+    })
+
+    return NextResponse.json({
+      data: quotes || [],
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    })
   } catch (error) {
-    console.error('Error in GET /api/quotes:', error)
+    logger.api.error('GET', '/api/quotes', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('API Route: POST /api/quotes called')
+    logger.api.request('POST', '/api/quotes')
 
-    // 사용자 인증 확인 - 개발 환경에서는 현재 사용자 사용
+    // 사용자 인증 확인
     const userId = await getUserFromRequest(request)
     if (!userId) {
+      logger.warn('Unauthorized access attempt to POST /api/quotes')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -66,31 +120,33 @@ export async function POST(request: NextRequest) {
       return rateLimitError
     }
 
-    console.log('Creating quote for user:', userId)
+    logger.debug('Creating quote', { userId })
 
     // 환경에 맞는 Supabase 클라이언트 생성
     const supabase = createSupabaseClient(request)
-    console.log('Supabase client created')
-    
+
     const body = await request.json()
-    console.log('Request body:', JSON.stringify(body, null, 2))
-    
-    // 필수 필드 검증
-    if (!body.client_name || !body.client_email || !body.title) {
-      console.log('Missing required fields')
+
+    // Zod 스키마로 입력값 검증
+    const validation = safeParse(quoteCreateSchema, body)
+
+    if (!validation.success) {
+      logger.warn('Quote validation failed', { errors: validation.errors })
       return NextResponse.json(
-        { error: 'Missing required fields: client_name, client_email, title' },
+        { error: 'Validation failed', details: validation.errors },
         { status: 400 }
       )
     }
 
+    const validatedData = validation.data
+
     // 견적서 항목 총합 계산
-    const items = body.items || []
-    const subtotal = items.reduce((sum: number, item: { amount?: number }) => sum + (item.amount || 0), 0)
-    console.log('Calculated subtotal:', subtotal)
+    const subtotal = validatedData.items.reduce((sum, item) => sum + item.amount, 0)
+    logger.debug('Calculated quote subtotal', { subtotal })
 
     // 공급자 정보로 사용자 프로필 업데이트 (필요시)
     if (body.supplier_info) {
+      logger.db.query('users', 'UPDATE')
       const { error: updateError } = await supabase
         .from('users')
         .update({
@@ -103,31 +159,33 @@ export async function POST(request: NextRequest) {
         .eq('id', userId)
 
       if (updateError) {
-        console.warn('Failed to update user profile:', updateError)
+        logger.warn('Failed to update user profile', { error: updateError })
         // 사용자 프로필 업데이트 실패는 치명적이지 않으므로 계속 진행
       }
     }
 
     // 견적서 생성
-    const expiresAt = body.valid_until ? new Date(body.valid_until).toISOString() : (body.expires_at ? new Date(body.expires_at).toISOString() : null)
-    
+    const expiresAt = validatedData.expiry_date ? new Date(validatedData.expiry_date).toISOString() : null
+
     const quoteData: QuoteInsert = {
       user_id: userId,
-      client_name: body.client_name,
-      client_email: body.client_email,
-      client_phone: body.client_phone || null,
-      client_company: body.client_company || null,
-      title: body.title,
-      description: body.description || null,
-      items: items,
-      subtotal: subtotal,
-      status: body.status || 'draft',
+      customer_id: validatedData.customer_id || null,
+      client_name: validatedData.client_name,
+      client_email: validatedData.client_email || null,
+      client_phone: validatedData.client_phone || null,
+      client_company: validatedData.client_company || null,
+      client_business_number: validatedData.client_business_number || null,
+      quote_number: validatedData.quote_number || undefined,
+      title: validatedData.title,
+      issue_date: validatedData.issue_date,
       expires_at: expiresAt ?? undefined,
-      client_business_number: body.client_business_number || undefined,
-      client_address: body.client_address || undefined,
+      items: validatedData.items,
+      subtotal: subtotal,
+      status: validatedData.status || 'draft',
+      notes: validatedData.notes || null,
     }
-    
-    console.log('Quote data to insert:', JSON.stringify(quoteData, null, 2))
+
+    logger.db.query('quotes', 'INSERT')
 
     const { data: quote, error } = await supabase
       .from('quotes')
@@ -136,26 +194,23 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Failed to create quote:', error)
-      return NextResponse.json({ 
-        error: 'Failed to create quote', 
-        details: error.message,
-        code: error.code 
+      logger.db.error('quotes', 'INSERT', error)
+      return NextResponse.json({
+        error: 'Failed to create quote'
       }, { status: 500 })
     }
 
-    console.log('Quote created successfully:', quote)
+    logger.info('Quote created successfully', { quoteId: quote.id })
 
     // Audit logging
     await logCreate(userId, 'quote', quote.id, quoteData, extractMetadata(request))
 
     return NextResponse.json(quote, { status: 201 })
-    
+
   } catch (error) {
-    console.error('Unexpected error in POST /api/quotes:', error)
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
+    logger.api.error('POST', '/api/quotes', error)
+    return NextResponse.json({
+      error: 'Internal server error'
     }, { status: 500 })
   }
 }
