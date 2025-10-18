@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { QuoteList } from "./QuoteList";
 import { ContractView } from "./ContractView";
 import { useTenant } from "@/contexts/TenantContext";
@@ -22,8 +22,25 @@ export function DocumentsView({
   initialTab = "quotes",
   onTabChange,
 }: DocumentsViewProps) {
-  const { basePath } = useTenant();
+  const { basePath: tenantBasePath } = useTenant();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Extract username from current path: /username/documents -> /username
+  // or use tenant basePath: /t/tenant -> /t/tenant
+  const getBasePath = () => {
+    if (tenantBasePath) {
+      return tenantBasePath; // /t/tenant
+    }
+    // Check for /{username}/documents pattern
+    const usernameMatch = pathname?.match(/^(\/[^\/]+)\/(documents|dashboard|finance|schedule|customers)/);
+    if (usernameMatch) {
+      return usernameMatch[1]; // /username
+    }
+    return ''; // fallback to root
+  };
+
+  const basePath = getBasePath();
 
   const [activeTab, setActiveTab] = useState<DocTab>(initialTab);
 
