@@ -55,12 +55,10 @@ interface DatabaseQuote {
     amount: number;
   }>;
   subtotal: number;
-  tax_rate: number;
-  tax_amount: number;
-  total_amount: number;
+  tax: number;
+  total: number;
   status: "draft" | "sent" | "approved" | "rejected" | "expired";
-  expires_at?: string;
-  approved_at?: string;
+  expiry_date?: string;
   created_at: string;
   updated_at: string;
 }
@@ -89,10 +87,10 @@ const transformQuote = (dbQuote: DatabaseQuote): Quote => ({
   id: dbQuote.id,
   client: dbQuote.client_name,
   project: dbQuote.title,
-  amount: dbQuote.total_amount,
+  amount: dbQuote.total,
   status: dbQuote.status,
   date: new Date(dbQuote.created_at).toLocaleDateString('ko-KR'),
-  dueDate: dbQuote.expires_at ? new Date(dbQuote.expires_at).toLocaleDateString('ko-KR') : undefined,
+  dueDate: dbQuote.expiry_date ? new Date(dbQuote.expiry_date).toLocaleDateString('ko-KR') : undefined,
   phone: dbQuote.client_phone || undefined,
   company: dbQuote.client_company || undefined,
 });

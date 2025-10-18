@@ -42,7 +42,7 @@ export async function GET(
     if (quote && !error) {
       const { data: supplier } = await supabase
         .from('users')
-        .select('name, email, phone, business_name, business_number, company_name, business_address')
+        .select('name, email, phone, business_name, business_registration_number, company_name, business_address')
         .eq('id', quote.user_id)
         .single()
 
