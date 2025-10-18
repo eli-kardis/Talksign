@@ -4,6 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
+import { apiClient } from '@/lib/api-client'
 import type { PaginatedResponse } from './useCustomers'
 
 // Types
@@ -69,11 +70,7 @@ export const contractKeys = {
 
 // API Functions
 async function fetchContracts(page: number = 1, limit: number = 20): Promise<PaginatedResponse<Contract>> {
-  const response = await fetch(`/api/contracts?page=${page}&limit=${limit}`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-  })
+  const response = await apiClient.get(`/api/contracts?page=${page}&limit=${limit}`)
 
   if (!response.ok) {
     const error = await response.json()
@@ -84,12 +81,7 @@ async function fetchContracts(page: number = 1, limit: number = 20): Promise<Pag
 }
 
 async function createContract(data: ContractCreateInput): Promise<Contract> {
-  const response = await fetch('/api/contracts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(data),
-  })
+  const response = await apiClient.post('/api/contracts', data)
 
   if (!response.ok) {
     const error = await response.json()

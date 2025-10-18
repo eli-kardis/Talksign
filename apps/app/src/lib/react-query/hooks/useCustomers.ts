@@ -10,6 +10,7 @@
 
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
+import { apiClient } from '@/lib/api-client'
 
 // Types
 export interface Customer {
@@ -62,13 +63,7 @@ export const customerKeys = {
 
 // API Functions
 async function fetchCustomers(page: number = 1, limit: number = 20): Promise<PaginatedResponse<Customer>> {
-  const response = await fetch(`/api/customers?page=${page}&limit=${limit}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-  })
+  const response = await apiClient.get(`/api/customers?page=${page}&limit=${limit}`)
 
   if (!response.ok) {
     const error = await response.json()
@@ -80,14 +75,7 @@ async function fetchCustomers(page: number = 1, limit: number = 20): Promise<Pag
 }
 
 async function createCustomer(data: CustomerCreateInput): Promise<Customer> {
-  const response = await fetch('/api/customers', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify(data),
-  })
+  const response = await apiClient.post('/api/customers', data)
 
   if (!response.ok) {
     const error = await response.json()
@@ -99,14 +87,7 @@ async function createCustomer(data: CustomerCreateInput): Promise<Customer> {
 }
 
 async function deleteCustomers(customerIds: string[]): Promise<void> {
-  const response = await fetch('/api/customers', {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify({ customerIds }),
-  })
+  const response = await apiClient.delete('/api/customers', { customerIds })
 
   if (!response.ok) {
     const error = await response.json()

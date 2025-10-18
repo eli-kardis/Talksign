@@ -4,6 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
+import { apiClient } from '@/lib/api-client'
 import type { PaginatedResponse } from './useCustomers'
 
 // Types
@@ -62,11 +63,7 @@ export const quoteKeys = {
 
 // API Functions
 async function fetchQuotes(page: number = 1, limit: number = 20): Promise<PaginatedResponse<Quote>> {
-  const response = await fetch(`/api/quotes?page=${page}&limit=${limit}`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-  })
+  const response = await apiClient.get(`/api/quotes?page=${page}&limit=${limit}`)
 
   if (!response.ok) {
     const error = await response.json()
@@ -77,12 +74,7 @@ async function fetchQuotes(page: number = 1, limit: number = 20): Promise<Pagina
 }
 
 async function createQuote(data: QuoteCreateInput): Promise<Quote> {
-  const response = await fetch('/api/quotes', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(data),
-  })
+  const response = await apiClient.post('/api/quotes', data)
 
   if (!response.ok) {
     const error = await response.json()
