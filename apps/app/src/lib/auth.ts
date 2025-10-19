@@ -10,6 +10,7 @@ export interface UserData {
   businessRegistrationNumber?: string // 사업자등록번호 (선택)
   companyName?: string // 회사명 (사업자등록번호 입력시에만)
   businessName?: string // 기존 호환성을 위해 유지
+  businessAddress?: string // 사업장 주소 (선택)
 }
 
 // 통합된 인증 결과 타입
@@ -131,7 +132,8 @@ export const auth = {
           email: userData.email,
           business_registration_number: userData.businessRegistrationNumber || null,
           company_name: userData.companyName || null,
-          business_name: userData.businessName || null
+          business_name: userData.businessName || null,
+          business_address: userData.businessAddress || null
         })
         .eq('id', user.id)
 

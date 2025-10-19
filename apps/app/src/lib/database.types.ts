@@ -600,6 +600,7 @@ export type Database = {
       }
       quotes: {
         Row: {
+          client_address: string | null
           client_business_number: string | null
           client_company: string | null
           client_email: string | null
@@ -615,6 +616,7 @@ export type Database = {
           quote_number: string | null
           status: string | null
           subtotal: number | null
+          supplier_info: Json | null
           tax: number | null
           title: string
           total: number | null
@@ -622,6 +624,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          client_address?: string | null
           client_business_number?: string | null
           client_company?: string | null
           client_email?: string | null
@@ -637,6 +640,7 @@ export type Database = {
           quote_number?: string | null
           status?: string | null
           subtotal?: number | null
+          supplier_info?: Json | null
           tax?: number | null
           title: string
           total?: number | null
@@ -644,6 +648,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          client_address?: string | null
           client_business_number?: string | null
           client_company?: string | null
           client_email?: string | null
@@ -659,6 +664,7 @@ export type Database = {
           quote_number?: string | null
           status?: string | null
           subtotal?: number | null
+          supplier_info?: Json | null
           tax?: number | null
           title?: string
           total?: number | null

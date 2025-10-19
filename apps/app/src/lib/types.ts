@@ -64,8 +64,9 @@ export interface Contract extends Omit<DbContract, 'items' | 'supplier_info'> {
   // are not in the database schema - use contract_signatures table instead
 }
 
-export interface Quote extends Omit<DbQuote, 'items'> {
+export interface Quote extends Omit<DbQuote, 'items' | 'supplier_info'> {
   items: QuoteItem[]
+  supplier_info?: SupplierInfo
 }
 
 // API 응답 타입
@@ -109,7 +110,7 @@ export function parseQuoteFromDb(dbQuote: DbQuote): Quote {
   return {
     ...dbQuote,
     items: (dbQuote.items as unknown as QuoteItem[]) || [],
-    // Note: supplier_info is not stored in quotes table
+    supplier_info: (dbQuote.supplier_info as unknown as SupplierInfo) || undefined,
   }
 }
 

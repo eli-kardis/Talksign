@@ -13,6 +13,7 @@ interface SupplierInfoFormProps {
     phone: string
     businessRegistrationNumber: string
     companyName: string
+    businessAddress?: string
   }
   isEditing: boolean
   onSupplierInfoChange: (info: any) => void
@@ -158,6 +159,29 @@ export function SupplierInfoForm({
             />
           </div>
         )}
+
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="supplierBusinessAddress" className="text-foreground">
+            사업장 주소
+          </Label>
+          <Input
+            id="supplierBusinessAddress"
+            value={supplierInfo.businessAddress || ''}
+            onChange={(e) =>
+              onSupplierInfoChange({
+                ...supplierInfo,
+                businessAddress: e.target.value,
+              })
+            }
+            placeholder={isEditing ? '서울시 강남구 테헤란로 123' : ''}
+            className={
+              isEditing
+                ? 'bg-input-background border-border'
+                : 'bg-muted text-muted-foreground'
+            }
+            disabled={!isEditing}
+          />
+        </div>
       </div>
 
       <div className="mt-4 p-3 bg-muted/30 rounded-lg">

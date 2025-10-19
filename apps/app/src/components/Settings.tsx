@@ -18,6 +18,7 @@ interface UserProfile {
   email: string
   businessRegistrationNumber: string
   companyName: string
+  businessAddress: string
 }
 
 interface SettingsProps {
@@ -32,14 +33,16 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
     phone: '',
     email: '',
     businessRegistrationNumber: '',
-    companyName: ''
+    companyName: '',
+    businessAddress: ''
   })
   const [originalData, setOriginalData] = useState<UserProfile>({
     name: '',
     phone: '',
     email: '',
     businessRegistrationNumber: '',
-    companyName: ''
+    companyName: '',
+    businessAddress: ''
   })
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -68,7 +71,7 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('name, phone, email, business_registration_number, company_name')
+        .select('name, phone, email, business_registration_number, company_name, business_address')
         .eq('id', user?.id)
         .single()
 
@@ -83,7 +86,8 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
         phone: data.phone || '',
         email: data.email || '',
         businessRegistrationNumber: data.business_registration_number || '',
-        companyName: data.company_name || ''
+        companyName: data.company_name || '',
+        businessAddress: data.business_address || ''
       }
 
       setFormData(profileData)
@@ -146,7 +150,8 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
         phone: formData.phone,
         email: formData.email,
         businessRegistrationNumber: formData.businessRegistrationNumber,
-        companyName: formData.companyName
+        companyName: formData.companyName,
+        businessAddress: formData.businessAddress
       })
 
       if (result.success) {
@@ -314,7 +319,7 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
               </div>
 
               {/* 회사명 */}
-              <div 
+              <div
                 className="transition-all duration-500 ease-out overflow-hidden"
                 style={{
                   maxHeight: showCompanyField ? '120px' : '0px',
@@ -334,6 +339,19 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
                     className="bg-input-background border-border text-foreground"
                   />
                 </div>
+              </div>
+
+              {/* 사업장 주소 */}
+              <div className="space-y-2">
+                <Label htmlFor="businessAddress" className="text-foreground">사업장 주소</Label>
+                <Input
+                  id="businessAddress"
+                  type="text"
+                  placeholder="서울시 강남구 테헤란로 123"
+                  value={formData.businessAddress}
+                  onChange={(e) => handleInputChange('businessAddress', e.target.value)}
+                  className="bg-input-background border-border text-foreground"
+                />
               </div>
 
               <Button

@@ -26,9 +26,8 @@ interface QuoteData {
     amount: number
   }>
   subtotal: number
-  taxAmount: number
-  taxRate: number
-  totalAmount: number
+  tax: number
+  total: number
 }
 
 export default function UserNewContractPage({ params }: { params: Promise<{ username: string }> }) {
@@ -82,7 +81,7 @@ export default function UserNewContractPage({ params }: { params: Promise<{ user
     project: {
       title: `${quoteData.title} - 계약서`,
       description: quoteData.description || '',
-      amount: quoteData.totalAmount,
+      amount: quoteData.total,
       startDate: '',
       endDate: ''
     },

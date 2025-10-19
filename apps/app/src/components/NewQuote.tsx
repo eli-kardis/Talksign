@@ -37,6 +37,7 @@ interface NewQuoteProps {
       phone: string
       company: string
       businessNumber?: string
+      address?: string
     }
     project: {
       title: string
@@ -74,8 +75,9 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
     businessRegistrationNumber: '',
     companyName: '',
     businessName: '',
+    businessAddress: '',
   })
-  
+
   const [clientInfo, setClientInfo] = useState({
     name: '',
     company: '',
@@ -112,6 +114,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
             businessRegistrationNumber: userData.business_registration_number || '',
             companyName: userData.company_name || '',
             businessName: userData.business_name || '',
+            businessAddress: userData.business_address || '',
           })
         }
       } catch (error) {
@@ -135,6 +138,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
           businessRegistrationNumber: initialData.supplier.business_registration_number || '',
           businessName: initialData.supplier.business_name || '',
           companyName: initialData.supplier.company_name || '',
+          businessAddress: initialData.supplier.business_address || '',
         })
       }
 
@@ -145,7 +149,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         phone: initialData.client.phone,
         company: initialData.client.company,
         businessNumber: initialData.client.businessNumber || '',
-        address: '',
+        address: initialData.client.address || '',
       })
 
       // 프로젝트 정보 설정
@@ -180,7 +184,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
           phone: initialData.client.phone,
           company: initialData.client.company,
           businessNumber: initialData.client.businessNumber || '',
-          address: '',
+          address: initialData.client.address || '',
         },
         projectInfo: {
           title: initialData.project.title,
@@ -319,6 +323,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         client_phone: (clientInfo.phone || '').trim() || '',
         client_company: (clientInfo.company || '').trim() || '',
         client_business_number: (clientInfo.businessNumber || '').trim() || '',
+        client_address: (clientInfo.address || '').trim() || '',
         title: (quoteTitle || '').trim() || '견적서',
         issue_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
         expiry_date: validUntil || '',
@@ -342,6 +347,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
           business_registration_number: (supplierInfo.businessRegistrationNumber || '').trim() || null,
           company_name: (supplierInfo.companyName || '').trim() || null,
           business_name: (supplierInfo.businessName || '').trim() || null,
+          business_address: (supplierInfo.businessAddress || '').trim() || null,
         },
       }
 
