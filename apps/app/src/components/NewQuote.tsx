@@ -8,7 +8,8 @@ import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
 import { Separator } from './ui/separator'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
-import { ArrowLeft, MessageSquare, Save, AlertTriangle, User } from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible'
+import { ArrowLeft, MessageSquare, Save, AlertTriangle, User, ChevronDown, Mail } from 'lucide-react'
 import { QuoteItemsTable } from './QuoteItemsTable'
 import { CustomerSelector } from './CustomerSelector'
 import { ClientInfoForm, SupplierInfoForm } from './contracts'
@@ -38,6 +39,9 @@ interface NewQuoteProps {
       company: string
       businessNumber?: string
       address?: string
+      fax?: string
+      businessType?: string
+      businessCategory?: string
     }
     project: {
       title: string
@@ -68,6 +72,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [initialFormData, setInitialFormData] = useState<any>(null)
   const [isEditingSupplier, setIsEditingSupplier] = useState(false)
+  const [isQuoteConditionsOpen, setIsQuoteConditionsOpen] = useState(false)
   const [supplierInfo, setSupplierInfo] = useState({
     name: '',
     email: '',
@@ -550,7 +555,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6 overflow-x-hidden">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
         <Button type="button" variant="outline" onClick={handleBackClick} className="border-border w-fit">
@@ -567,7 +572,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 w-full max-w-full">
         {/* Main Form */}
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
           {/* 견적서 제목 */}
@@ -610,14 +615,78 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
             />
           </Card>
 
-
-          {/* 견적 항목 테이블 */}
-          <QuoteItemsTable
-            items={items}
-            onItemsChange={setItems}
-            validUntil={validUntil}
-            onValidUntilChange={setValidUntil}
-          />
+          {/* 견적 조건 */}
+          <Collapsible open={isQuoteConditionsOpen} onOpenChange={setIsQuoteConditionsOpen}>
+            <Card className="p-4 md:p-6 bg-card border-border">
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium text-foreground">견적 조건 (선택사항)</h3>
+                  <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${isQuoteConditionsOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="deliveryDueDate" className="text-foreground">납품/완료 기한</Label>
+                      <Input
+                        type="date"
+                        id="deliveryDueDate"
+                        value={quoteConditions.deliveryDueDate}
+                        onChange={(e) => setQuoteConditions({ ...quoteConditions, deliveryDueDate: e.target.value })}
+                        className="bg-input-background border-border"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="warrantyPeriod" className="text-foreground">하자보증 기간</Label>
+                      <Input
+                        id="warrantyPeriod"
+                        value={quoteConditions.warrantyPeriod}
+                        onChange={(e) => setQuoteConditions({ ...quoteConditions, warrantyPeriod: e.target.value })}
+                        placeholder="예: 1년"
+                        className="bg-input-background border-border"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="asConditions" className="text-foreground">A/S 조건</Label>
+                      <Textarea
+                        id="asConditions"
+                        value={quoteConditions.asConditions}
+                        onChange={(e) => setQuoteConditions({ ...quoteConditions, asConditions: e.target.value })}
+                        placeholder="A/S 조건을 입력하세요"
+                        rows={2}
+                        className="bg-input-background border-border"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="specialNotes" className="text-foreground">특기사항</Label>
+                      <Textarea
+                        id="specialNotes"
+                        value={quoteConditions.specialNotes}
+                        onChange={(e) => setQuoteConditions({ ...quoteConditions, specialNotes: e.target.value })}
+                        placeholder="특기사항을 입력하세요"
+                        rows={2}
+                        className="bg-input-background border-border"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="disclaimer" className="text-foreground">면책사항</Label>
+                      <Textarea
+                        id="disclaimer"
+                        value={quoteConditions.disclaimer}
+                        onChange={(e) => setQuoteConditions({ ...quoteConditions, disclaimer: e.target.value })}
+                        placeholder="면책사항을 입력하세요"
+                        rows={2}
+                        className="bg-input-background border-border"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
 
           {/* 결제 정보 */}
           <Card className="p-4 md:p-6 bg-card border-border">
@@ -651,23 +720,86 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                   <option value="현금">현금</option>
                 </select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="paymentDueDate" className="text-foreground">결제 기한</Label>
-                <Input
-                  type="date"
-                  id="paymentDueDate"
-                  value={paymentInfo.paymentDueDate}
-                  onChange={(e) => setPaymentInfo({ ...paymentInfo, paymentDueDate: e.target.value })}
-                  className="bg-input-background border-border"
-                />
-              </div>
+              {paymentInfo.paymentCondition !== '분할' && (
+                <div className="space-y-2">
+                  <Label htmlFor="paymentDueDate" className="text-foreground">결제 기한</Label>
+                  <Input
+                    type="date"
+                    id="paymentDueDate"
+                    value={paymentInfo.paymentDueDate}
+                    onChange={(e) => setPaymentInfo({ ...paymentInfo, paymentDueDate: e.target.value })}
+                    className="bg-input-background border-border"
+                  />
+                </div>
+              )}
             </div>
+
+            {/* 분할 결제 상세 정보 */}
+            {paymentInfo.paymentCondition === '분할' && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <h4 className="font-medium mb-3 text-foreground">분할 결제 상세</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="depositAmount" className="text-foreground">선금</Label>
+                    <Input
+                      type="text"
+                      id="depositAmount"
+                      placeholder="금액 입력"
+                      className="bg-input-background border-border"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="milestoneAmount" className="text-foreground">중도금</Label>
+                    <Input
+                      type="text"
+                      id="milestoneAmount"
+                      placeholder="금액 입력"
+                      className="bg-input-background border-border"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="balanceAmount" className="text-foreground">잔금</Label>
+                    <Input
+                      type="text"
+                      id="balanceAmount"
+                      placeholder="금액 입력"
+                      className="bg-input-background border-border"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="depositDueDate" className="text-foreground">선금 지급일</Label>
+                    <Input
+                      type="date"
+                      id="depositDueDate"
+                      className="bg-input-background border-border"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="milestoneDueDate" className="text-foreground">중도금 지급일</Label>
+                    <Input
+                      type="date"
+                      id="milestoneDueDate"
+                      className="bg-input-background border-border"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="balanceDueDate" className="text-foreground">잔금 지급일</Label>
+                    <Input
+                      type="date"
+                      id="balanceDueDate"
+                      className="bg-input-background border-border"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {paymentInfo.paymentMethod === '계좌이체' && (
               <div className="mt-4 pt-4 border-t border-border">
                 <h4 className="font-medium mb-3 text-foreground">입금 계좌 정보</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="bankName" className="text-foreground">은행명</Label>
+                    <Label htmlFor="bankName" className="text-foreground">은행명 *</Label>
                     <Input
                       id="bankName"
                       value={paymentInfo.bankName}
@@ -677,7 +809,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="bankAccountNumber" className="text-foreground">계좌번호</Label>
+                    <Label htmlFor="bankAccountNumber" className="text-foreground">계좌번호 *</Label>
                     <Input
                       id="bankAccountNumber"
                       value={paymentInfo.bankAccountNumber}
@@ -687,7 +819,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="bankAccountHolder" className="text-foreground">예금주</Label>
+                    <Label htmlFor="bankAccountHolder" className="text-foreground">예금주 *</Label>
                     <Input
                       id="bankAccountHolder"
                       value={paymentInfo.bankAccountHolder}
@@ -701,117 +833,67 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
             )}
           </Card>
 
-          {/* 견적 조건 */}
-          <Card className="p-4 md:p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">견적 조건 (선택사항)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="deliveryDueDate" className="text-foreground">납품/완료 기한</Label>
-                <Input
-                  type="date"
-                  id="deliveryDueDate"
-                  value={quoteConditions.deliveryDueDate}
-                  onChange={(e) => setQuoteConditions({ ...quoteConditions, deliveryDueDate: e.target.value })}
-                  className="bg-input-background border-border"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="warrantyPeriod" className="text-foreground">하자보증 기간</Label>
-                <Input
-                  id="warrantyPeriod"
-                  value={quoteConditions.warrantyPeriod}
-                  onChange={(e) => setQuoteConditions({ ...quoteConditions, warrantyPeriod: e.target.value })}
-                  placeholder="예: 1년"
-                  className="bg-input-background border-border"
-                />
-              </div>
-            </div>
-            <div className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="asConditions" className="text-foreground">A/S 조건</Label>
-                <Textarea
-                  id="asConditions"
-                  value={quoteConditions.asConditions}
-                  onChange={(e) => setQuoteConditions({ ...quoteConditions, asConditions: e.target.value })}
-                  placeholder="A/S 조건을 입력하세요"
-                  rows={2}
-                  className="bg-input-background border-border"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="specialNotes" className="text-foreground">특기사항</Label>
-                <Textarea
-                  id="specialNotes"
-                  value={quoteConditions.specialNotes}
-                  onChange={(e) => setQuoteConditions({ ...quoteConditions, specialNotes: e.target.value })}
-                  placeholder="특기사항을 입력하세요"
-                  rows={2}
-                  className="bg-input-background border-border"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="disclaimer" className="text-foreground">면책사항</Label>
-                <Textarea
-                  id="disclaimer"
-                  value={quoteConditions.disclaimer}
-                  onChange={(e) => setQuoteConditions({ ...quoteConditions, disclaimer: e.target.value })}
-                  placeholder="면책사항을 입력하세요"
-                  rows={2}
-                  className="bg-input-background border-border"
-                />
-              </div>
-            </div>
-          </Card>
+          {/* 견적 항목 테이블 */}
+          <QuoteItemsTable
+            items={items}
+            onItemsChange={setItems}
+            validUntil={validUntil}
+            onValidUntilChange={setValidUntil}
+          />
 
-          {/* 할인 정보 */}
+          {/* 최종 견적 */}
           <Card className="p-4 md:p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">할인 정보 (선택사항)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="discountRate" className="text-foreground">할인율 (%)</Label>
-                <Input
-                  type="number"
-                  id="discountRate"
-                  value={discountInfo.discountRate || ''}
-                  onChange={(e) => setDiscountInfo({ ...discountInfo, discountRate: parseFloat(e.target.value) || 0 })}
-                  placeholder="0"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  className="bg-input-background border-border"
-                />
+            <h3 className="font-medium mb-4 text-foreground">최종 견적</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-muted-foreground">총 합계</span>
+                <span className="font-mono font-medium">{new Intl.NumberFormat('ko-KR').format(totalAmount)}원</span>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="discountAmount" className="text-foreground">할인 금액 (원)</Label>
-                <Input
-                  type="number"
-                  id="discountAmount"
-                  value={discountInfo.discountAmount || ''}
-                  onChange={(e) => setDiscountInfo({ ...discountInfo, discountAmount: parseFloat(e.target.value) || 0 })}
-                  placeholder="0"
-                  min="0"
-                  className="bg-input-background border-border"
-                />
+              <div className="flex justify-between items-center py-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="finalDiscountRate" className="text-muted-foreground">할인율</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    id="finalDiscountRate"
+                    value={discountInfo.discountRate || ''}
+                    onChange={(e) => setDiscountInfo({ ...discountInfo, discountRate: parseFloat(e.target.value) || 0 })}
+                    placeholder="0"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="bg-input-background border-border w-24 h-8 text-right text-sm"
+                  />
+                  <span className="text-muted-foreground">%</span>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="promotionCode" className="text-foreground">프로모션 코드</Label>
-                <Input
-                  id="promotionCode"
-                  value={discountInfo.promotionCode}
-                  onChange={(e) => setDiscountInfo({ ...discountInfo, promotionCode: e.target.value })}
-                  placeholder="프로모션 코드 입력"
-                  className="bg-input-background border-border"
-                />
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-muted-foreground">할인 금액</span>
+                <span className="font-mono font-medium text-red-500">
+                  -{new Intl.NumberFormat('ko-KR').format(Math.floor(totalAmount * (discountInfo.discountRate / 100)))}원
+                </span>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="promotionName" className="text-foreground">프로모션명</Label>
-                <Input
-                  id="promotionName"
-                  value={discountInfo.promotionName}
-                  onChange={(e) => setDiscountInfo({ ...discountInfo, promotionName: e.target.value })}
-                  placeholder="프로모션명 입력"
-                  className="bg-input-background border-border"
-                />
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-muted-foreground">공급가액</span>
+                <span className="font-mono font-medium">
+                  {new Intl.NumberFormat('ko-KR').format(totalAmount - Math.floor(totalAmount * (discountInfo.discountRate / 100)))}원
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-muted-foreground">VAT (10%)</span>
+                <span className="font-mono font-medium">
+                  {new Intl.NumberFormat('ko-KR').format(Math.floor((totalAmount - Math.floor(totalAmount * (discountInfo.discountRate / 100))) * 0.1))}원
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-3 bg-primary/5 rounded-lg px-3">
+                <span className="font-semibold text-foreground">최종 견적</span>
+                <span className="font-mono font-bold text-primary text-xl">
+                  {new Intl.NumberFormat('ko-KR').format(
+                    totalAmount - Math.floor(totalAmount * (discountInfo.discountRate / 100)) +
+                    Math.floor((totalAmount - Math.floor(totalAmount * (discountInfo.discountRate / 100))) * 0.1)
+                  )}원
+                </span>
               </div>
             </div>
           </Card>
@@ -836,17 +918,28 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                 type="button"
                 variant="outline"
                 className="w-full border-border h-11 text-sm sm:text-base"
+                onClick={handleSaveAndSend}
+                disabled={Boolean(isLoading || !supplierInfo.name || !supplierInfo.email || !supplierInfo.phone || !clientInfo.name || !clientInfo.company || !clientInfo.phone || !clientInfo.email || quoteTitle.trim() === '' || validUntil.trim() === '' || (supplierInfo.businessRegistrationNumber && !supplierInfo.companyName))}
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                {isLoading ? '발송 중...' : '이메일로 발송'}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-border h-11 text-sm sm:text-base"
                 onClick={handleSaveDraft}
                 disabled={isLoading || (isEdit && !hasUnsavedChanges)}
               >
                 <Save className="w-4 h-4 mr-2" />
-                {isLoading ? '저장 중...' : '임시저장'}
+                {isLoading ? '저장 중...' : '저장'}
               </Button>
             </div>
 
             <div className="mt-4 p-3 bg-accent rounded-lg">
               <p className="text-xs sm:text-sm text-accent-foreground">
-                💡 견적서가 카카오톡으로 발송되면 고객이 바로 확인하고 승인할 수 있습니다.
+                💡 견적서가 카카오톡 또는 이메일로 발송되면 고객이 바로 확인하고 승인할 수 있습니다.
               </p>
             </div>
           </Card>

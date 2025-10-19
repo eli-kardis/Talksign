@@ -35,9 +35,52 @@ export function ClientInfoForm({
 }: ClientInfoFormProps) {
   const formContent = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="clientCompany" className="text-foreground">
+            회사명{clientInfo.businessNumber ? ' *' : ''}
+          </Label>
+          <Input
+            id="clientCompany"
+            value={clientInfo.company}
+            onChange={(e) =>
+              onClientInfoChange({ ...clientInfo, company: e.target.value })
+            }
+            placeholder={isEditing ? '(주)회사명' : ''}
+            className={
+              isEditing
+                ? 'bg-input-background border-border'
+                : 'bg-muted text-muted-foreground'
+            }
+            disabled={!isEditing}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="clientBusinessNumber" className="text-foreground">
+            사업자등록번호
+          </Label>
+          <Input
+            id="clientBusinessNumber"
+            value={clientInfo.businessNumber}
+            onChange={(e) =>
+              onClientInfoChange({
+                ...clientInfo,
+                businessNumber: formatBusinessNumber(e.target.value),
+              })
+            }
+            placeholder={isEditing ? '123-12-12345' : ''}
+            className={
+              isEditing
+                ? 'bg-input-background border-border'
+                : 'bg-muted text-muted-foreground'
+            }
+            disabled={!isEditing}
+          />
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="clientName" className="text-foreground">
-            고객명 *
+            대표자명 *
           </Label>
           <Input
             id="clientName"
@@ -99,6 +142,26 @@ export function ClientInfoForm({
           />
         </div>
 
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="clientAddress" className="text-foreground">
+            주소
+          </Label>
+          <Input
+            id="clientAddress"
+            value={clientInfo.address}
+            onChange={(e) =>
+              onClientInfoChange({ ...clientInfo, address: e.target.value })
+            }
+            placeholder={isEditing ? '서울시 강남구...' : ''}
+            className={
+              isEditing
+                ? 'bg-input-background border-border'
+                : 'bg-muted text-muted-foreground'
+            }
+            disabled={!isEditing}
+          />
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="clientFax" className="text-foreground">
             팩스
@@ -122,51 +185,8 @@ export function ClientInfoForm({
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="clientBusinessNumber" className="text-foreground">
-            사업자등록번호
-          </Label>
-          <Input
-            id="clientBusinessNumber"
-            value={clientInfo.businessNumber}
-            onChange={(e) =>
-              onClientInfoChange({
-                ...clientInfo,
-                businessNumber: formatBusinessNumber(e.target.value),
-              })
-            }
-            placeholder={isEditing ? '123-12-12345' : ''}
-            className={
-              isEditing
-                ? 'bg-input-background border-border'
-                : 'bg-muted text-muted-foreground'
-            }
-            disabled={!isEditing}
-          />
-        </div>
-
         {clientInfo.businessNumber && (
           <>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="clientCompany" className="text-foreground">
-                회사명 *
-              </Label>
-              <Input
-                id="clientCompany"
-                value={clientInfo.company}
-                onChange={(e) =>
-                  onClientInfoChange({ ...clientInfo, company: e.target.value })
-                }
-                placeholder={isEditing ? '(주)회사명' : ''}
-                className={
-                  isEditing
-                    ? 'bg-input-background border-border'
-                    : 'bg-muted text-muted-foreground'
-                }
-                disabled={!isEditing}
-              />
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="clientBusinessType" className="text-foreground">
                 업태
@@ -214,26 +234,6 @@ export function ClientInfoForm({
             </div>
           </>
         )}
-
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="clientAddress" className="text-foreground">
-            주소
-          </Label>
-          <Input
-            id="clientAddress"
-            value={clientInfo.address}
-            onChange={(e) =>
-              onClientInfoChange({ ...clientInfo, address: e.target.value })
-            }
-            placeholder={isEditing ? '서울시 강남구...' : ''}
-            className={
-              isEditing
-                ? 'bg-input-background border-border'
-                : 'bg-muted text-muted-foreground'
-            }
-            disabled={!isEditing}
-          />
-        </div>
       </div>
   )
 

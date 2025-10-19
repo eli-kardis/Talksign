@@ -170,37 +170,37 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
       </div>
 
       {/* 총액 요약 */}
-      <div className="mb-6 p-4 bg-muted/20 rounded-lg">
-        <div className="flex items-center gap-2 mb-3">
-          <Calculator className="w-5 h-5 text-primary" />
-          <h4 className="font-medium text-foreground">견적 요약</h4>
+      <div className="mb-4 p-3 bg-muted/20 rounded-lg">
+        <div className="flex items-center gap-2 mb-2">
+          <Calculator className="w-4 h-4 text-primary" />
+          <h4 className="font-medium text-foreground text-sm">견적 요약</h4>
         </div>
-        <div className="grid grid-cols-3 gap-4 text-sm">
+        <div className="grid grid-cols-3 gap-3 text-xs">
           <div className="text-center">
             <div className="text-muted-foreground mb-1">소계</div>
-            <div className="font-mono font-medium text-foreground">{formatCurrency(totalAmount)}원</div>
+            <div className="font-mono font-medium text-foreground text-sm">{formatCurrency(totalAmount)}원</div>
           </div>
           <div className="text-center">
             <div className="text-muted-foreground mb-1">부가세 (10%)</div>
-            <div className="font-mono font-medium text-foreground">{formatCurrency(vatAmount)}원</div>
+            <div className="font-mono font-medium text-foreground text-sm">{formatCurrency(vatAmount)}원</div>
           </div>
           <div className="text-center">
             <div className="text-muted-foreground mb-1">총 금액</div>
-            <div className="font-mono font-bold text-primary text-lg">{formatCurrency(finalAmount)}원</div>
+            <div className="font-mono font-bold text-primary text-base">{formatCurrency(finalAmount)}원</div>
           </div>
         </div>
       </div>
 
       {/* 견적 유효기간 */}
-      <div className="mb-6 p-5 bg-card rounded-lg border border-border">
-        <div className="flex items-center gap-2 mb-4">
-          <Calendar className="w-5 h-5 text-primary" />
-          <h4 className="font-medium text-foreground">견적 유효기간</h4>
+      <div className="mb-4 p-3 bg-card rounded-lg border border-border">
+        <div className="flex items-center gap-2 mb-3">
+          <Calendar className="w-4 h-4 text-primary" />
+          <h4 className="font-medium text-foreground text-sm">견적 유효기간</h4>
         </div>
-        <div className="space-y-3">
-          <div className="flex items-center gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
             <div className="flex-1">
-              <Label htmlFor="validUntilDate" className="text-foreground text-sm mb-2 block">
+              <Label htmlFor="validUntilDate" className="text-foreground text-xs mb-1.5 block">
                 유효 기한
               </Label>
               {/* 숨겨진 실제 날짜 입력 */}
@@ -213,8 +213,8 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
                 min={new Date().toISOString().split('T')[0]}
               />
               {/* 커스텀 날짜 표시 버튼 */}
-              <div 
-                className="flex items-center justify-between p-3 bg-input-background border border-border rounded-md cursor-pointer hover:bg-input-background/80 transition-colors h-11"
+              <div
+                className="flex items-center justify-between p-2 bg-input-background border border-border rounded-md cursor-pointer hover:bg-input-background/80 transition-colors h-9 text-sm"
                 onClick={handleDateTextClick}
                 role="button"
                 tabIndex={0}
@@ -224,25 +224,25 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
                   }
                 }}
               >
-                <span className="text-foreground">
-                  {validUntil 
+                <span className="text-foreground text-sm">
+                  {validUntil
                     ? new Date(validUntil).toLocaleDateString('ko-KR', {
                         year: 'numeric',
-                        month: '2-digit', 
+                        month: '2-digit',
                         day: '2-digit'
                       })
                     : '날짜를 선택하세요'
                   }
                 </span>
-                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
               </div>
             </div>
           </div>
           {validUntil && (
-            <div className="p-3 bg-primary/5 rounded-md border border-primary/20">
+            <div className="p-2 bg-primary/5 rounded-md border border-primary/20">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary" />
-                <span className="text-primary font-medium">
+                <Calendar className="w-3.5 h-3.5 text-primary" />
+                <span className="text-primary font-medium text-xs">
                   {new Date(validUntil).toLocaleDateString('ko-KR', {
                     year: 'numeric',
                     month: 'long',
@@ -256,19 +256,20 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
       </div>
 
       {/* 테이블 */}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-8"></TableHead>
-            <TableHead className="min-w-[120px]">항목명</TableHead>
-            <TableHead className="min-w-[200px]">설명</TableHead>
-            <TableHead className="min-w-[140px] text-right">단가</TableHead>
-            <TableHead className="min-w-[100px] text-center">수량</TableHead>
-            <TableHead className="min-w-[100px] text-center">단위</TableHead>
-            <TableHead className="w-[120px] text-right">금액</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
+      <div className="overflow-x-auto -mx-6 px-6">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-6 text-xs"></TableHead>
+              <TableHead className="min-w-[100px] text-xs">항목명</TableHead>
+              <TableHead className="min-w-[140px] text-xs">설명</TableHead>
+              <TableHead className="min-w-[100px] text-right text-xs">단가</TableHead>
+              <TableHead className="min-w-[70px] text-center text-xs">수량</TableHead>
+              <TableHead className="min-w-[60px] text-center text-xs">단위</TableHead>
+              <TableHead className="w-[100px] text-right text-xs">금액</TableHead>
+              <TableHead className="w-[40px]"></TableHead>
+            </TableRow>
+          </TableHeader>
         <TableBody onDragLeave={handleDragLeave}>
           {items.map((item, index) => (
             <TableRow
@@ -287,13 +288,13 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
               onDrop={(e) => handleDrop(e, index)}
             >
               <TableCell>
-                <div 
-                  className="flex justify-center p-2 cursor-grab active:cursor-grabbing hover:bg-muted/50 rounded"
+                <div
+                  className="flex justify-center p-1 cursor-grab active:cursor-grabbing hover:bg-muted/50 rounded"
                   draggable
                   onDragStart={(e) => handleDragStart(e, index)}
                   onDragEnd={handleDragEnd}
                 >
-                  <GripVertical className="w-4 h-4 text-muted-foreground" />
+                  <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
                 </div>
               </TableCell>
               <TableCell>
@@ -301,7 +302,7 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
                   placeholder="항목명"
                   value={item.name}
                   onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                  className="bg-input-background/50 border border-border/50 p-2 h-9 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors"
+                  className="bg-input-background/50 border border-border/50 p-1.5 h-8 text-xs focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors"
                 />
               </TableCell>
               <TableCell>
@@ -309,7 +310,7 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
                   placeholder="상세 설명"
                   value={item.description}
                   onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                  className="bg-input-background/50 border border-border/50 p-2 h-9 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors"
+                  className="bg-input-background/50 border border-border/50 p-1.5 h-8 text-xs focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors"
                 />
               </TableCell>
               <TableCell>
@@ -323,7 +324,7 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
                     updateItem(item.id, 'unitPrice', value)
                   }}
                   onWheel={(e) => e.currentTarget.blur()}
-                  className="bg-input-background/50 border border-border/50 p-2 h-9 text-right focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors min-w-[120px] w-full"
+                  className="bg-input-background/50 border border-border/50 p-1.5 h-8 text-xs text-right focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors min-w-[90px] w-full"
                 />
               </TableCell>
               <TableCell>
@@ -337,7 +338,7 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
                     updateItem(item.id, 'quantity', value)
                   }}
                   onWheel={(e) => e.currentTarget.blur()}
-                  className="bg-input-background/50 border border-border/50 p-2 h-9 text-center focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors min-w-[80px] w-full"
+                  className="bg-input-background/50 border border-border/50 p-1.5 h-8 text-xs text-center focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors min-w-[60px] w-full"
                 />
               </TableCell>
               <TableCell>
@@ -345,11 +346,11 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
                   placeholder="개"
                   value={item.unit}
                   onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                  className="bg-input-background/50 border border-border/50 p-2 h-9 text-center focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors min-w-[80px] w-full"
+                  className="bg-input-background/50 border border-border/50 p-1.5 h-8 text-xs text-center focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary hover:bg-input-background transition-colors min-w-[55px] w-full"
                 />
               </TableCell>
               <TableCell>
-                <div className="text-right font-mono font-medium text-foreground">
+                <div className="text-right font-mono font-medium text-foreground text-xs">
                   {formatCurrency(item.amount)}원
                 </div>
               </TableCell>
@@ -360,20 +361,21 @@ export function QuoteItemsTable({ items, onItemsChange, validUntil, onValidUntil
                   size="sm"
                   onClick={() => removeItem(item.id)}
                   disabled={items.length === 1}
-                  className="h-9 w-9 p-0 border-border/50 bg-input-background/30 hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-7 w-7 p-0 border-border/50 bg-input-background/30 hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
-      </Table>
-      
+        </Table>
+      </div>
+
       {/* 항목 추가 버튼을 테이블 아래에 배치 */}
-      <div className="mt-4 flex justify-end">
-        <Button type="button" variant="outline" onClick={addItem} className="border-border">
-          <Plus className="w-4 h-4 mr-2" />
+      <div className="mt-3 flex justify-end">
+        <Button type="button" variant="outline" onClick={addItem} className="border-border h-8 text-xs">
+          <Plus className="w-3.5 h-3.5 mr-1.5" />
           항목 추가
         </Button>
       </div>

@@ -35,7 +35,7 @@ export function SupplierInfoForm({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Building className="w-5 h-5 text-primary" />
-          <h3 className="font-medium text-foreground">수급업체 정보</h3>
+          <h3 className="font-medium text-foreground">공급자 정보</h3>
         </div>
         <Button
           type="button"
@@ -49,6 +49,55 @@ export function SupplierInfoForm({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="supplierCompanyName" className="text-foreground">
+            회사명{supplierInfo.businessRegistrationNumber ? ' *' : ''}
+          </Label>
+          <Input
+            id="supplierCompanyName"
+            value={supplierInfo.companyName}
+            onChange={(e) =>
+              onSupplierInfoChange({
+                ...supplierInfo,
+                companyName: e.target.value,
+              })
+            }
+            placeholder={isEditing ? '(주)회사명 또는 개인사업자명' : ''}
+            className={
+              isEditing
+                ? 'bg-input-background border-border'
+                : 'bg-muted text-muted-foreground'
+            }
+            disabled={!isEditing}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label
+            htmlFor="supplierBusinessNumber"
+            className="text-foreground"
+          >
+            사업자등록번호
+          </Label>
+          <Input
+            id="supplierBusinessNumber"
+            value={supplierInfo.businessRegistrationNumber}
+            onChange={(e) =>
+              onSupplierInfoChange({
+                ...supplierInfo,
+                businessRegistrationNumber: formatBusinessNumber(e.target.value),
+              })
+            }
+            placeholder={isEditing ? '123-12-12345' : ''}
+            className={
+              isEditing
+                ? 'bg-input-background border-border'
+                : 'bg-muted text-muted-foreground'
+            }
+            disabled={!isEditing}
+          />
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="supplierName" className="text-foreground">
             대표자명 *
@@ -113,6 +162,29 @@ export function SupplierInfoForm({
           />
         </div>
 
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="supplierBusinessAddress" className="text-foreground">
+            사업장 주소
+          </Label>
+          <Input
+            id="supplierBusinessAddress"
+            value={supplierInfo.businessAddress || ''}
+            onChange={(e) =>
+              onSupplierInfoChange({
+                ...supplierInfo,
+                businessAddress: e.target.value,
+              })
+            }
+            placeholder={isEditing ? '서울시 강남구 테헤란로 123' : ''}
+            className={
+              isEditing
+                ? 'bg-input-background border-border'
+                : 'bg-muted text-muted-foreground'
+            }
+            disabled={!isEditing}
+          />
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="supplierFax" className="text-foreground">
             팩스
@@ -136,56 +208,8 @@ export function SupplierInfoForm({
           />
         </div>
 
-        <div className="space-y-2">
-          <Label
-            htmlFor="supplierBusinessNumber"
-            className="text-foreground"
-          >
-            사업자등록번호
-          </Label>
-          <Input
-            id="supplierBusinessNumber"
-            value={supplierInfo.businessRegistrationNumber}
-            onChange={(e) =>
-              onSupplierInfoChange({
-                ...supplierInfo,
-                businessRegistrationNumber: formatBusinessNumber(e.target.value),
-              })
-            }
-            placeholder={isEditing ? '123-12-12345' : ''}
-            className={
-              isEditing
-                ? 'bg-input-background border-border'
-                : 'bg-muted text-muted-foreground'
-            }
-            disabled={!isEditing}
-          />
-        </div>
-
         {supplierInfo.businessRegistrationNumber && (
           <>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="supplierCompanyName" className="text-foreground">
-                회사명 *
-              </Label>
-              <Input
-                id="supplierCompanyName"
-                value={supplierInfo.companyName}
-                onChange={(e) =>
-                  onSupplierInfoChange({
-                    ...supplierInfo,
-                    companyName: e.target.value,
-                  })
-                }
-                placeholder={isEditing ? '(주)회사명 또는 개인사업자명' : ''}
-                className={
-                  isEditing
-                    ? 'bg-input-background border-border'
-                    : 'bg-muted text-muted-foreground'
-                }
-                disabled={!isEditing}
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="supplierBusinessType" className="text-foreground">
                 업태
@@ -232,29 +256,6 @@ export function SupplierInfoForm({
             </div>
           </>
         )}
-
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="supplierBusinessAddress" className="text-foreground">
-            사업장 주소
-          </Label>
-          <Input
-            id="supplierBusinessAddress"
-            value={supplierInfo.businessAddress || ''}
-            onChange={(e) =>
-              onSupplierInfoChange({
-                ...supplierInfo,
-                businessAddress: e.target.value,
-              })
-            }
-            placeholder={isEditing ? '서울시 강남구 테헤란로 123' : ''}
-            className={
-              isEditing
-                ? 'bg-input-background border-border'
-                : 'bg-muted text-muted-foreground'
-            }
-            disabled={!isEditing}
-          />
-        </div>
       </div>
 
       <div className="mt-4 p-3 bg-muted/30 rounded-lg">
