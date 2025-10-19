@@ -983,7 +983,7 @@ export type Database = {
         | "completed"
         | "failed"
         | "refunded"
-      quote_status: "draft" | "sent" | "approved" | "rejected" | "expired"
+      quote_status: "draft" | "saved" | "sent" | "approved" | "rejected" | "expired"
       schedule_priority: "low" | "medium" | "high"
       schedule_type: "task" | "meeting" | "deadline" | "presentation" | "launch"
       tax_invoice_status:
@@ -1128,7 +1128,7 @@ export const Constants = {
         "failed",
         "refunded",
       ],
-      quote_status: ["draft", "sent", "approved", "rejected", "expired"],
+      quote_status: ["draft", "saved", "sent", "approved", "rejected", "expired"],
       schedule_priority: ["low", "medium", "high"],
       schedule_type: ["task", "meeting", "deadline", "presentation", "launch"],
       tax_invoice_status: ["draft", "issued", "sent", "confirmed", "cancelled"],

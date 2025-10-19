@@ -57,7 +57,7 @@ interface DatabaseQuote {
   subtotal: number;
   tax: number;
   total: number;
-  status: "draft" | "sent" | "approved" | "rejected" | "expired";
+  status: "draft" | "saved" | "sent" | "approved" | "rejected" | "expired";
   expiry_date?: string;
   created_at: string;
   updated_at: string;
@@ -69,7 +69,7 @@ interface Quote {
   client: string;
   project: string;
   amount: number;
-  status: "draft" | "sent" | "approved" | "rejected" | "expired";
+  status: "draft" | "saved" | "sent" | "approved" | "rejected" | "expired";
   date: string;
   dueDate?: string;
   phone?: string;
@@ -95,7 +95,7 @@ const transformQuote = (dbQuote: DatabaseQuote): Quote => ({
   company: dbQuote.client_company || undefined,
 });
 
-type TabKey = "all" | "draft" | "sent" | "approved" | "rejected" | "expired";
+type TabKey = "all" | "draft" | "saved" | "sent" | "approved" | "rejected" | "expired";
 
 type SortField = 'client' | 'project' | 'date' | 'status' | 'amount';
 type SortDirection = 'asc' | 'desc';
@@ -267,6 +267,7 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
     const c: Record<TabKey, number> = {
       all: quotes.length,
       draft: 0,
+      saved: 0,
       sent: 0,
       approved: 0,
       rejected: 0,
@@ -714,13 +715,14 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                       </div>
                     </td>
                     <td className="px-4 py-3 cursor-pointer" onClick={() => onViewQuote(quote.id)}>
-                      <Badge 
+                      <Badge
                         variant={quote.status === 'approved' ? 'default' : quote.status === 'rejected' ? 'destructive' : 'secondary'}
                         className="text-xs"
                       >
-                        {quote.status === 'draft' ? '임시저장' : 
-                         quote.status === 'sent' ? '발송됨' : 
-                         quote.status === 'approved' ? '승인됨' : 
+                        {quote.status === 'draft' ? '임시저장' :
+                         quote.status === 'saved' ? '저장' :
+                         quote.status === 'sent' ? '발송됨' :
+                         quote.status === 'approved' ? '승인됨' :
                          quote.status === 'rejected' ? '거절됨' : '만료됨'}
                       </Badge>
                     </td>
@@ -731,15 +733,6 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onViewQuote(quote.id)}
-                          className="text-xs h-8"
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          보기
-                        </Button>
                         {onEditQuote && (
                           <Button
                             variant="outline"
@@ -781,12 +774,14 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                 />
                 <Badge variant={
                   quote.status === 'approved' ? 'default' :
-                  quote.status === 'sent' ? 'secondary' :
-                  'outline'
+                  quote.status === 'rejected' ? 'destructive' :
+                  'secondary'
                 } className="text-xs">
-                  {quote.status === 'approved' ? '승인됨' :
-                   quote.status === 'sent' ? '전송됨' :
-                   '임시저장'}
+                  {quote.status === 'draft' ? '임시저장' :
+                   quote.status === 'saved' ? '저장' :
+                   quote.status === 'sent' ? '발송됨' :
+                   quote.status === 'approved' ? '승인됨' :
+                   quote.status === 'rejected' ? '거절됨' : '만료됨'}
                 </Badge>
               </div>
               
@@ -806,14 +801,6 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
               </div>
               
               <div className="flex gap-1 mt-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onViewQuote(quote.id)}
-                  className="flex-1 text-xs h-8"
-                >
-                  보기
-                </Button>
                 {onEditQuote && (
                   <Button
                     variant="outline"

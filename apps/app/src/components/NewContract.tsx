@@ -11,6 +11,7 @@ import { CustomerSelector } from './CustomerSelector';
 import { SupplierSignatureModal } from './SupplierSignatureModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters';
+import { AuthenticatedApiClient } from '@/lib/api-client';
 
 interface ContractItem {
   id: string;
@@ -511,7 +512,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   const fetchQuotes = async () => {
     setLoadingQuotes(true);
     try {
-      const response = await fetch('/api/quotes');
+      const response = await AuthenticatedApiClient.get('/api/quotes');
       if (!response.ok) {
         throw new Error('견적서를 불러오는데 실패했습니다.');
       }

@@ -715,15 +715,6 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onViewContract?.(contract.id)}
-                              className="text-xs h-8"
-                            >
-                              <Eye className="w-3 h-3 mr-1" />
-                              보기
-                            </Button>
                             {onEditContract && (
                               <Button
                                 variant="outline"
@@ -800,15 +791,6 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                   </div>
                   
                   <div className="flex gap-1 mt-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onViewContract?.(contract.id)}
-                      className="flex-1 text-xs h-8"
-                    >
-                      <Eye className="w-3 h-3 mr-1" />
-                      보기
-                    </Button>
                     {onEditContract && (
                       <Button
                         variant="outline"

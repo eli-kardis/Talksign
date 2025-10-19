@@ -117,8 +117,8 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">견적서를 불러오는 중...</span>
+        <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+        <span className="ml-2 text-gray-600">견적서를 불러오는 중...</span>
       </div>
     );
   }
@@ -127,8 +127,8 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
     return (
       <Card className="p-6 text-center bg-card border-border border-destructive/50">
         <AlertCircle className="w-8 h-8 text-destructive mx-auto mb-2" />
-        <h3 className="text-lg font-medium text-foreground mb-2">오류가 발생했습니다</h3>
-        <p className="text-sm text-muted-foreground mb-4">{error}</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">오류가 발생했습니다</h3>
+        <p className="text-sm text-gray-600 mb-4">{error}</p>
         <Button
           onClick={() => router.back()}
           variant="outline"
@@ -197,10 +197,10 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
           </Button>
           
           <div>
-            <h1 className="text-2xl font-bold text-foreground">{quote.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{quote.title}</h1>
             <div className="flex items-center gap-2 mt-1">
               <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-600">
                 {new Date(quote.created_at).toLocaleDateString('ko-KR')}
               </span>
             </div>
@@ -226,20 +226,20 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
       </div>
 
       {/* Quote Document */}
-      <Card className="max-w-4xl mx-auto bg-card border-border shadow-lg">
-        <div className="p-6 md:p-8 space-y-6 md:space-y-8 text-foreground">
+      <Card className="max-w-4xl mx-auto bg-white dark:bg-white border-border shadow-lg [&_*::selection]:bg-blue-200 [&_*::selection]:text-gray-900">
+        <div className="p-6 md:p-8 space-y-6 md:space-y-8 text-gray-900">
           
           {/* 1. 견적서 제목과 견적일자 */}
           <div className="border-b border-border pb-6">
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">{quote.title}</h2>
-                <p className="text-sm text-muted-foreground">견적서 번호: {quote.id.slice(0, 8).toUpperCase()}</p>
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{quote.title}</h2>
+                <p className="text-sm text-gray-600">견적서 번호: {quote.id.slice(0, 8).toUpperCase()}</p>
               </div>
               <div className="text-right">
                 <div className="flex items-center gap-2 justify-end">
-                  <span className="text-sm font-medium text-muted-foreground">견적일자:</span>
-                  <span className="font-semibold text-foreground">
+                  <span className="text-sm font-medium text-gray-600">견적일자:</span>
+                  <span className="font-semibold text-gray-900">
                     {new Date(quote.created_at).getFullYear()}년 {String(new Date(quote.created_at).getMonth() + 1).padStart(2, '0')}월 {String(new Date(quote.created_at).getDate()).padStart(2, '0')}일
                   </span>
                 </div>
@@ -252,27 +252,27 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
             {/* 공급자 정보 */}
             {quote.supplier && (
               <div>
-                <h3 className="text-lg font-semibold text-foreground mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   공급자 정보
                 </h3>
-                <Card className="bg-muted/30 border-border h-full">
+                <Card className="bg-gray-50 border-border h-full">
                   <div className="p-4 md:p-5">
                     <div className="space-y-2">
-                      <p className="font-semibold text-foreground text-lg">
+                      <p className="font-semibold text-gray-900 text-lg">
                         회사명: {quote.supplier.company_name || quote.supplier.business_name || quote.supplier.name}
                       </p>
-                      <p className="text-sm text-muted-foreground">대표자: {quote.supplier.name}</p>
+                      <p className="text-sm text-gray-600">대표자: {quote.supplier.name}</p>
                       {quote.supplier.business_registration_number && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-gray-600">
                           사업자등록번호: {quote.supplier.business_registration_number}
                         </p>
                       )}
-                      <p className="text-sm text-muted-foreground">이메일: {quote.supplier.email}</p>
+                      <p className="text-sm text-gray-600">이메일: {quote.supplier.email}</p>
                       {quote.supplier.phone && (
-                        <p className="text-sm text-muted-foreground">전화번호: {quote.supplier.phone}</p>
+                        <p className="text-sm text-gray-600">전화번호: {quote.supplier.phone}</p>
                       )}
                       {quote.supplier.business_address && (
-                        <p className="text-sm text-muted-foreground">주소: {quote.supplier.business_address}</p>
+                        <p className="text-sm text-gray-600">주소: {quote.supplier.business_address}</p>
                       )}
                     </div>
                   </div>
@@ -282,27 +282,27 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
 
             {/* 수신자 정보 */}
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 수신자 정보
               </h3>
-              <Card className="bg-muted/30 border-border h-full">
+              <Card className="bg-gray-50 border-border h-full">
                 <div className="p-4 md:p-5">
                   <div className="space-y-2">
                     {quote.client_company && (
-                      <p className="font-semibold text-foreground text-lg">회사명: {quote.client_company}</p>
+                      <p className="font-semibold text-gray-900 text-lg">회사명: {quote.client_company}</p>
                     )}
-                    <p className="text-sm text-muted-foreground">고객명: {quote.client_name}</p>
+                    <p className="text-sm text-gray-600">고객명: {quote.client_name}</p>
                     {quote.client_business_number && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-gray-600">
                         사업자등록번호: {quote.client_business_number}
                       </p>
                     )}
-                    <p className="text-sm text-muted-foreground">이메일: {quote.client_email}</p>
+                    <p className="text-sm text-gray-600">이메일: {quote.client_email}</p>
                     {quote.client_phone && (
-                      <p className="text-sm text-muted-foreground">전화번호: {quote.client_phone}</p>
+                      <p className="text-sm text-gray-600">전화번호: {quote.client_phone}</p>
                     )}
                     {quote.client_address && (
-                      <p className="text-sm text-muted-foreground">주소: {quote.client_address}</p>
+                      <p className="text-sm text-gray-600">주소: {quote.client_address}</p>
                     )}
                   </div>
                 </div>
@@ -313,15 +313,15 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
           {/* 5. 견적 유효기간 */}
           {quote.expiry_date && (
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 견적 유효기간
               </h3>
-              <Card className="bg-muted/20 border-border">
+              <Card className="bg-gray-50 border-border">
                 <div className="p-4 md:p-5">
-                  <p className="font-semibold text-foreground mb-2">
+                  <p className="font-semibold text-gray-900 mb-2">
                     {new Date(quote.expiry_date).toLocaleDateString('ko-KR')}까지 유효
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-600">
                     해당 날짜 이후에는 견적이 자동으로 만료됩니다.
                   </p>
                 </div>
@@ -331,20 +331,20 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
 
           {/* 6. 견적 항목 */}
           <div>
-            <h3 className="text-lg font-semibold text-foreground mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
               견적 항목
             </h3>
             <Card className="border-border overflow-hidden bg-card">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[800px]">
-                  <thead className="bg-muted/20 border-b border-border">
+                  <thead className="bg-gray-50 border-b border-border">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">항목명</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">설명</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">수량</th>
-                      <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">단위</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">단가</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">금액</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">항목명</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">설명</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">수량</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">단위</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">단가</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">금액</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -367,26 +367,26 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
                       }
 
                       return (
-                        <tr key={item.id || index} className="hover:bg-muted/20 transition-colors border-b border-border">
+                        <tr key={item.id || index} className="hover:bg-gray-50 transition-colors border-b border-border">
                           <td className="px-4 py-3">
-                            <p className="font-medium text-foreground text-sm">{itemName || '-'}</p>
+                            <p className="font-medium text-gray-900 text-sm">{itemName || '-'}</p>
                           </td>
                           <td className="px-4 py-3">
-                            <p className="text-sm text-muted-foreground">{itemDesc || '-'}</p>
+                            <p className="text-sm text-gray-600">{itemDesc || '-'}</p>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <p className="text-sm text-foreground">{item.quantity || 1}</p>
+                            <p className="text-sm text-gray-900">{item.quantity || 1}</p>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <p className="text-sm text-foreground">{item.unit || '개'}</p>
+                            <p className="text-sm text-gray-900">{item.unit || '개'}</p>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <span className="text-sm text-foreground">
+                            <span className="text-sm text-gray-900">
                               ₩{new Intl.NumberFormat('ko-KR').format(item.unit_price || item.amount)}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <span className="font-semibold text-foreground text-sm">
+                            <span className="font-semibold text-gray-900 text-sm">
                               ₩{new Intl.NumberFormat('ko-KR').format(item.amount)}
                             </span>
                           </td>
@@ -402,12 +402,12 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
           {/* 7. 참고사항 */}
           {quote.description && (
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 참고사항
               </h3>
-              <Card className="bg-muted/20 border-border">
+              <Card className="bg-gray-50 border-border">
                 <div className="p-4 md:p-5">
-                  <p className="text-foreground whitespace-pre-wrap leading-relaxed">{quote.description}</p>
+                  <p className="text-gray-900 whitespace-pre-wrap leading-relaxed">{quote.description}</p>
                 </div>
               </Card>
             </div>
@@ -415,27 +415,27 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
 
           {/* 8. 총 합계 */}
           <div>
-            <h3 className="text-lg font-semibold text-foreground mb-4">총 합계</h3>
-            <Card className="bg-muted/20 border-border">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">총 합계</h3>
+            <Card className="bg-gray-50 border-border">
               <div className="p-4 md:p-6 space-y-4">
                 <div className="flex justify-between items-center text-base">
-                  <span className="text-muted-foreground">소계</span>
-                  <span className="text-foreground font-semibold">₩{new Intl.NumberFormat('ko-KR').format(quote.subtotal)}</span>
+                  <span className="text-gray-600">소계</span>
+                  <span className="text-gray-900 font-semibold">₩{new Intl.NumberFormat('ko-KR').format(quote.subtotal)}</span>
                 </div>
                 {quote.tax > 0 && (
                   <div className="flex justify-between items-center text-base">
-                    <span className="text-muted-foreground">부가세 (10%)</span>
-                    <span className="text-foreground font-semibold">₩{new Intl.NumberFormat('ko-KR').format(quote.tax)}</span>
+                    <span className="text-gray-600">부가세 (10%)</span>
+                    <span className="text-gray-900 font-semibold">₩{new Intl.NumberFormat('ko-KR').format(quote.tax)}</span>
                   </div>
                 )}
                 <Separator className="bg-border" />
-                <div className="flex justify-between items-center bg-muted/30 p-4 rounded-lg">
-                  <span className="text-xl font-bold text-foreground">총 금액</span>
+                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+                  <span className="text-xl font-bold text-gray-900">총 금액</span>
                   <div className="text-right">
-                    <span className="text-3xl font-bold text-foreground">
+                    <span className="text-3xl font-bold text-gray-900">
                       ₩{new Intl.NumberFormat('ko-KR').format(quote.total)}
                     </span>
-                    <p className="text-sm text-muted-foreground mt-1">부가세 포함</p>
+                    <p className="text-sm text-gray-600 mt-1">부가세 포함</p>
                   </div>
                 </div>
               </div>
@@ -445,7 +445,7 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
           {/* Footer */}
           <div className="text-center pt-6 border-t border-border">
             <div className="space-y-2 text-sm">
-              <p className="text-muted-foreground">본 견적서는 <span className="text-foreground font-medium">{new Date(quote.created_at).toLocaleDateString('ko-KR')}</span>에 작성되었습니다.</p>
+              <p className="text-gray-600">본 견적서는 <span className="text-gray-900 font-medium">{new Date(quote.created_at).toLocaleDateString('ko-KR')}</span>에 작성되었습니다.</p>
             </div>
           </div>
         </div>

@@ -265,48 +265,87 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
 
   const formatCurrency = (amount: number) => new Intl.NumberFormat('ko-KR').format(amount)
 
-  const saveQuote = async (status: 'draft' | 'sent' = 'draft') => {
-    // 공급자 정보 필수 필드 검증
-    if (!supplierInfo.name.trim()) {
-      alert('공급자 대표자명을 입력해주세요.')
-      return
-    }
-    
-    if (!supplierInfo.email.trim()) {
-      alert('공급자 이메일을 입력해주세요.')
-      return
-    }
-    
-    if (!supplierInfo.phone.trim()) {
-      alert('공급자 연락처를 입력해주세요.')
-      return
+  // 견적서 완성도 검증 함수
+  const isQuoteComplete = (): boolean => {
+    // 공급자 정보 필수 필드
+    if (!supplierInfo.name.trim() || !supplierInfo.email.trim() || !supplierInfo.phone.trim()) {
+      return false
     }
 
     // 사업자등록번호가 있으면 회사명도 필수
     if (supplierInfo.businessRegistrationNumber.trim() && !supplierInfo.companyName.trim()) {
-      alert('사업자등록번호를 입력하셨다면 회사명도 입력해주세요.')
-      return
+      return false
     }
 
-    // 고객 정보 필수 필드 검증
-    if (!clientInfo.name.trim()) {
-      alert('고객명을 입력해주세요.')
-      return
-    }
-    
-    if (!clientInfo.email.trim()) {
-      alert('고객 이메일을 입력해주세요.')
-      return
-    }
-    
-    if (!quoteTitle.trim()) {
-      alert('견적서 제목을 입력해주세요.')
-      return
+    // 고객 정보 필수 필드
+    if (!clientInfo.name.trim() || !clientInfo.email.trim()) {
+      return false
     }
 
-    if (!validUntil.trim()) {
-      alert('견적 유효기간을 입력해주세요.')
-      return
+    // 견적서 제목 및 유효기간
+    if (!quoteTitle.trim() || !validUntil.trim()) {
+      return false
+    }
+
+    // 항목이 최소 1개 이상이고, 첫 번째 항목이 유효한지 확인
+    if (items.length === 0 || !items[0].name.trim() || items[0].amount === 0) {
+      return false
+    }
+
+    return true
+  }
+
+  const saveQuote = async (status: 'draft' | 'saved' | 'sent' = 'draft') => {
+    // 발송('sent') 시에만 필수 필드 검증 수행
+    if (status === 'sent') {
+      // 공급자 정보 필수 필드 검증
+      if (!supplierInfo.name.trim()) {
+        alert('공급자 대표자명을 입력해주세요.')
+        return
+      }
+
+      if (!supplierInfo.email.trim()) {
+        alert('공급자 이메일을 입력해주세요.')
+        return
+      }
+
+      if (!supplierInfo.phone.trim()) {
+        alert('공급자 연락처를 입력해주세요.')
+        return
+      }
+
+      // 사업자등록번호가 있으면 회사명도 필수
+      if (supplierInfo.businessRegistrationNumber.trim() && !supplierInfo.companyName.trim()) {
+        alert('사업자등록번호를 입력하셨다면 회사명도 입력해주세요.')
+        return
+      }
+
+      // 고객 정보 필수 필드 검증
+      if (!clientInfo.name.trim()) {
+        alert('고객명을 입력해주세요.')
+        return
+      }
+
+      if (!clientInfo.email.trim()) {
+        alert('고객 이메일을 입력해주세요.')
+        return
+      }
+
+      if (!quoteTitle.trim()) {
+        alert('견적서 제목을 입력해주세요.')
+        return
+      }
+
+      if (!validUntil.trim()) {
+        alert('견적 유효기간을 입력해주세요.')
+        return
+      }
+    }
+
+    // 저장 시 완성도에 따라 상태 자동 결정
+    let finalStatus = status
+    if (status === 'draft') {
+      finalStatus = isQuoteComplete() ? 'saved' : 'draft'
     }
 
     setIsLoading(true)
@@ -327,7 +366,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         title: (quoteTitle || '').trim() || '견적서',
         issue_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
         expiry_date: validUntil || '',
-        status,
+        status: finalStatus,
         items: items.map(item => ({
           name: (item.name || '').trim(),
           description: (item.description || '').trim(),
@@ -378,9 +417,11 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
       }
 
       const savedQuote = await response.json()
-      
-      if (status === 'sent') {
+
+      if (finalStatus === 'sent') {
         alert(`${clientInfo.name}님께 카카오톡으로 견적서가 ${isEdit ? '수정되어' : ''} 발송되었습니다!`)
+      } else if (finalStatus === 'saved') {
+        alert(`견적서가 ${isEdit ? '수정되어' : ''} 저장되었습니다.`)
       } else {
         alert(`견적서가 ${isEdit ? '수정되어' : ''} 임시저장되었습니다.`)
       }
