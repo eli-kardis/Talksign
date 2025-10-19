@@ -52,6 +52,46 @@ interface Contract {
   terms?: string[];
   created_at: string;
   signed_date?: string;
+
+  // 법적 필수 요소
+  party_a_role?: string;
+  party_b_role?: string;
+  contract_copies?: number;
+  party_a_representative?: string;
+  party_b_representative?: string;
+
+  // 상세 결제 정보
+  down_payment_ratio?: number;
+  interim_payment_ratio?: number;
+  final_payment_ratio?: number;
+  down_payment_date?: string;
+  interim_payment_date?: string;
+  final_payment_date?: string;
+  payment_method?: string;
+  bank_name?: string;
+  bank_account_number?: string;
+  bank_account_holder?: string;
+
+  // 계약 이행 조건
+  delivery_conditions?: string;
+  delivery_location?: string;
+  delivery_deadline?: string;
+  warranty_period?: string;
+  warranty_scope?: string;
+
+  // 법적 보호 조항
+  nda_clause?: string;
+  termination_conditions?: string;
+  dispute_resolution?: string;
+  jurisdiction_court?: string;
+  force_majeure_clause?: string;
+
+  // 추가 조항
+  renewal_conditions?: string;
+  amendment_procedure?: string;
+  assignment_prohibition?: string;
+  special_terms?: string;
+  penalty_clause?: string;
 }
 
 export default function ContractDetailPage({ params }: { params: Promise<{ contractId: string }> }) {
@@ -412,7 +452,231 @@ export default function ContractDetailPage({ params }: { params: Promise<{ contr
             </div>
           )}
 
-          {/* 6. 총 합계 */}
+          {/* 6. 상세 결제 정보 */}
+          {(contract.down_payment_ratio || contract.bank_name) && (
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">
+                상세 결제 정보
+              </h3>
+              <Card className="bg-gray-50 border-gray-300">
+                <div className="p-4 md:p-5">
+                  {(contract.down_payment_ratio || contract.interim_payment_ratio || contract.final_payment_ratio) && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-black mb-2 text-sm">대금 지급 비율</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        {contract.down_payment_ratio && (
+                          <div className="text-sm">
+                            <span className="text-gray-700">선금: </span>
+                            <span className="text-black font-medium">{contract.down_payment_ratio}%</span>
+                          </div>
+                        )}
+                        {contract.interim_payment_ratio && (
+                          <div className="text-sm">
+                            <span className="text-gray-700">중도금: </span>
+                            <span className="text-black font-medium">{contract.interim_payment_ratio}%</span>
+                          </div>
+                        )}
+                        {contract.final_payment_ratio && (
+                          <div className="text-sm">
+                            <span className="text-gray-700">잔금: </span>
+                            <span className="text-black font-medium">{contract.final_payment_ratio}%</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {(contract.down_payment_date || contract.interim_payment_date || contract.final_payment_date) && (
+                    <div className="mb-4 border-t border-gray-300 pt-4">
+                      <h4 className="font-semibold text-black mb-2 text-sm">대금 지급일</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        {contract.down_payment_date && (
+                          <div className="text-sm">
+                            <span className="text-gray-700">선금: </span>
+                            <span className="text-black">{contract.down_payment_date}</span>
+                          </div>
+                        )}
+                        {contract.interim_payment_date && (
+                          <div className="text-sm">
+                            <span className="text-gray-700">중도금: </span>
+                            <span className="text-black">{contract.interim_payment_date}</span>
+                          </div>
+                        )}
+                        {contract.final_payment_date && (
+                          <div className="text-sm">
+                            <span className="text-gray-700">잔금: </span>
+                            <span className="text-black">{contract.final_payment_date}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {contract.bank_name && (
+                    <div className="border-t border-gray-300 pt-4">
+                      <h4 className="font-semibold text-black mb-2 text-sm">입금 계좌</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div className="text-sm">
+                          <span className="text-gray-700">은행: </span>
+                          <span className="text-black">{contract.bank_name}</span>
+                        </div>
+                        {contract.bank_account_number && (
+                          <div className="text-sm">
+                            <span className="text-gray-700">계좌번호: </span>
+                            <span className="text-black">{contract.bank_account_number}</span>
+                          </div>
+                        )}
+                        {contract.bank_account_holder && (
+                          <div className="text-sm">
+                            <span className="text-gray-700">예금주: </span>
+                            <span className="text-black">{contract.bank_account_holder}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* 7. 계약 이행 조건 */}
+          {(contract.delivery_conditions || contract.warranty_period) && (
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">
+                계약 이행 조건
+              </h3>
+              <Card className="bg-gray-50 border-gray-300">
+                <div className="p-4 md:p-5 space-y-3">
+                  {contract.delivery_conditions && (
+                    <div className="text-sm">
+                      <span className="text-gray-700 font-medium">인도/납품 조건: </span>
+                      <span className="text-black">{contract.delivery_conditions}</span>
+                    </div>
+                  )}
+                  {contract.delivery_location && (
+                    <div className="text-sm">
+                      <span className="text-gray-700 font-medium">납품 장소: </span>
+                      <span className="text-black">{contract.delivery_location}</span>
+                    </div>
+                  )}
+                  {contract.delivery_deadline && (
+                    <div className="text-sm">
+                      <span className="text-gray-700 font-medium">납품 기한: </span>
+                      <span className="text-black">{contract.delivery_deadline}</span>
+                    </div>
+                  )}
+                  {contract.warranty_period && (
+                    <div className="text-sm">
+                      <span className="text-gray-700 font-medium">하자보증 기간: </span>
+                      <span className="text-black">{contract.warranty_period}</span>
+                    </div>
+                  )}
+                  {contract.warranty_scope && (
+                    <div className="text-sm">
+                      <span className="text-gray-700 font-medium">하자보증 범위: </span>
+                      <span className="text-black">{contract.warranty_scope}</span>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* 8. 법적 보호 조항 */}
+          {(contract.nda_clause || contract.termination_conditions || contract.force_majeure_clause) && (
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">
+                법적 보호 조항
+              </h3>
+              <Card className="bg-gray-50 border-gray-300">
+                <div className="p-4 md:p-5 space-y-4">
+                  {contract.nda_clause && (
+                    <div>
+                      <h4 className="font-semibold text-black mb-2 text-sm">비밀유지 조항 (NDA)</h4>
+                      <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{contract.nda_clause}</p>
+                    </div>
+                  )}
+                  {contract.termination_conditions && (
+                    <div className="border-t border-gray-300 pt-4">
+                      <h4 className="font-semibold text-black mb-2 text-sm">계약 해지 조건</h4>
+                      <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{contract.termination_conditions}</p>
+                    </div>
+                  )}
+                  {(contract.dispute_resolution || contract.jurisdiction_court) && (
+                    <div className="border-t border-gray-300 pt-4">
+                      <h4 className="font-semibold text-black mb-2 text-sm">분쟁 해결</h4>
+                      <div className="space-y-2">
+                        {contract.dispute_resolution && (
+                          <div className="text-sm">
+                            <span className="text-gray-700">해결 방법: </span>
+                            <span className="text-black">{contract.dispute_resolution}</span>
+                          </div>
+                        )}
+                        {contract.jurisdiction_court && (
+                          <div className="text-sm">
+                            <span className="text-gray-700">관할 법원: </span>
+                            <span className="text-black">{contract.jurisdiction_court}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {contract.force_majeure_clause && (
+                    <div className="border-t border-gray-300 pt-4">
+                      <h4 className="font-semibold text-black mb-2 text-sm">불가항력 조항</h4>
+                      <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{contract.force_majeure_clause}</p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* 9. 추가 조항 */}
+          {(contract.renewal_conditions || contract.amendment_procedure || contract.special_terms || contract.penalty_clause) && (
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">
+                추가 조항
+              </h3>
+              <Card className="bg-gray-50 border-gray-300">
+                <div className="p-4 md:p-5 space-y-4">
+                  {contract.renewal_conditions && (
+                    <div>
+                      <h4 className="font-semibold text-black mb-2 text-sm">계약 갱신 조건</h4>
+                      <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{contract.renewal_conditions}</p>
+                    </div>
+                  )}
+                  {contract.amendment_procedure && (
+                    <div className="border-t border-gray-300 pt-4">
+                      <h4 className="font-semibold text-black mb-2 text-sm">계약 변경/수정 절차</h4>
+                      <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{contract.amendment_procedure}</p>
+                    </div>
+                  )}
+                  {contract.assignment_prohibition && (
+                    <div className="border-t border-gray-300 pt-4">
+                      <h4 className="font-semibold text-black mb-2 text-sm">권리/의무 양도 금지</h4>
+                      <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{contract.assignment_prohibition}</p>
+                    </div>
+                  )}
+                  {contract.special_terms && (
+                    <div className="border-t border-gray-300 pt-4">
+                      <h4 className="font-semibold text-black mb-2 text-sm">특약 사항</h4>
+                      <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{contract.special_terms}</p>
+                    </div>
+                  )}
+                  {contract.penalty_clause && (
+                    <div className="border-t border-gray-300 pt-4">
+                      <h4 className="font-semibold text-black mb-2 text-sm">위약금 조항</h4>
+                      <p className="text-sm text-black leading-relaxed whitespace-pre-wrap">{contract.penalty_clause}</p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* 10. 총 합계 */}
           <div>
             <h3 className="text-lg font-semibold text-black mb-4">총 합계</h3>
             <Card className="bg-gray-50 border-gray-300">

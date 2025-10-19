@@ -248,6 +248,11 @@ export type Database = {
       }
       contracts: {
         Row: {
+          amendment_procedure: string | null
+          assignment_prohibition: string | null
+          bank_account_holder: string | null
+          bank_account_number: string | null
+          bank_name: string | null
           client_address: string | null
           client_business_number: string | null
           client_company: string | null
@@ -255,35 +260,64 @@ export type Database = {
           client_name: string
           client_phone: string | null
           content: string | null
+          contract_copies: number | null
           contract_number: string | null
           contract_url: string | null
           created_at: string | null
           customer_id: string | null
+          delivery_conditions: string | null
+          delivery_deadline: string | null
+          delivery_location: string | null
+          dispute_resolution: string | null
+          down_payment_date: string | null
+          down_payment_ratio: number | null
           end_date: string | null
+          final_payment_date: string | null
+          final_payment_ratio: number | null
+          force_majeure_clause: string | null
           id: string
+          interim_payment_date: string | null
+          interim_payment_ratio: number | null
           issue_date: string
           items: Json
+          jurisdiction_court: string | null
+          nda_clause: string | null
           notes: string | null
+          party_a_representative: string | null
+          party_a_role: string | null
+          party_b_representative: string | null
+          party_b_role: string | null
           payment_method: string | null
           payment_terms: string | null
+          penalty_clause: string | null
           project_description: string | null
           project_end_date: string | null
           project_start_date: string | null
           quote_id: string | null
+          renewal_conditions: string | null
           signed_at: string | null
+          special_terms: string | null
           start_date: string
           status: string | null
           subtotal: number | null
           supplier_info: Json | null
           tax_amount: number | null
           tax_rate: number | null
+          termination_conditions: string | null
           terms: string | null
           title: string
           total_amount: number | null
           updated_at: string | null
           user_id: string
+          warranty_period: string | null
+          warranty_scope: string | null
         }
         Insert: {
+          amendment_procedure?: string | null
+          assignment_prohibition?: string | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
           client_address?: string | null
           client_business_number?: string | null
           client_company?: string | null
@@ -291,35 +325,64 @@ export type Database = {
           client_name: string
           client_phone?: string | null
           content?: string | null
+          contract_copies?: number | null
           contract_number?: string | null
           contract_url?: string | null
           created_at?: string | null
           customer_id?: string | null
+          delivery_conditions?: string | null
+          delivery_deadline?: string | null
+          delivery_location?: string | null
+          dispute_resolution?: string | null
+          down_payment_date?: string | null
+          down_payment_ratio?: number | null
           end_date?: string | null
+          final_payment_date?: string | null
+          final_payment_ratio?: number | null
+          force_majeure_clause?: string | null
           id?: string
+          interim_payment_date?: string | null
+          interim_payment_ratio?: number | null
           issue_date: string
           items?: Json
+          jurisdiction_court?: string | null
+          nda_clause?: string | null
           notes?: string | null
+          party_a_representative?: string | null
+          party_a_role?: string | null
+          party_b_representative?: string | null
+          party_b_role?: string | null
           payment_method?: string | null
           payment_terms?: string | null
+          penalty_clause?: string | null
           project_description?: string | null
           project_end_date?: string | null
           project_start_date?: string | null
           quote_id?: string | null
+          renewal_conditions?: string | null
           signed_at?: string | null
+          special_terms?: string | null
           start_date: string
           status?: string | null
           subtotal?: number | null
           supplier_info?: Json | null
           tax_amount?: number | null
           tax_rate?: number | null
+          termination_conditions?: string | null
           terms?: string | null
           title: string
           total_amount?: number | null
           updated_at?: string | null
           user_id: string
+          warranty_period?: string | null
+          warranty_scope?: string | null
         }
         Update: {
+          amendment_procedure?: string | null
+          assignment_prohibition?: string | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
           client_address?: string | null
           client_business_number?: string | null
           client_company?: string | null
@@ -327,33 +390,57 @@ export type Database = {
           client_name?: string
           client_phone?: string | null
           content?: string | null
+          contract_copies?: number | null
           contract_number?: string | null
           contract_url?: string | null
           created_at?: string | null
           customer_id?: string | null
+          delivery_conditions?: string | null
+          delivery_deadline?: string | null
+          delivery_location?: string | null
+          dispute_resolution?: string | null
+          down_payment_date?: string | null
+          down_payment_ratio?: number | null
           end_date?: string | null
+          final_payment_date?: string | null
+          final_payment_ratio?: number | null
+          force_majeure_clause?: string | null
           id?: string
+          interim_payment_date?: string | null
+          interim_payment_ratio?: number | null
           issue_date?: string
           items?: Json
+          jurisdiction_court?: string | null
+          nda_clause?: string | null
           notes?: string | null
+          party_a_representative?: string | null
+          party_a_role?: string | null
+          party_b_representative?: string | null
+          party_b_role?: string | null
           payment_method?: string | null
           payment_terms?: string | null
+          penalty_clause?: string | null
           project_description?: string | null
           project_end_date?: string | null
           project_start_date?: string | null
           quote_id?: string | null
+          renewal_conditions?: string | null
           signed_at?: string | null
+          special_terms?: string | null
           start_date?: string
           status?: string | null
           subtotal?: number | null
           supplier_info?: Json | null
           tax_amount?: number | null
           tax_rate?: number | null
+          termination_conditions?: string | null
           terms?: string | null
           title?: string
           total_amount?: number | null
           updated_at?: string | null
           user_id?: string
+          warranty_period?: string | null
+          warranty_scope?: string | null
         }
         Relationships: [
           {
@@ -428,6 +515,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      email_logs: {
+        Row: {
+          created_at: string | null
+          entity_id: string
+          entity_type: string
+          from_email: string
+          id: string
+          message: string | null
+          opened_at: string | null
+          resend_id: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+          to_email: string
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id: string
+          entity_type: string
+          from_email: string
+          id?: string
+          message?: string | null
+          opened_at?: string | null
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          to_email: string
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          from_email?: string
+          id?: string
+          message?: string | null
+          opened_at?: string | null
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          to_email?: string
+        }
+        Relationships: []
       }
       kv_store_e83d4894: {
         Row: {
@@ -600,6 +732,10 @@ export type Database = {
       }
       quotes: {
         Row: {
+          as_conditions: string | null
+          bank_account_holder: string | null
+          bank_account_number: string | null
+          bank_name: string | null
           client_address: string | null
           client_business_number: string | null
           client_company: string | null
@@ -608,12 +744,22 @@ export type Database = {
           client_phone: string | null
           created_at: string | null
           customer_id: string | null
+          delivery_due_date: string | null
+          disclaimer: string | null
+          discount_amount: number | null
+          discount_rate: number | null
           expiry_date: string | null
           id: string
           issue_date: string
           items: Json
           notes: string | null
+          payment_condition: string | null
+          payment_due_date: string | null
+          payment_method: string | null
+          promotion_code: string | null
+          promotion_name: string | null
           quote_number: string | null
+          special_notes: string | null
           status: string | null
           subtotal: number | null
           supplier_info: Json | null
@@ -622,8 +768,13 @@ export type Database = {
           total: number | null
           updated_at: string | null
           user_id: string
+          warranty_period: string | null
         }
         Insert: {
+          as_conditions?: string | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
           client_address?: string | null
           client_business_number?: string | null
           client_company?: string | null
@@ -632,12 +783,22 @@ export type Database = {
           client_phone?: string | null
           created_at?: string | null
           customer_id?: string | null
+          delivery_due_date?: string | null
+          disclaimer?: string | null
+          discount_amount?: number | null
+          discount_rate?: number | null
           expiry_date?: string | null
           id?: string
           issue_date: string
           items?: Json
           notes?: string | null
+          payment_condition?: string | null
+          payment_due_date?: string | null
+          payment_method?: string | null
+          promotion_code?: string | null
+          promotion_name?: string | null
           quote_number?: string | null
+          special_notes?: string | null
           status?: string | null
           subtotal?: number | null
           supplier_info?: Json | null
@@ -646,8 +807,13 @@ export type Database = {
           total?: number | null
           updated_at?: string | null
           user_id: string
+          warranty_period?: string | null
         }
         Update: {
+          as_conditions?: string | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
           client_address?: string | null
           client_business_number?: string | null
           client_company?: string | null
@@ -656,12 +822,22 @@ export type Database = {
           client_phone?: string | null
           created_at?: string | null
           customer_id?: string | null
+          delivery_due_date?: string | null
+          disclaimer?: string | null
+          discount_amount?: number | null
+          discount_rate?: number | null
           expiry_date?: string | null
           id?: string
           issue_date?: string
           items?: Json
           notes?: string | null
+          payment_condition?: string | null
+          payment_due_date?: string | null
+          payment_method?: string | null
+          promotion_code?: string | null
+          promotion_name?: string | null
           quote_number?: string | null
+          special_notes?: string | null
           status?: string | null
           subtotal?: number | null
           supplier_info?: Json | null
@@ -670,6 +846,7 @@ export type Database = {
           total?: number | null
           updated_at?: string | null
           user_id?: string
+          warranty_period?: string | null
         }
         Relationships: [
           {
@@ -902,33 +1079,48 @@ export type Database = {
       }
       users: {
         Row: {
+          business_address: string | null
+          business_category: string | null
           business_name: string | null
           business_registration_number: string | null
+          business_type: string | null
           company_name: string | null
+          company_seal_image_url: string | null
           created_at: string | null
           email: string
+          fax: string | null
           id: string
           name: string
           phone: string | null
           updated_at: string | null
         }
         Insert: {
+          business_address?: string | null
+          business_category?: string | null
           business_name?: string | null
           business_registration_number?: string | null
+          business_type?: string | null
           company_name?: string | null
+          company_seal_image_url?: string | null
           created_at?: string | null
           email: string
+          fax?: string | null
           id: string
           name: string
           phone?: string | null
           updated_at?: string | null
         }
         Update: {
+          business_address?: string | null
+          business_category?: string | null
           business_name?: string | null
           business_registration_number?: string | null
+          business_type?: string | null
           company_name?: string | null
+          company_seal_image_url?: string | null
           created_at?: string | null
           email?: string
+          fax?: string | null
           id?: string
           name?: string
           phone?: string | null
@@ -983,7 +1175,13 @@ export type Database = {
         | "completed"
         | "failed"
         | "refunded"
-      quote_status: "draft" | "saved" | "sent" | "approved" | "rejected" | "expired"
+      quote_status:
+        | "draft"
+        | "sent"
+        | "approved"
+        | "rejected"
+        | "expired"
+        | "saved"
       schedule_priority: "low" | "medium" | "high"
       schedule_type: "task" | "meeting" | "deadline" | "presentation" | "launch"
       tax_invoice_status:
@@ -992,7 +1190,6 @@ export type Database = {
         | "sent"
         | "confirmed"
         | "cancelled"
-      user_role: "freelancer" | "client" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1128,11 +1325,17 @@ export const Constants = {
         "failed",
         "refunded",
       ],
-      quote_status: ["draft", "saved", "sent", "approved", "rejected", "expired"],
+      quote_status: [
+        "draft",
+        "sent",
+        "approved",
+        "rejected",
+        "expired",
+        "saved",
+      ],
       schedule_priority: ["low", "medium", "high"],
       schedule_type: ["task", "meeting", "deadline", "presentation", "launch"],
       tax_invoice_status: ["draft", "issued", "sent", "confirmed", "cancelled"],
-      user_role: ["freelancer", "client", "admin"],
     },
   },
 } as const

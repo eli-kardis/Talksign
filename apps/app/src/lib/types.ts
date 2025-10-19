@@ -42,10 +42,14 @@ export interface SupplierInfo {
   name?: string
   email?: string
   phone?: string
+  fax?: string
   business_name?: string
   business_registration_number?: string
+  business_type?: string
+  business_category?: string
   company_name?: string
   business_address?: string
+  company_seal_image_url?: string
 }
 
 export interface DigitalSignature {
@@ -67,6 +71,8 @@ export interface Contract extends Omit<DbContract, 'items' | 'supplier_info'> {
 export interface Quote extends Omit<DbQuote, 'items' | 'supplier_info'> {
   items: QuoteItem[]
   supplier_info?: SupplierInfo
+  // Note: All other fields (payment info, quote conditions, discount info)
+  // are already included from DbQuote via extends
 }
 
 // API 응답 타입

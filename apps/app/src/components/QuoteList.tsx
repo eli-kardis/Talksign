@@ -33,7 +33,9 @@ import {
   Filter,
   Trash2,
   Download,
+  Mail,
 } from "lucide-react";
+import { EmailSendPanel } from "./EmailSendPanel";
 
 // Database Quote 타입 (API에서 받는 데이터 - supabase 스키마와 일치)
 interface DatabaseQuote {
@@ -149,6 +151,7 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
   const [active, setActive] = useState<TabKey>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [dbQuotes, setDbQuotes] = useState<DatabaseQuote[]>([]); // 원본 데이터 저장
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortField, setSortField] = useState<SortField | null>(null);
@@ -157,12 +160,18 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
   const [filterAmountMin, setFilterAmountMin] = useState<string>('');
   const [filterAmountMax, setFilterAmountMax] = useState<string>('');
   const [filterDateStart, setFilterDateStart] = useState<Date | undefined>(undefined);
-  
+
   // 선택 및 삭제 관련 상태
   const [selectedQuotes, setSelectedQuotes] = useState<string[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [filterDateEnd, setFilterDateEnd] = useState<Date | undefined>(undefined);
+
+  // 이메일 발송 관련 상태
+  const [emailPanelOpen, setEmailPanelOpen] = useState(false);
+  const [selectedQuoteForEmail, setSelectedQuoteForEmail] = useState<DatabaseQuote | null>(null);
+  const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState('');
 
   // 숫자를 3자리마다 콤마를 넣어 포맷팅하는 함수
   const formatNumber = (num: string) => {
@@ -248,8 +257,9 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
         }
 
         const responseData = await response.json();
-        const dbQuotes: DatabaseQuote[] = responseData.data || [];
-        const transformedQuotes = dbQuotes.map(transformQuote);
+        const fetchedDbQuotes: DatabaseQuote[] = responseData.data || [];
+        const transformedQuotes = fetchedDbQuotes.map(transformQuote);
+        setDbQuotes(fetchedDbQuotes); // 원본 데이터 저장
         setQuotes(transformedQuotes);
       } catch (err) {
         console.error('Error fetching quotes:', err);
@@ -261,6 +271,34 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
 
     fetchQuotes();
   }, []);
+
+  // 사용자 정보 가져오기
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await AuthenticatedApiClient.get('/api/users/profile');
+        if (response.ok) {
+          const data = await response.json();
+          setUserEmail(data.email || '');
+          setUserName(data.name || data.company_name || '');
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
+  // 이메일 발송 핸들러
+  const handleSendEmail = (quote: Quote, event: React.MouseEvent) => {
+    event.stopPropagation();
+    const dbQuote = dbQuotes.find(q => q.id === quote.id);
+    if (dbQuote) {
+      setSelectedQuoteForEmail(dbQuote);
+      setEmailPanelOpen(true);
+    }
+  };
 
   // ✅ 타입 안전한 카운트 계산
   const counts = useMemo(() => {
@@ -635,17 +673,20 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                       onCheckedChange={handleSelectAll}
                     />
                   </th>
-                  <SortableHeader 
-                    field="client" 
-                    currentSort={sortField} 
+                  <SortableHeader
+                    field="client"
+                    currentSort={sortField}
                     currentDirection={sortDirection}
                     onSort={handleSort}
                   >
                     회사명
                   </SortableHeader>
-                  <SortableHeader 
-                    field="project" 
-                    currentSort={sortField} 
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    대표자명
+                  </th>
+                  <SortableHeader
+                    field="project"
+                    currentSort={sortField}
                     currentDirection={sortDirection}
                     onSort={handleSort}
                   >
@@ -694,14 +735,10 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                       />
                     </td>
                     <td className="px-4 py-3 cursor-pointer" onClick={() => onViewQuote(quote.id)}>
-                      <div className="flex items-center gap-3">
-                        <div>
-                          <p className="font-medium text-foreground text-sm">{quote.client}</p>
-                          {quote.company && (
-                            <p className="text-xs text-muted-foreground">{quote.company}</p>
-                          )}
-                        </div>
-                      </div>
+                      <p className="font-medium text-foreground text-sm">{quote.company || '-'}</p>
+                    </td>
+                    <td className="px-4 py-3 cursor-pointer" onClick={() => onViewQuote(quote.id)}>
+                      <p className="font-medium text-foreground text-sm">{quote.client}</p>
                     </td>
                     <td className="px-4 py-3 cursor-pointer" onClick={() => onViewQuote(quote.id)}>
                       <p className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">{quote.project}</p>
@@ -753,6 +790,16 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                         >
                           <Download className="w-3 h-3 mr-1" />
                           PDF
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => handleSendEmail(quote, e)}
+                          className="text-xs h-8"
+                          title="이메일 발송"
+                        >
+                          <Mail className="w-3 h-3 mr-1" />
+                          이메일
                         </Button>
                       </div>
                     </td>
@@ -820,6 +867,15 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                 >
                   <Download className="w-3 h-3" />
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => handleSendEmail(quote, e)}
+                  className="text-xs h-8 px-2"
+                  title="이메일 발송"
+                >
+                  <Mail className="w-3 h-3" />
+                </Button>
               </div>
             </Card>
           ))}
@@ -881,6 +937,21 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 이메일 발송 패널 */}
+      {selectedQuoteForEmail && (
+        <EmailSendPanel
+          isOpen={emailPanelOpen}
+          onClose={() => setEmailPanelOpen(false)}
+          entityType="quote"
+          entityId={selectedQuoteForEmail.id}
+          entityTitle={selectedQuoteForEmail.title}
+          recipientEmail={selectedQuoteForEmail.client_email}
+          recipientName={selectedQuoteForEmail.client_name}
+          senderEmail={userEmail}
+          senderName={userName}
+        />
+      )}
     </div>
   );
 }

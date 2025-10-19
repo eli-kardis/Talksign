@@ -169,6 +169,56 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     additionalTerms: ''
   });
 
+  // 8. 법적 필수 요소
+  const [legalInfo, setLegalInfo] = useState({
+    partyARole: '발주자', // 갑의 역할
+    partyBRole: '수급업체', // 을의 역할
+    contractCopies: 2,
+    partyARepresentative: '', // 발주자 대표자
+    partyBRepresentative: '' // 수급업체 대표자
+  });
+
+  // 9. 상세 결제 정보
+  const [detailedPaymentInfo, setDetailedPaymentInfo] = useState({
+    downPaymentRatio: 0,
+    interimPaymentRatio: 0,
+    finalPaymentRatio: 0,
+    downPaymentDate: '',
+    interimPaymentDate: '',
+    finalPaymentDate: '',
+    paymentMethod: '계좌이체',
+    bankName: '',
+    bankAccountNumber: '',
+    bankAccountHolder: ''
+  });
+
+  // 10. 계약 이행 조건
+  const [deliveryInfo, setDeliveryInfo] = useState({
+    deliveryConditions: '',
+    deliveryLocation: '',
+    deliveryDeadline: '',
+    warrantyPeriod: '',
+    warrantyScope: ''
+  });
+
+  // 11. 법적 보호 조항
+  const [legalClauses, setLegalClauses] = useState({
+    ndaClause: '',
+    terminationConditions: '',
+    disputeResolution: '서울중앙지방법원',
+    jurisdictionCourt: '서울중앙지방법원',
+    forceMajeureClause: ''
+  });
+
+  // 12. 추가 조항
+  const [additionalClauses, setAdditionalClauses] = useState({
+    renewalConditions: '',
+    amendmentProcedure: '',
+    assignmentProhibition: '',
+    specialTerms: '',
+    penaltyClause: ''
+  });
+
   // 사용자 정보를 자동으로 로드
   useEffect(() => {
     const loadUserInfo = async () => {
@@ -206,7 +256,12 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         projectInfo,
         contractItems,
         contractTerms,
-        paymentInfo
+        paymentInfo,
+        legalInfo,
+        detailedPaymentInfo,
+        deliveryInfo,
+        legalClauses,
+        additionalClauses
       });
     }
   }, [isEdit, initialData, supplierInfo.name]);
@@ -234,12 +289,17 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       projectInfo,
       contractItems,
       contractTerms,
-      paymentInfo
+      paymentInfo,
+      legalInfo,
+      detailedPaymentInfo,
+      deliveryInfo,
+      legalClauses,
+      additionalClauses
     };
 
     const hasChanges = !compareObjects(currentFormData, initialFormData);
     setHasUnsavedChanges(hasChanges);
-  }, [contractBasicInfo, clientInfo, supplierInfo, projectInfo, contractItems, contractTerms, paymentInfo, initialFormData, isEdit]);
+  }, [contractBasicInfo, clientInfo, supplierInfo, projectInfo, contractItems, contractTerms, paymentInfo, legalInfo, detailedPaymentInfo, deliveryInfo, legalClauses, additionalClauses, initialFormData, isEdit]);
 
   // 페이지 언로드 시 경고
   useEffect(() => {
@@ -724,7 +784,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       if (isEdit) {
         setInitialFormData({
           contractBasicInfo, clientInfo, supplierInfo, projectInfo,
-          contractItems, contractTerms, paymentInfo
+          contractItems, contractTerms, paymentInfo, legalInfo,
+          detailedPaymentInfo, deliveryInfo, legalClauses, additionalClauses
         });
         setHasUnsavedChanges(false);
       }
@@ -769,7 +830,46 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         additional_terms: paymentInfo.additionalTerms,
         ...calculateTotals(),
         status: 'draft',
-        ...(initialData?.quoteId && { quote_id: initialData.quoteId })
+        ...(initialData?.quoteId && { quote_id: initialData.quoteId }),
+
+        // 법적 필수 요소
+        party_a_role: legalInfo.partyARole || null,
+        party_b_role: legalInfo.partyBRole || null,
+        contract_copies: legalInfo.contractCopies || 2,
+        party_a_representative: legalInfo.partyARepresentative || null,
+        party_b_representative: legalInfo.partyBRepresentative || null,
+
+        // 상세 결제 정보
+        down_payment_ratio: detailedPaymentInfo.downPaymentRatio || null,
+        interim_payment_ratio: detailedPaymentInfo.interimPaymentRatio || null,
+        final_payment_ratio: detailedPaymentInfo.finalPaymentRatio || null,
+        down_payment_date: detailedPaymentInfo.downPaymentDate || null,
+        interim_payment_date: detailedPaymentInfo.interimPaymentDate || null,
+        final_payment_date: detailedPaymentInfo.finalPaymentDate || null,
+        bank_name: detailedPaymentInfo.bankName || null,
+        bank_account_number: detailedPaymentInfo.bankAccountNumber || null,
+        bank_account_holder: detailedPaymentInfo.bankAccountHolder || null,
+
+        // 계약 이행 조건
+        delivery_conditions: deliveryInfo.deliveryConditions || null,
+        delivery_location: deliveryInfo.deliveryLocation || null,
+        delivery_deadline: deliveryInfo.deliveryDeadline || null,
+        warranty_period: deliveryInfo.warrantyPeriod || null,
+        warranty_scope: deliveryInfo.warrantyScope || null,
+
+        // 법적 보호 조항
+        nda_clause: legalClauses.ndaClause || null,
+        termination_conditions: legalClauses.terminationConditions || null,
+        dispute_resolution: legalClauses.disputeResolution || null,
+        jurisdiction_court: legalClauses.jurisdictionCourt || null,
+        force_majeure_clause: legalClauses.forceMajeureClause || null,
+
+        // 추가 조항
+        renewal_conditions: additionalClauses.renewalConditions || null,
+        amendment_procedure: additionalClauses.amendmentProcedure || null,
+        assignment_prohibition: additionalClauses.assignmentProhibition || null,
+        special_terms: additionalClauses.specialTerms || null,
+        penalty_clause: additionalClauses.penaltyClause || null
       };
 
       if (isEdit && editContractId) {
@@ -803,11 +903,12 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       if (isEdit) {
         setInitialFormData({
           contractBasicInfo, clientInfo, supplierInfo, projectInfo,
-          contractItems, contractTerms, paymentInfo
+          contractItems, contractTerms, paymentInfo, legalInfo,
+          detailedPaymentInfo, deliveryInfo, legalClauses, additionalClauses
         });
         setHasUnsavedChanges(false);
       }
-      
+
       onNavigate('contracts');
     } catch (error) {
       console.error('Contract save error:', error);
@@ -1555,6 +1656,313 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                   onChange={(e) => setPaymentInfo({...paymentInfo, additionalTerms: e.target.value})}
                   placeholder="결제와 관련된 추가 조건이 있다면 입력하세요"
                   rows={3}
+                  className="bg-input-background border-border"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* 8. 상세 결제 정보 */}
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">상세 결제 정보 (선택사항)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="downPaymentRatio" className="text-foreground">선금 비율 (%)</Label>
+                <Input
+                  id="downPaymentRatio"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={detailedPaymentInfo.downPaymentRatio}
+                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, downPaymentRatio: Number(e.target.value)})}
+                  placeholder="예: 30"
+                  className="bg-input-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="interimPaymentRatio" className="text-foreground">중도금 비율 (%)</Label>
+                <Input
+                  id="interimPaymentRatio"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={detailedPaymentInfo.interimPaymentRatio}
+                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, interimPaymentRatio: Number(e.target.value)})}
+                  placeholder="예: 40"
+                  className="bg-input-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="finalPaymentRatio" className="text-foreground">잔금 비율 (%)</Label>
+                <Input
+                  id="finalPaymentRatio"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={detailedPaymentInfo.finalPaymentRatio}
+                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, finalPaymentRatio: Number(e.target.value)})}
+                  placeholder="예: 30"
+                  className="bg-input-background border-border"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="downPaymentDate" className="text-foreground">선금 지급일</Label>
+                <Input
+                  id="downPaymentDate"
+                  value={detailedPaymentInfo.downPaymentDate}
+                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, downPaymentDate: e.target.value})}
+                  placeholder="예: 계약 체결 후 7일 이내"
+                  className="bg-input-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="interimPaymentDate" className="text-foreground">중도금 지급일</Label>
+                <Input
+                  id="interimPaymentDate"
+                  value={detailedPaymentInfo.interimPaymentDate}
+                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, interimPaymentDate: e.target.value})}
+                  placeholder="예: 중간 검수 후 7일 이내"
+                  className="bg-input-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="finalPaymentDate" className="text-foreground">잔금 지급일</Label>
+                <Input
+                  id="finalPaymentDate"
+                  value={detailedPaymentInfo.finalPaymentDate}
+                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, finalPaymentDate: e.target.value})}
+                  placeholder="예: 최종 인도 후 7일 이내"
+                  className="bg-input-background border-border"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="bankName" className="text-foreground">은행명</Label>
+                <Input
+                  id="bankName"
+                  value={detailedPaymentInfo.bankName}
+                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, bankName: e.target.value})}
+                  placeholder="예: 국민은행"
+                  className="bg-input-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bankAccountNumber" className="text-foreground">계좌번호</Label>
+                <Input
+                  id="bankAccountNumber"
+                  value={detailedPaymentInfo.bankAccountNumber}
+                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, bankAccountNumber: e.target.value})}
+                  placeholder="예: 123-456-789012"
+                  className="bg-input-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bankAccountHolder" className="text-foreground">예금주</Label>
+                <Input
+                  id="bankAccountHolder"
+                  value={detailedPaymentInfo.bankAccountHolder}
+                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, bankAccountHolder: e.target.value})}
+                  placeholder="예: (주)회사명"
+                  className="bg-input-background border-border"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* 9. 계약 이행 조건 */}
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">계약 이행 조건 (선택사항)</h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="deliveryConditions" className="text-foreground">인도/납품 조건</Label>
+                <Textarea
+                  id="deliveryConditions"
+                  value={deliveryInfo.deliveryConditions}
+                  onChange={(e) => setDeliveryInfo({...deliveryInfo, deliveryConditions: e.target.value})}
+                  placeholder="예: 최종 검수 완료 후 5영업일 이내 납품"
+                  rows={2}
+                  className="bg-input-background border-border"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="deliveryLocation" className="text-foreground">납품 장소</Label>
+                  <Input
+                    id="deliveryLocation"
+                    value={deliveryInfo.deliveryLocation}
+                    onChange={(e) => setDeliveryInfo({...deliveryInfo, deliveryLocation: e.target.value})}
+                    placeholder="예: 발주처 지정 장소"
+                    className="bg-input-background border-border"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="deliveryDeadline" className="text-foreground">납품 기한</Label>
+                  <Input
+                    id="deliveryDeadline"
+                    value={deliveryInfo.deliveryDeadline}
+                    onChange={(e) => setDeliveryInfo({...deliveryInfo, deliveryDeadline: e.target.value})}
+                    placeholder="예: 2025-12-31"
+                    className="bg-input-background border-border"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="warrantyPeriod" className="text-foreground">하자보증 기간</Label>
+                  <Input
+                    id="warrantyPeriod"
+                    value={deliveryInfo.warrantyPeriod}
+                    onChange={(e) => setDeliveryInfo({...deliveryInfo, warrantyPeriod: e.target.value})}
+                    placeholder="예: 납품 후 1년"
+                    className="bg-input-background border-border"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="warrantyScope" className="text-foreground">하자보증 범위</Label>
+                  <Input
+                    id="warrantyScope"
+                    value={deliveryInfo.warrantyScope}
+                    onChange={(e) => setDeliveryInfo({...deliveryInfo, warrantyScope: e.target.value})}
+                    placeholder="예: 프로그램 오류 수정"
+                    className="bg-input-background border-border"
+                  />
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* 10. 법적 보호 조항 */}
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">법적 보호 조항 (선택사항)</h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="ndaClause" className="text-foreground">비밀유지 조항 (NDA)</Label>
+                <Textarea
+                  id="ndaClause"
+                  value={legalClauses.ndaClause}
+                  onChange={(e) => setLegalClauses({...legalClauses, ndaClause: e.target.value})}
+                  placeholder="예: 양 당사자는 본 계약과 관련하여 취득한 상대방의 기밀정보를 제3자에게 공개하거나 누설하지 않는다."
+                  rows={3}
+                  className="bg-input-background border-border"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="terminationConditions" className="text-foreground">계약 해지 조건</Label>
+                <Textarea
+                  id="terminationConditions"
+                  value={legalClauses.terminationConditions}
+                  onChange={(e) => setLegalClauses({...legalClauses, terminationConditions: e.target.value})}
+                  placeholder="예: 상대방이 계약 의무를 중대하게 위반한 경우 서면 통지 후 14일 이내 시정되지 않으면 해지 가능"
+                  rows={3}
+                  className="bg-input-background border-border"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="disputeResolution" className="text-foreground">분쟁 해결 방법</Label>
+                  <Input
+                    id="disputeResolution"
+                    value={legalClauses.disputeResolution}
+                    onChange={(e) => setLegalClauses({...legalClauses, disputeResolution: e.target.value})}
+                    placeholder="예: 중재 또는 조정"
+                    className="bg-input-background border-border"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="jurisdictionCourt" className="text-foreground">관할 법원</Label>
+                  <Input
+                    id="jurisdictionCourt"
+                    value={legalClauses.jurisdictionCourt}
+                    onChange={(e) => setLegalClauses({...legalClauses, jurisdictionCourt: e.target.value})}
+                    placeholder="예: 서울중앙지방법원"
+                    className="bg-input-background border-border"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="forceMajeureClause" className="text-foreground">불가항력 조항</Label>
+                <Textarea
+                  id="forceMajeureClause"
+                  value={legalClauses.forceMajeureClause}
+                  onChange={(e) => setLegalClauses({...legalClauses, forceMajeureClause: e.target.value})}
+                  placeholder="예: 천재지변, 전쟁, 법령 개정 등 불가항력적 사유로 계약 이행이 불가능한 경우 당사자는 책임을 지지 않는다."
+                  rows={3}
+                  className="bg-input-background border-border"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* 11. 추가 조항 */}
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">추가 조항 (선택사항)</h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="renewalConditions" className="text-foreground">계약 갱신 조건</Label>
+                <Textarea
+                  id="renewalConditions"
+                  value={additionalClauses.renewalConditions}
+                  onChange={(e) => setAdditionalClauses({...additionalClauses, renewalConditions: e.target.value})}
+                  placeholder="예: 계약 만료 30일 전까지 별도 통지가 없는 경우 동일 조건으로 1년 자동 연장"
+                  rows={2}
+                  className="bg-input-background border-border"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amendmentProcedure" className="text-foreground">계약 변경/수정 절차</Label>
+                <Textarea
+                  id="amendmentProcedure"
+                  value={additionalClauses.amendmentProcedure}
+                  onChange={(e) => setAdditionalClauses({...additionalClauses, amendmentProcedure: e.target.value})}
+                  placeholder="예: 계약 내용 변경은 양 당사자의 서면 합의로만 가능하다."
+                  rows={2}
+                  className="bg-input-background border-border"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="assignmentProhibition" className="text-foreground">권리/의무 양도 금지</Label>
+                <Textarea
+                  id="assignmentProhibition"
+                  value={additionalClauses.assignmentProhibition}
+                  onChange={(e) => setAdditionalClauses({...additionalClauses, assignmentProhibition: e.target.value})}
+                  placeholder="예: 당사자는 상대방의 사전 서면 동의 없이 본 계약상 권리와 의무를 제3자에게 양도할 수 없다."
+                  rows={2}
+                  className="bg-input-background border-border"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="specialTerms" className="text-foreground">특약 사항</Label>
+                <Textarea
+                  id="specialTerms"
+                  value={additionalClauses.specialTerms}
+                  onChange={(e) => setAdditionalClauses({...additionalClauses, specialTerms: e.target.value})}
+                  placeholder="기타 특별히 합의된 사항을 입력하세요"
+                  rows={3}
+                  className="bg-input-background border-border"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="penaltyClause" className="text-foreground">위약금 조항</Label>
+                <Textarea
+                  id="penaltyClause"
+                  value={additionalClauses.penaltyClause}
+                  onChange={(e) => setAdditionalClauses({...additionalClauses, penaltyClause: e.target.value})}
+                  placeholder="예: 계약 위반 시 계약금액의 10%를 위약금으로 지급한다."
+                  rows={2}
                   className="bg-input-background border-border"
                 />
               </div>

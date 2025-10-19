@@ -9,11 +9,12 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar as CalendarComponent } from './ui/calendar';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { PenTool, FileText, Clock, CheckCircle, AlertCircle, Search, MessageSquare, Eye, Edit, Calendar, User, Plus, ChevronUp, ChevronDown, Filter, Trash2, Download } from 'lucide-react';
+import { PenTool, FileText, Clock, CheckCircle, AlertCircle, Search, MessageSquare, Eye, Edit, Calendar, User, Plus, ChevronUp, ChevronDown, Filter, Trash2, Download, Mail } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { AuthenticatedApiClient } from '@/lib/api-client';
 import { DemoModeNotice } from './DemoModeNotice';
+import { EmailSendPanel } from './EmailSendPanel';
 
 interface Contract {
   id: string;
@@ -137,6 +138,12 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // 이메일 발송 관련 상태
+  const [emailPanelOpen, setEmailPanelOpen] = useState(false);
+  const [selectedContractForEmail, setSelectedContractForEmail] = useState<any>(null);
+  const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState('');
+
   // Load contracts from API
   useEffect(() => {
     const loadContracts = async () => {
@@ -163,6 +170,39 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
 
     loadContracts();
   }, []);
+
+  // 사용자 정보 가져오기
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await AuthenticatedApiClient.get('/api/users/profile');
+        if (response.ok) {
+          const data = await response.json();
+          setUserEmail(data.email || '');
+          setUserName(data.name || data.company_name || '');
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
+  // 이메일 발송 핸들러
+  const handleSendEmail = async (contractId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    try {
+      const response = await AuthenticatedApiClient.get(`/api/contracts/${contractId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedContractForEmail(data);
+        setEmailPanelOpen(true);
+      }
+    } catch (error) {
+      console.error('Error fetching contract for email:', error);
+    }
+  };
 
   // Selection handlers
   const handleSelectContract = (contractId: string, checked: boolean) => {
@@ -736,6 +776,16 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                               <Download className="w-3 h-3 mr-1" />
                               PDF
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => handleSendEmail(contract.id, e)}
+                              className="text-xs h-8"
+                              title="이메일 발송"
+                            >
+                              <Mail className="w-3 h-3 mr-1" />
+                              이메일
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -811,6 +861,15 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                     >
                       <Download className="w-3 h-3" />
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => handleSendEmail(contract.id, e)}
+                      className="text-xs h-8 px-2"
+                      title="이메일 발송"
+                    >
+                      <Mail className="w-3 h-3" />
+                    </Button>
                     {contract.status === 'sent' && (
                       <Button
                         variant="outline"
@@ -879,6 +938,21 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 이메일 발송 패널 */}
+      {selectedContractForEmail && (
+        <EmailSendPanel
+          isOpen={emailPanelOpen}
+          onClose={() => setEmailPanelOpen(false)}
+          entityType="contract"
+          entityId={selectedContractForEmail.id}
+          entityTitle={selectedContractForEmail.title}
+          recipientEmail={selectedContractForEmail.client_email}
+          recipientName={selectedContractForEmail.client_name}
+          senderEmail={userEmail}
+          senderName={userName}
+        />
+      )}
     </div>
   );
 }

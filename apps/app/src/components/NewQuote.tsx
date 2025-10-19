@@ -72,10 +72,14 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
     name: '',
     email: '',
     phone: '',
+    fax: '',
     businessRegistrationNumber: '',
+    businessType: '',
+    businessCategory: '',
     companyName: '',
     businessName: '',
     businessAddress: '',
+    companySealImageUrl: '',
   })
 
   const [clientInfo, setClientInfo] = useState({
@@ -92,6 +96,33 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
     description: '',
     dueDate: '',          // ✅ 원본 필드 복원
     notes: '',            // ✅ 원본 필드 복원
+  })
+
+  // 결제 정보
+  const [paymentInfo, setPaymentInfo] = useState({
+    paymentCondition: '',
+    paymentMethod: '',
+    bankName: '',
+    bankAccountNumber: '',
+    bankAccountHolder: '',
+    paymentDueDate: '',
+  })
+
+  // 견적 조건
+  const [quoteConditions, setQuoteConditions] = useState({
+    deliveryDueDate: '',
+    warrantyPeriod: '',
+    asConditions: '',
+    specialNotes: '',
+    disclaimer: '',
+  })
+
+  // 할인 정보
+  const [discountInfo, setDiscountInfo] = useState({
+    discountRate: 0,
+    discountAmount: 0,
+    promotionCode: '',
+    promotionName: '',
   })
 
   const [items, setItems] = useState<QuoteItem[]>([
@@ -111,10 +142,14 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
             name: userData.name || '',
             email: userData.email || '',
             phone: userData.phone || '',
+            fax: userData.fax || '',
             businessRegistrationNumber: userData.business_registration_number || '',
+            businessType: userData.business_type || '',
+            businessCategory: userData.business_category || '',
             companyName: userData.company_name || '',
             businessName: userData.business_name || '',
             businessAddress: userData.business_address || '',
+            companySealImageUrl: userData.company_seal_image_url || '',
           })
         }
       } catch (error) {
@@ -135,10 +170,14 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
           name: initialData.supplier.name || '',
           email: initialData.supplier.email || '',
           phone: initialData.supplier.phone || '',
+          fax: initialData.supplier.fax || '',
           businessRegistrationNumber: initialData.supplier.business_registration_number || '',
+          businessType: initialData.supplier.business_type || '',
+          businessCategory: initialData.supplier.business_category || '',
           businessName: initialData.supplier.business_name || '',
           companyName: initialData.supplier.company_name || '',
           businessAddress: initialData.supplier.business_address || '',
+          companySealImageUrl: initialData.supplier.company_seal_image_url || '',
         })
       }
 
@@ -149,7 +188,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         phone: initialData.client.phone,
         company: initialData.client.company,
         businessNumber: initialData.client.businessNumber || '',
-        address: initialData.client.address || '',
+        address: (initialData.client as any).address || '',
       })
 
       // 프로젝트 정보 설정
@@ -383,11 +422,33 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
           name: (supplierInfo.name || '').trim(),
           email: (supplierInfo.email || '').trim(),
           phone: (supplierInfo.phone || '').trim(),
+          fax: (supplierInfo.fax || '').trim() || null,
           business_registration_number: (supplierInfo.businessRegistrationNumber || '').trim() || null,
+          business_type: (supplierInfo.businessType || '').trim() || null,
+          business_category: (supplierInfo.businessCategory || '').trim() || null,
           company_name: (supplierInfo.companyName || '').trim() || null,
           business_name: (supplierInfo.businessName || '').trim() || null,
           business_address: (supplierInfo.businessAddress || '').trim() || null,
+          company_seal_image_url: (supplierInfo.companySealImageUrl || '').trim() || null,
         },
+        // 결제 정보
+        payment_condition: (paymentInfo.paymentCondition || '').trim() || null,
+        payment_method: (paymentInfo.paymentMethod || '').trim() || null,
+        bank_name: (paymentInfo.bankName || '').trim() || null,
+        bank_account_number: (paymentInfo.bankAccountNumber || '').trim() || null,
+        bank_account_holder: (paymentInfo.bankAccountHolder || '').trim() || null,
+        payment_due_date: (paymentInfo.paymentDueDate || '').trim() || null,
+        // 견적 조건
+        delivery_due_date: (quoteConditions.deliveryDueDate || '').trim() || null,
+        warranty_period: (quoteConditions.warrantyPeriod || '').trim() || null,
+        as_conditions: (quoteConditions.asConditions || '').trim() || null,
+        special_notes: (quoteConditions.specialNotes || '').trim() || null,
+        disclaimer: (quoteConditions.disclaimer || '').trim() || null,
+        // 할인 정보
+        discount_rate: discountInfo.discountRate || 0,
+        discount_amount: discountInfo.discountAmount || 0,
+        promotion_code: (discountInfo.promotionCode || '').trim() || null,
+        promotion_name: (discountInfo.promotionName || '').trim() || null,
       }
 
       const url = isEdit && editQuoteId ? `/api/quotes/${editQuoteId}` : '/api/quotes'
@@ -542,12 +603,209 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
 
 
           {/* 견적 항목 테이블 */}
-          <QuoteItemsTable 
-            items={items} 
+          <QuoteItemsTable
+            items={items}
             onItemsChange={setItems}
             validUntil={validUntil}
             onValidUntilChange={setValidUntil}
           />
+
+          {/* 결제 정보 */}
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">결제 정보 (선택사항)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="paymentCondition" className="text-foreground">결제 조건</Label>
+                <select
+                  id="paymentCondition"
+                  value={paymentInfo.paymentCondition}
+                  onChange={(e) => setPaymentInfo({ ...paymentInfo, paymentCondition: e.target.value })}
+                  className="w-full h-10 px-3 rounded-md border border-border bg-input-background"
+                >
+                  <option value="">선택하세요</option>
+                  <option value="선불">선불</option>
+                  <option value="후불">후불</option>
+                  <option value="분할">분할</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="paymentMethod" className="text-foreground">결제 방법</Label>
+                <select
+                  id="paymentMethod"
+                  value={paymentInfo.paymentMethod}
+                  onChange={(e) => setPaymentInfo({ ...paymentInfo, paymentMethod: e.target.value })}
+                  className="w-full h-10 px-3 rounded-md border border-border bg-input-background"
+                >
+                  <option value="">선택하세요</option>
+                  <option value="계좌이체">계좌이체</option>
+                  <option value="카드">카드</option>
+                  <option value="현금">현금</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="paymentDueDate" className="text-foreground">결제 기한</Label>
+                <Input
+                  type="date"
+                  id="paymentDueDate"
+                  value={paymentInfo.paymentDueDate}
+                  onChange={(e) => setPaymentInfo({ ...paymentInfo, paymentDueDate: e.target.value })}
+                  className="bg-input-background border-border"
+                />
+              </div>
+            </div>
+            {paymentInfo.paymentMethod === '계좌이체' && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <h4 className="font-medium mb-3 text-foreground">입금 계좌 정보</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bankName" className="text-foreground">은행명</Label>
+                    <Input
+                      id="bankName"
+                      value={paymentInfo.bankName}
+                      onChange={(e) => setPaymentInfo({ ...paymentInfo, bankName: e.target.value })}
+                      placeholder="예: 국민은행"
+                      className="bg-input-background border-border"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bankAccountNumber" className="text-foreground">계좌번호</Label>
+                    <Input
+                      id="bankAccountNumber"
+                      value={paymentInfo.bankAccountNumber}
+                      onChange={(e) => setPaymentInfo({ ...paymentInfo, bankAccountNumber: e.target.value })}
+                      placeholder="계좌번호 입력"
+                      className="bg-input-background border-border"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bankAccountHolder" className="text-foreground">예금주</Label>
+                    <Input
+                      id="bankAccountHolder"
+                      value={paymentInfo.bankAccountHolder}
+                      onChange={(e) => setPaymentInfo({ ...paymentInfo, bankAccountHolder: e.target.value })}
+                      placeholder="예금주명 입력"
+                      className="bg-input-background border-border"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* 견적 조건 */}
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">견적 조건 (선택사항)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="deliveryDueDate" className="text-foreground">납품/완료 기한</Label>
+                <Input
+                  type="date"
+                  id="deliveryDueDate"
+                  value={quoteConditions.deliveryDueDate}
+                  onChange={(e) => setQuoteConditions({ ...quoteConditions, deliveryDueDate: e.target.value })}
+                  className="bg-input-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="warrantyPeriod" className="text-foreground">하자보증 기간</Label>
+                <Input
+                  id="warrantyPeriod"
+                  value={quoteConditions.warrantyPeriod}
+                  onChange={(e) => setQuoteConditions({ ...quoteConditions, warrantyPeriod: e.target.value })}
+                  placeholder="예: 1년"
+                  className="bg-input-background border-border"
+                />
+              </div>
+            </div>
+            <div className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="asConditions" className="text-foreground">A/S 조건</Label>
+                <Textarea
+                  id="asConditions"
+                  value={quoteConditions.asConditions}
+                  onChange={(e) => setQuoteConditions({ ...quoteConditions, asConditions: e.target.value })}
+                  placeholder="A/S 조건을 입력하세요"
+                  rows={2}
+                  className="bg-input-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="specialNotes" className="text-foreground">특기사항</Label>
+                <Textarea
+                  id="specialNotes"
+                  value={quoteConditions.specialNotes}
+                  onChange={(e) => setQuoteConditions({ ...quoteConditions, specialNotes: e.target.value })}
+                  placeholder="특기사항을 입력하세요"
+                  rows={2}
+                  className="bg-input-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="disclaimer" className="text-foreground">면책사항</Label>
+                <Textarea
+                  id="disclaimer"
+                  value={quoteConditions.disclaimer}
+                  onChange={(e) => setQuoteConditions({ ...quoteConditions, disclaimer: e.target.value })}
+                  placeholder="면책사항을 입력하세요"
+                  rows={2}
+                  className="bg-input-background border-border"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* 할인 정보 */}
+          <Card className="p-4 md:p-6 bg-card border-border">
+            <h3 className="font-medium mb-4 text-foreground">할인 정보 (선택사항)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="discountRate" className="text-foreground">할인율 (%)</Label>
+                <Input
+                  type="number"
+                  id="discountRate"
+                  value={discountInfo.discountRate || ''}
+                  onChange={(e) => setDiscountInfo({ ...discountInfo, discountRate: parseFloat(e.target.value) || 0 })}
+                  placeholder="0"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  className="bg-input-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="discountAmount" className="text-foreground">할인 금액 (원)</Label>
+                <Input
+                  type="number"
+                  id="discountAmount"
+                  value={discountInfo.discountAmount || ''}
+                  onChange={(e) => setDiscountInfo({ ...discountInfo, discountAmount: parseFloat(e.target.value) || 0 })}
+                  placeholder="0"
+                  min="0"
+                  className="bg-input-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="promotionCode" className="text-foreground">프로모션 코드</Label>
+                <Input
+                  id="promotionCode"
+                  value={discountInfo.promotionCode}
+                  onChange={(e) => setDiscountInfo({ ...discountInfo, promotionCode: e.target.value })}
+                  placeholder="프로모션 코드 입력"
+                  className="bg-input-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="promotionName" className="text-foreground">프로모션명</Label>
+                <Input
+                  id="promotionName"
+                  value={discountInfo.promotionName}
+                  onChange={(e) => setDiscountInfo({ ...discountInfo, promotionName: e.target.value })}
+                  placeholder="프로모션명 입력"
+                  className="bg-input-background border-border"
+                />
+              </div>
+            </div>
+          </Card>
         </div>
 
         {/* Action Sidebar - Sticky */}

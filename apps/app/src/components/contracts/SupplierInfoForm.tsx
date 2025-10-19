@@ -11,9 +11,13 @@ interface SupplierInfoFormProps {
     name: string
     email: string
     phone: string
+    fax?: string
     businessRegistrationNumber: string
+    businessType?: string
+    businessCategory?: string
     companyName: string
     businessAddress?: string
+    companySealImageUrl?: string
   }
   isEditing: boolean
   onSupplierInfoChange: (info: any) => void
@@ -110,6 +114,29 @@ export function SupplierInfoForm({
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="supplierFax" className="text-foreground">
+            팩스
+          </Label>
+          <Input
+            id="supplierFax"
+            value={supplierInfo.fax || ''}
+            onChange={(e) =>
+              onSupplierInfoChange({
+                ...supplierInfo,
+                fax: e.target.value,
+              })
+            }
+            placeholder={isEditing ? '02-1234-5678' : ''}
+            className={
+              isEditing
+                ? 'bg-input-background border-border'
+                : 'bg-muted text-muted-foreground'
+            }
+            disabled={!isEditing}
+          />
+        </div>
+
+        <div className="space-y-2">
           <Label
             htmlFor="supplierBusinessNumber"
             className="text-foreground"
@@ -136,28 +163,74 @@ export function SupplierInfoForm({
         </div>
 
         {supplierInfo.businessRegistrationNumber && (
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="supplierCompanyName" className="text-foreground">
-              회사명 *
-            </Label>
-            <Input
-              id="supplierCompanyName"
-              value={supplierInfo.companyName}
-              onChange={(e) =>
-                onSupplierInfoChange({
-                  ...supplierInfo,
-                  companyName: e.target.value,
-                })
-              }
-              placeholder={isEditing ? '(주)회사명 또는 개인사업자명' : ''}
-              className={
-                isEditing
-                  ? 'bg-input-background border-border'
-                  : 'bg-muted text-muted-foreground'
-              }
-              disabled={!isEditing}
-            />
-          </div>
+          <>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="supplierCompanyName" className="text-foreground">
+                회사명 *
+              </Label>
+              <Input
+                id="supplierCompanyName"
+                value={supplierInfo.companyName}
+                onChange={(e) =>
+                  onSupplierInfoChange({
+                    ...supplierInfo,
+                    companyName: e.target.value,
+                  })
+                }
+                placeholder={isEditing ? '(주)회사명 또는 개인사업자명' : ''}
+                className={
+                  isEditing
+                    ? 'bg-input-background border-border'
+                    : 'bg-muted text-muted-foreground'
+                }
+                disabled={!isEditing}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="supplierBusinessType" className="text-foreground">
+                업태
+              </Label>
+              <Input
+                id="supplierBusinessType"
+                value={supplierInfo.businessType || ''}
+                onChange={(e) =>
+                  onSupplierInfoChange({
+                    ...supplierInfo,
+                    businessType: e.target.value,
+                  })
+                }
+                placeholder={isEditing ? '예: 서비스업' : ''}
+                className={
+                  isEditing
+                    ? 'bg-input-background border-border'
+                    : 'bg-muted text-muted-foreground'
+                }
+                disabled={!isEditing}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="supplierBusinessCategory" className="text-foreground">
+                업종
+              </Label>
+              <Input
+                id="supplierBusinessCategory"
+                value={supplierInfo.businessCategory || ''}
+                onChange={(e) =>
+                  onSupplierInfoChange({
+                    ...supplierInfo,
+                    businessCategory: e.target.value,
+                  })
+                }
+                placeholder={isEditing ? '예: 소프트웨어 개발' : ''}
+                className={
+                  isEditing
+                    ? 'bg-input-background border-border'
+                    : 'bg-muted text-muted-foreground'
+                }
+                disabled={!isEditing}
+              />
+            </div>
+          </>
         )}
 
         <div className="space-y-2 sm:col-span-2">
