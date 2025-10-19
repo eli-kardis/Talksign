@@ -109,7 +109,7 @@ export function parseContractFromDb(dbContract: DbContract): Contract {
     items: (dbContract.items as unknown as ContractItem[]) || [],
     supplier_info: (dbContract.supplier_info as unknown as SupplierInfo) || undefined,
     // Note: Signatures are stored in contract_signatures table, not in the contract record
-  }
+  } as Contract
 }
 
 export function parseQuoteFromDb(dbQuote: DbQuote): Quote {
@@ -117,7 +117,7 @@ export function parseQuoteFromDb(dbQuote: DbQuote): Quote {
     ...dbQuote,
     items: (dbQuote.items as unknown as QuoteItem[]) || [],
     supplier_info: (dbQuote.supplier_info as unknown as SupplierInfo) || undefined,
-  }
+  } as Quote
 }
 
 // Insert/Update 타입

@@ -49,12 +49,14 @@ export async function GET(
     const supplierName = (supplierInfo.company_name || supplierInfo.name || '공급자')
       .replace(/[/\\?%*:|"<>]/g, '_') // 파일명에 사용 불가능한 문자 제거
       .replace(/\s+/g, '_') // 공백을 언더스코어로 변경
+      .substring(0, 30) // 최대 30자로 제한
 
     const title = validContract.title
       .replace(/[/\\?%*:|"<>]/g, '_')
       .replace(/\s+/g, '_')
+      .substring(0, 40) // 최대 40자로 제한
 
-    const date = new Date().toLocaleDateString('ko-KR').replace(/\. /g, '.').replace(/\.$/, '')
+    const date = new Date().toISOString().split('T')[0] // YYYY-MM-DD 형식
     const fileName = `${supplierName}_${title}_계약서_${date}.pdf`
 
     // PDF 응답 반환
@@ -62,7 +64,8 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${encodeURIComponent(fileName)}"`,
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+        'Content-Length': pdfBuffer.length.toString(),
       },
     })
   } catch (error) {

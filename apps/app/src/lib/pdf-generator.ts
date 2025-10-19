@@ -245,9 +245,9 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
           </div>
 
           <div class="info-box">
-            <h3>고객 정보</h3>
+            <h3>수신자 정보</h3>
             <div class="info-row">
-              <span class="info-label">고객명:</span>
+              <span class="info-label">대표자명:</span>
               <span class="info-value">${quote.client_name}</span>
             </div>
             <div class="info-row">
@@ -306,20 +306,28 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
 
         <!-- Total -->
         <div class="total-section">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px;">
+            <span>소계</span>
+            <span>${(quote.subtotal || 0).toLocaleString('ko-KR')}원</span>
+          </div>
           ${quote.discount_amount && quote.discount_amount > 0 ? `
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px;">
-              <span>소계</span>
-              <span>${(quote.subtotal || 0).toLocaleString('ko-KR')}원</span>
-            </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px; color: #dc2626;">
               <span>할인</span>
               <span>-${quote.discount_amount.toLocaleString('ko-KR')}원</span>
             </div>
-            <div style="border-top: 1px solid #3b82f6; padding-top: 8px; margin-top: 8px;"></div>
           ` : ''}
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px;">
+            <span>공급가액</span>
+            <span>${((quote.subtotal || 0) - (quote.discount_amount || 0)).toLocaleString('ko-KR')}원</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px;">
+            <span>부가세 (10%)</span>
+            <span>${(Math.floor(((quote.subtotal || 0) - (quote.discount_amount || 0)) * 0.1)).toLocaleString('ko-KR')}원</span>
+          </div>
+          <div style="border-top: 2px solid #3b82f6; padding-top: 8px; margin-top: 8px;"></div>
           <div class="total-row">
-            <span>총 금액</span>
-            <span>${(quote.subtotal || 0).toLocaleString('ko-KR')}원</span>
+            <span>최종 견적</span>
+            <span>${(((quote.subtotal || 0) - (quote.discount_amount || 0)) + Math.floor(((quote.subtotal || 0) - (quote.discount_amount || 0)) * 0.1)).toLocaleString('ko-KR')}원</span>
           </div>
         </div>
 
@@ -698,8 +706,14 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
               <h3>갑 (공급자)</h3>
               ${supplierInfo?.company_name || supplierInfo?.name ? `
                 <div class="info-row">
-                  <span class="info-label">상호:</span>
+                  <span class="info-label">회사명:</span>
                   <span class="info-value">${supplierInfo.company_name || supplierInfo.name}</span>
+                </div>
+              ` : ''}
+              ${supplierInfo?.name ? `
+                <div class="info-row">
+                  <span class="info-label">대표자명:</span>
+                  <span class="info-value">${supplierInfo.name}</span>
                 </div>
               ` : ''}
               ${supplierInfo?.business_registration_number ? `
@@ -717,15 +731,15 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
             </div>
 
             <div class="party-box">
-              <h3>을 (고객)</h3>
+              <h3>을 (발주처)</h3>
               ${contract.client_company ? `
                 <div class="info-row">
-                  <span class="info-label">상호:</span>
+                  <span class="info-label">회사명:</span>
                   <span class="info-value">${contract.client_company}</span>
                 </div>
               ` : ''}
               <div class="info-row">
-                <span class="info-label">대표자:</span>
+                <span class="info-label">대표자명:</span>
                 <span class="info-value">${contract.client_name}</span>
               </div>
               <div class="info-row">
