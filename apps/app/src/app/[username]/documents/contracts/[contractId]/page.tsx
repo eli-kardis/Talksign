@@ -24,9 +24,12 @@ interface ContractSupplier {
   name: string;
   email: string;
   phone?: string;
+  fax?: string;
   business_name?: string;
   company_name?: string;
   business_registration_number?: string;
+  business_type?: string;
+  business_category?: string;
   business_address?: string;
 }
 
@@ -37,8 +40,11 @@ interface Contract {
   client_name: string;
   client_email: string;
   client_phone?: string;
+  client_fax?: string;
   client_company?: string;
   client_business_number?: string;
+  client_business_type?: string;
+  client_business_category?: string;
   client_address?: string;
   supplier?: ContractSupplier;
   items: ContractItem[];
@@ -300,9 +306,18 @@ export default function ContractDetailPage({ params }: { params: Promise<{ contr
                         사업자등록번호: {contract.client_business_number}
                       </p>
                     )}
+                    {contract.client_business_type && (
+                      <p className="text-sm text-gray-700">업태: {contract.client_business_type}</p>
+                    )}
+                    {contract.client_business_category && (
+                      <p className="text-sm text-gray-700">업종: {contract.client_business_category}</p>
+                    )}
                     <p className="text-sm text-gray-700">이메일: {contract.client_email}</p>
                     {contract.client_phone && (
                       <p className="text-sm text-gray-700">전화번호: {contract.client_phone}</p>
+                    )}
+                    {contract.client_fax && (
+                      <p className="text-sm text-gray-700">팩스: {contract.client_fax}</p>
                     )}
                     {contract.client_address && (
                       <p className="text-sm text-gray-700">주소: {contract.client_address}</p>
@@ -330,9 +345,18 @@ export default function ContractDetailPage({ params }: { params: Promise<{ contr
                           사업자등록번호: {contract.supplier.business_registration_number}
                         </p>
                       )}
+                      {contract.supplier.business_type && (
+                        <p className="text-sm text-gray-700">업태: {contract.supplier.business_type}</p>
+                      )}
+                      {contract.supplier.business_category && (
+                        <p className="text-sm text-gray-700">업종: {contract.supplier.business_category}</p>
+                      )}
                       <p className="text-sm text-gray-700">이메일: {contract.supplier.email}</p>
                       {contract.supplier.phone && (
                         <p className="text-sm text-gray-700">전화번호: {contract.supplier.phone}</p>
+                      )}
+                      {contract.supplier.fax && (
+                        <p className="text-sm text-gray-700">팩스: {contract.supplier.fax}</p>
                       )}
                       {contract.supplier.business_address && (
                         <p className="text-sm text-gray-700">주소: {contract.supplier.business_address}</p>

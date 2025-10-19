@@ -88,7 +88,10 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
     businessNumber: '',
     phone: '',
     email: '',
+    fax: '',
     address: '',
+    businessType: '',
+    businessCategory: '',
   })
 
   const [projectInfo, setProjectInfo] = useState({
@@ -188,7 +191,10 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         phone: initialData.client.phone,
         company: initialData.client.company,
         businessNumber: initialData.client.businessNumber || '',
+        fax: (initialData.client as any).fax || '',
         address: (initialData.client as any).address || '',
+        businessType: (initialData.client as any).businessType || '',
+        businessCategory: (initialData.client as any).businessCategory || '',
       })
 
       // 프로젝트 정보 설정
@@ -297,7 +303,10 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
       businessNumber: customer.business_registration_number || '',
       phone: customer.phone || '',
       email: customer.email || '',
+      fax: customer.fax || '',
       address: customer.address || '',
+      businessType: customer.business_type || '',
+      businessCategory: customer.business_category || '',
     })
     setHasUnsavedChanges(true)
   }

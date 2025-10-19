@@ -53,8 +53,11 @@ interface Quote {
   client_name: string;
   client_email: string;
   client_phone?: string;
+  client_fax?: string;
   client_company?: string;
   client_business_number?: string;
+  client_business_type?: string;
+  client_business_category?: string;
   client_address?: string;
   title: string;
   description?: string;
@@ -338,9 +341,18 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
                         사업자등록번호: {quote.client_business_number}
                       </p>
                     )}
+                    {quote.client_business_type && (
+                      <p className="text-sm text-gray-600">업태: {quote.client_business_type}</p>
+                    )}
+                    {quote.client_business_category && (
+                      <p className="text-sm text-gray-600">업종: {quote.client_business_category}</p>
+                    )}
                     <p className="text-sm text-gray-600">이메일: {quote.client_email}</p>
                     {quote.client_phone && (
                       <p className="text-sm text-gray-600">전화번호: {quote.client_phone}</p>
+                    )}
+                    {quote.client_fax && (
+                      <p className="text-sm text-gray-600">팩스: {quote.client_fax}</p>
                     )}
                     {quote.client_address && (
                       <p className="text-sm text-gray-600">주소: {quote.client_address}</p>

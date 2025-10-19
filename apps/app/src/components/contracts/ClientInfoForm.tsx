@@ -11,8 +11,11 @@ interface ClientInfoFormProps {
     name: string
     email: string
     phone: string
+    fax?: string
     company: string
     businessNumber: string
+    businessType?: string
+    businessCategory?: string
     address: string
   }
   isEditing: boolean
@@ -97,16 +100,19 @@ export function ClientInfoForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="clientCompany" className="text-foreground">
-            회사명 *
+          <Label htmlFor="clientFax" className="text-foreground">
+            팩스
           </Label>
           <Input
-            id="clientCompany"
-            value={clientInfo.company}
+            id="clientFax"
+            value={clientInfo.fax || ''}
             onChange={(e) =>
-              onClientInfoChange({ ...clientInfo, company: e.target.value })
+              onClientInfoChange({
+                ...clientInfo,
+                fax: e.target.value,
+              })
             }
-            placeholder="(주)회사명"
+            placeholder={isEditing ? '02-1234-5678' : ''}
             className={
               isEditing
                 ? 'bg-input-background border-border'
@@ -138,6 +144,76 @@ export function ClientInfoForm({
             disabled={!isEditing}
           />
         </div>
+
+        {clientInfo.businessNumber && (
+          <>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="clientCompany" className="text-foreground">
+                회사명 *
+              </Label>
+              <Input
+                id="clientCompany"
+                value={clientInfo.company}
+                onChange={(e) =>
+                  onClientInfoChange({ ...clientInfo, company: e.target.value })
+                }
+                placeholder={isEditing ? '(주)회사명' : ''}
+                className={
+                  isEditing
+                    ? 'bg-input-background border-border'
+                    : 'bg-muted text-muted-foreground'
+                }
+                disabled={!isEditing}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="clientBusinessType" className="text-foreground">
+                업태
+              </Label>
+              <Input
+                id="clientBusinessType"
+                value={clientInfo.businessType || ''}
+                onChange={(e) =>
+                  onClientInfoChange({
+                    ...clientInfo,
+                    businessType: e.target.value,
+                  })
+                }
+                placeholder={isEditing ? '예: 서비스업' : ''}
+                className={
+                  isEditing
+                    ? 'bg-input-background border-border'
+                    : 'bg-muted text-muted-foreground'
+                }
+                disabled={!isEditing}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="clientBusinessCategory" className="text-foreground">
+                업종
+              </Label>
+              <Input
+                id="clientBusinessCategory"
+                value={clientInfo.businessCategory || ''}
+                onChange={(e) =>
+                  onClientInfoChange({
+                    ...clientInfo,
+                    businessCategory: e.target.value,
+                  })
+                }
+                placeholder={isEditing ? '예: 소프트웨어 개발' : ''}
+                className={
+                  isEditing
+                    ? 'bg-input-background border-border'
+                    : 'bg-muted text-muted-foreground'
+                }
+                disabled={!isEditing}
+              />
+            </div>
+          </>
+        )}
 
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="clientAddress" className="text-foreground">

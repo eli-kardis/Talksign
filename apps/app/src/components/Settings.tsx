@@ -270,12 +270,14 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
     return hasChanges
   }
 
-  // 다이얼로그가 닫힐 때 메시지 초기화
+  // 다이얼로그가 닫힐 때 메시지 초기화 및 저장되지 않은 변경사항 복원
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       // 창이 닫힐 때 메시지와 에러 초기화
       setMessage('')
       setError('')
+      // 저장되지 않은 변경사항을 원래 데이터로 복원
+      setFormData(originalData)
     }
     onOpenChange(newOpen)
   }
@@ -418,7 +420,7 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
 
                   {/* 사업장 주소 */}
                   <div className="space-y-2">
-                    <Label htmlFor="businessAddress" className="text-foreground">사업장 주소 (선택)</Label>
+                    <Label htmlFor="businessAddress" className="text-foreground">사업장 주소</Label>
                     <Input
                       id="businessAddress"
                       type="text"
@@ -432,7 +434,7 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
 
                   {/* 팩스 */}
                   <div className="space-y-2">
-                    <Label htmlFor="fax" className="text-foreground">팩스 (선택)</Label>
+                    <Label htmlFor="fax" className="text-foreground">팩스</Label>
                     <Input
                       id="fax"
                       type="tel"
@@ -446,7 +448,7 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
 
                   {/* 업태 */}
                   <div className="space-y-2">
-                    <Label htmlFor="businessType" className="text-foreground">업태 (선택)</Label>
+                    <Label htmlFor="businessType" className="text-foreground">업태</Label>
                     <Input
                       id="businessType"
                       type="text"
@@ -460,7 +462,7 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
 
                   {/* 업종 */}
                   <div className="space-y-2">
-                    <Label htmlFor="businessCategory" className="text-foreground">업종 (선택)</Label>
+                    <Label htmlFor="businessCategory" className="text-foreground">업종</Label>
                     <Input
                       id="businessCategory"
                       type="text"

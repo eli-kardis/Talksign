@@ -23,6 +23,9 @@ interface Customer {
   email: string;
   phone: string;
   address: string | null | undefined;
+  fax?: string | null;
+  business_type?: string | null;
+  business_category?: string | null;
   created_at: string;
   updated_at?: string;
 }
@@ -35,6 +38,9 @@ interface CustomerFormData {
   email: string;
   phone: string;
   address: string;
+  fax: string;
+  business_type: string;
+  business_category: string;
 }
 
 export default function CustomersPage() {
@@ -50,7 +56,10 @@ export default function CustomersPage() {
     business_registration_number: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    fax: '',
+    business_type: '',
+    business_category: ''
   });
   const [errors, setErrors] = useState<Partial<CustomerFormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,7 +75,10 @@ export default function CustomersPage() {
     business_registration_number: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    fax: '',
+    business_type: '',
+    business_category: ''
   });
   const [editErrors, setEditErrors] = useState<Partial<CustomerFormData>>({});
   const [isUpdating, setIsUpdating] = useState(false);
@@ -165,6 +177,9 @@ export default function CustomersPage() {
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         address: formData.address.trim() || null,
+        fax: formData.fax.trim() || null,
+        business_type: formData.business_type.trim() || null,
+        business_category: formData.business_category.trim() || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -210,7 +225,10 @@ export default function CustomersPage() {
         business_registration_number: '',
         email: '',
         phone: '',
-        address: ''
+        address: '',
+        fax: '',
+        business_type: '',
+        business_category: ''
       });
       setIsAddModalOpen(false);
     } catch (error) {
@@ -292,7 +310,10 @@ export default function CustomersPage() {
       business_registration_number: customer.business_registration_number || '',
       email: customer.email,
       phone: customer.phone,
-      address: customer.address || ''
+      address: customer.address || '',
+      fax: (customer as any).fax || '',
+      business_type: (customer as any).business_type || '',
+      business_category: (customer as any).business_category || ''
     });
     setEditErrors({});
     setIsEditModalOpen(true);
@@ -362,6 +383,9 @@ export default function CustomersPage() {
         email: editFormData.email.trim(),
         phone: editFormData.phone.trim(),
         address: editFormData.address.trim() || null,
+        fax: editFormData.fax.trim() || null,
+        business_type: editFormData.business_type.trim() || null,
+        business_category: editFormData.business_category.trim() || null,
         updated_at: new Date().toISOString()
       };
 
@@ -596,7 +620,40 @@ export default function CustomersPage() {
                   rows={3}
                 />
               </div>
-              
+
+              <div className="space-y-2">
+                <Label htmlFor="fax" className="text-sm font-medium">팩스</Label>
+                <Input
+                  id="fax"
+                  type="tel"
+                  value={formData.fax}
+                  onChange={(e) => handleInputChange('fax', e.target.value)}
+                  placeholder="02-1234-5678"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="business_type" className="text-sm font-medium">업태</Label>
+                <Input
+                  id="business_type"
+                  type="text"
+                  value={formData.business_type}
+                  onChange={(e) => handleInputChange('business_type', e.target.value)}
+                  placeholder="예: 제조업, 도소매업, 서비스업"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="business_category" className="text-sm font-medium">업종</Label>
+                <Input
+                  id="business_category"
+                  type="text"
+                  value={formData.business_category}
+                  onChange={(e) => handleInputChange('business_category', e.target.value)}
+                  placeholder="예: IT 컨설팅, 웹개발"
+                />
+              </div>
+
               <div className="flex justify-end gap-2 pt-4">
                 <Button
                   type="button"
@@ -709,7 +766,40 @@ export default function CustomersPage() {
                 rows={3}
               />
             </div>
-            
+
+            <div className="space-y-2">
+              <Label htmlFor="edit_fax" className="text-sm font-medium">팩스</Label>
+              <Input
+                id="edit_fax"
+                type="tel"
+                value={editFormData.fax}
+                onChange={(e) => handleEditInputChange('fax', e.target.value)}
+                placeholder="02-1234-5678"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit_business_type" className="text-sm font-medium">업태</Label>
+              <Input
+                id="edit_business_type"
+                type="text"
+                value={editFormData.business_type}
+                onChange={(e) => handleEditInputChange('business_type', e.target.value)}
+                placeholder="예: 제조업, 도소매업, 서비스업"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit_business_category" className="text-sm font-medium">업종</Label>
+              <Input
+                id="edit_business_category"
+                type="text"
+                value={editFormData.business_category}
+                onChange={(e) => handleEditInputChange('business_category', e.target.value)}
+                placeholder="예: IT 컨설팅, 웹개발"
+              />
+            </div>
+
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 type="button"

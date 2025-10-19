@@ -5,10 +5,13 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ArrowLeft, MessageSquare, Save, User, Building, AlertTriangle, Plus, X, Edit3 } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
+import { ArrowLeft, MessageSquare, Save, User, Building, AlertTriangle, Plus, X, Edit3, AlertCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { CustomerSelector } from './CustomerSelector';
 import { SupplierSignatureModal } from './SupplierSignatureModal';
+import { ClientInfoForm, SupplierInfoForm } from './contracts';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters';
 import { AuthenticatedApiClient } from '@/lib/api-client';
@@ -77,8 +80,11 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   const clientEmailRef = useRef<HTMLInputElement>(null);
   const startDateRef = useRef<HTMLInputElement>(null);
   const endDateRef = useRef<HTMLInputElement>(null);
-  const paymentTermsRef = useRef<HTMLButtonElement>(null);
-  const customPaymentTermsRef = useRef<HTMLInputElement>(null);
+  const paymentConditionRef = useRef<HTMLButtonElement>(null);
+  const paymentMethodRef = useRef<HTMLDivElement>(null);
+  const bankNameRef = useRef<HTMLInputElement>(null);
+  const bankAccountNumberRef = useRef<HTMLInputElement>(null);
+  const bankAccountHolderRef = useRef<HTMLInputElement>(null);
 
   // 툴팁 상태 관리
   const [fieldTooltips, setFieldTooltips] = useState<{[key: string]: string}>({});
@@ -106,7 +112,10 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     phone: initialData?.client.phone || '',
     email: initialData?.client.email || '',
     businessNumber: initialData?.client.businessNumber || '',
-    address: initialData?.client.address || ''
+    fax: (initialData?.client as any)?.fax || '',
+    address: initialData?.client.address || '',
+    businessType: (initialData?.client as any)?.businessType || '',
+    businessCategory: (initialData?.client as any)?.businessCategory || ''
   });
 
   // 3. 공급자 정보
@@ -114,10 +123,13 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     name: '',
     email: '',
     phone: '',
+    fax: '',
     businessRegistrationNumber: '',
     companyName: '',
     businessName: '',
-    businessAddress: ''
+    businessAddress: '',
+    businessType: '',
+    businessCategory: ''
   });
 
   // 4. 프로젝트 정보
@@ -153,20 +165,42 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   // 6. 계약 조건
   const [contractTerms, setContractTerms] = useState<string[]>(
     initialData?.terms || [
-      "프로젝트 수행 기간은 계약서 체결 후 협의하여 결정합니다.",
-      "계약금 50% 선입금, 완료 후 50% 잔금 지급",
       "프로젝트 요구사항 변경 시 추가 비용이 발생할 수 있습니다.",
       "저작권은 완전한 대금 지급 후 수신자로 이전됩니다.",
       "계약 위반 시 위약금이 부과될 수 있습니다."
     ]
   );
 
-  // 7. 결제 정보
+  // 7. 통합 결제 정보
   const [paymentInfo, setPaymentInfo] = useState({
-    paymentTerms: '50-50', // 기본값
-    customPaymentTerms: '', // 직접 입력용
-    paymentMethod: '',
-    additionalTerms: ''
+    // 결제 조건
+    paymentCondition: 'immediate', // 'immediate' | 'custom'
+
+    // 입력 단위
+    inputUnit: 'amount', // 'amount' | 'percent'
+
+    // 금액 모드 필드
+    amountDeposit: '',
+    amountMilestone: '',
+    amountBalance: '',
+
+    // 비율 모드 필드
+    percentDeposit: '',
+    percentMilestone: '',
+    percentBalance: '',
+
+    // 지급일
+    dueDeposit: '',
+    dueMilestone: '',
+    dueBalance: '',
+
+    // 결제 방법
+    paymentMethod: '', // 'bank' | 'card'
+
+    // 계좌이체 선택 시 필수 필드
+    bankName: '',
+    bankAccountNumber: '',
+    bankAccountHolder: ''
   });
 
   // 8. 법적 필수 요소
@@ -176,20 +210,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     contractCopies: 2,
     partyARepresentative: '', // 수신자 대표자
     partyBRepresentative: '' // 공급자 대표자
-  });
-
-  // 9. 상세 결제 정보
-  const [detailedPaymentInfo, setDetailedPaymentInfo] = useState({
-    downPaymentRatio: 0,
-    interimPaymentRatio: 0,
-    finalPaymentRatio: 0,
-    downPaymentDate: '',
-    interimPaymentDate: '',
-    finalPaymentDate: '',
-    paymentMethod: '계좌이체',
-    bankName: '',
-    bankAccountNumber: '',
-    bankAccountHolder: ''
   });
 
   // 10. 계약 이행 조건
@@ -232,10 +252,13 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
             name: userData.name || '',
             email: userData.email || '',
             phone: userData.phone || '',
+            fax: userData.fax || '',
             businessRegistrationNumber: userData.business_registration_number || '',
             companyName: userData.company_name || '',
             businessName: userData.business_name || '',
-            businessAddress: userData.business_address || ''
+            businessAddress: userData.business_address || '',
+            businessType: userData.business_type || '',
+            businessCategory: userData.business_category || ''
           })
         }
       } catch (error) {
@@ -258,7 +281,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         contractTerms,
         paymentInfo,
         legalInfo,
-        detailedPaymentInfo,
         deliveryInfo,
         legalClauses,
         additionalClauses
@@ -291,7 +313,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       contractTerms,
       paymentInfo,
       legalInfo,
-      detailedPaymentInfo,
       deliveryInfo,
       legalClauses,
       additionalClauses
@@ -299,7 +320,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
     const hasChanges = !compareObjects(currentFormData, initialFormData);
     setHasUnsavedChanges(hasChanges);
-  }, [contractBasicInfo, clientInfo, supplierInfo, projectInfo, contractItems, contractTerms, paymentInfo, legalInfo, detailedPaymentInfo, deliveryInfo, legalClauses, additionalClauses, initialFormData, isEdit]);
+  }, [contractBasicInfo, clientInfo, supplierInfo, projectInfo, contractItems, contractTerms, paymentInfo, legalInfo, deliveryInfo, legalClauses, additionalClauses, initialFormData, isEdit]);
 
   // 페이지 언로드 시 경고
   useEffect(() => {
@@ -328,7 +349,10 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           phone: initialData.client.phone || '',
           email: initialData.client.email || '',
           businessNumber: initialData.client.businessNumber || '',
-          address: initialData.client.address || ''
+          fax: (initialData.client as any).fax || '',
+          address: initialData.client.address || '',
+          businessType: (initialData.client as any).businessType || '',
+          businessCategory: (initialData.client as any).businessCategory || ''
         });
       }
 
@@ -383,8 +407,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   const validateWithTooltips = () => {
     // 모든 이전 툴팁 제거
     setFieldTooltips({});
-    
-    let firstErrorRef = null;
+
+    let firstErrorRef: React.RefObject<any> | null = null;
     let firstErrorKey = '';
 
     if (!contractBasicInfo.title.trim()) {
@@ -478,24 +502,134 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         firstErrorKey = 'startDate';
       }
     }
-    
-    if (!paymentInfo.paymentTerms) {
-      showFieldTooltip('paymentTerms', '해당 항목을 입력해주세요');
+
+    // 결제 조건 검증
+    if (!paymentInfo.paymentCondition) {
+      showFieldTooltip('paymentCondition', '결제 조건을 선택해주세요');
       if (!firstErrorRef) {
-        firstErrorRef = paymentTermsRef;
-        firstErrorKey = 'paymentTerms';
+        firstErrorRef = paymentConditionRef;
+        firstErrorKey = 'paymentCondition';
       }
     }
-    
-    // 직접 입력 선택시 customPaymentTerms 필수 검증
-    if (paymentInfo.paymentTerms === 'custom' && !paymentInfo.customPaymentTerms.trim()) {
-      showFieldTooltip('customPaymentTerms', '결제 조건을 입력해주세요');
+
+    // 직접 입력 선택 시 결제 방법 필수 검증
+    if (paymentInfo.paymentCondition === 'custom' && !paymentInfo.paymentMethod) {
+      showFieldTooltip('paymentMethod', '결제 방법을 선택해주세요');
       if (!firstErrorRef) {
-        firstErrorRef = customPaymentTermsRef;
-        firstErrorKey = 'customPaymentTerms';
+        firstErrorRef = paymentMethodRef;
+        firstErrorKey = 'paymentMethod';
       }
     }
-    
+
+    // 계좌이체 선택 시 은행 정보 필수 검증
+    if (paymentInfo.paymentCondition === 'custom' && paymentInfo.paymentMethod === 'bank' && !paymentInfo.bankName.trim()) {
+      showFieldTooltip('bankName', '은행명은 필수 입력입니다.');
+      if (!firstErrorRef) {
+        firstErrorRef = bankNameRef;
+        firstErrorKey = 'bankName';
+      }
+    }
+
+    if (paymentInfo.paymentCondition === 'custom' && paymentInfo.paymentMethod === 'bank' && !paymentInfo.bankAccountNumber.trim()) {
+      showFieldTooltip('bankAccountNumber', '계좌번호는 필수 입력입니다.');
+      if (!firstErrorRef) {
+        firstErrorRef = bankAccountNumberRef;
+        firstErrorKey = 'bankAccountNumber';
+      }
+    }
+
+    if (paymentInfo.paymentCondition === 'custom' && paymentInfo.paymentMethod === 'bank' && !paymentInfo.bankAccountHolder.trim()) {
+      showFieldTooltip('bankAccountHolder', '예금주는 필수 입력입니다.');
+      if (!firstErrorRef) {
+        firstErrorRef = bankAccountHolderRef;
+        firstErrorKey = 'bankAccountHolder';
+      }
+    }
+
+    // 직접 입력 선택 시 추가 검증
+    if (paymentInfo.paymentCondition === 'custom') {
+      // 금액/비율 합계 검증
+      if (paymentInfo.inputUnit === 'amount' && !validateAmountSum()) {
+        const { total } = calculateTotals();
+        const formattedTotal = new Intl.NumberFormat('ko-KR').format(total);
+        showFieldTooltip('amountBalance', `선금 + 중도금 + 잔금 = 총 계약 금액(₩${formattedTotal}) 이어야 합니다.`);
+        if (!firstErrorRef) {
+          firstErrorRef = null;
+          firstErrorKey = 'amountBalance';
+        }
+      }
+
+      if (paymentInfo.inputUnit === 'percent' && !validatePercentSum()) {
+        showFieldTooltip('percentBalance', '선금 + 중도금 + 잔금 = 100% 이어야 합니다.');
+        if (!firstErrorRef) {
+          firstErrorRef = null;
+          firstErrorKey = 'percentBalance';
+        }
+      }
+
+      // 조건부 지급일 필수 검증 (값이 있는 항목만)
+      const hasDeposit = paymentInfo.inputUnit === 'amount'
+        ? (paymentInfo.amountDeposit && parseFloat(paymentInfo.amountDeposit) > 0)
+        : (paymentInfo.percentDeposit && parseFloat(paymentInfo.percentDeposit) > 0);
+
+      const hasMilestone = paymentInfo.inputUnit === 'amount'
+        ? (paymentInfo.amountMilestone && parseFloat(paymentInfo.amountMilestone) > 0)
+        : (paymentInfo.percentMilestone && parseFloat(paymentInfo.percentMilestone) > 0);
+
+      const hasBalance = paymentInfo.inputUnit === 'amount'
+        ? (paymentInfo.amountBalance && parseFloat(paymentInfo.amountBalance) > 0)
+        : (paymentInfo.percentBalance && parseFloat(paymentInfo.percentBalance) > 0);
+
+      if (hasDeposit && !paymentInfo.dueDeposit.trim()) {
+        showFieldTooltip('dueDeposit', '선금 지급일은 필수 입력입니다.');
+        if (!firstErrorRef) {
+          firstErrorRef = null;
+          firstErrorKey = 'dueDeposit';
+        }
+      }
+
+      if (hasMilestone && !paymentInfo.dueMilestone.trim()) {
+        showFieldTooltip('dueMilestone', '중도금 지급일은 필수 입력입니다.');
+        if (!firstErrorRef) {
+          firstErrorRef = null;
+          firstErrorKey = 'dueMilestone';
+        }
+      }
+
+      if (hasBalance && !paymentInfo.dueBalance.trim()) {
+        showFieldTooltip('dueBalance', '잔금 지급일은 필수 입력입니다.');
+        if (!firstErrorRef) {
+          firstErrorRef = null;
+          firstErrorKey = 'dueBalance';
+        }
+      }
+
+      // 음수/NaN/무한대 검증
+      const validateNumber = (value: string, fieldName: string): boolean => {
+        if (!value) return true; // 빈 값은 허용 (선택적)
+        const num = parseFloat(value);
+        if (isNaN(num) || !isFinite(num) || num < 0) {
+          showFieldTooltip(fieldName, '올바른 숫자를 입력해주세요 (0 이상)');
+          if (!firstErrorRef) {
+            firstErrorRef = null;
+            firstErrorKey = fieldName;
+          }
+          return false;
+        }
+        return true;
+      };
+
+      if (paymentInfo.inputUnit === 'amount') {
+        validateNumber(paymentInfo.amountDeposit, 'amountDeposit');
+        validateNumber(paymentInfo.amountMilestone, 'amountMilestone');
+        validateNumber(paymentInfo.amountBalance, 'amountBalance');
+      } else {
+        validateNumber(paymentInfo.percentDeposit, 'percentDeposit');
+        validateNumber(paymentInfo.percentMilestone, 'percentMilestone');
+        validateNumber(paymentInfo.percentBalance, 'percentBalance');
+      }
+    }
+
     const validItems = contractItems.filter(item => item.name.trim() && item.amount > 0);
     if (validItems.length === 0) {
       if (!firstErrorRef) {
@@ -557,6 +691,116 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     return { subtotal, taxAmount, total };
   };
 
+  // 결제 금액 자동 계산 (금액 모드)
+  const handleAmountChange = (field: 'deposit' | 'milestone' | 'balance', value: string) => {
+    const { total } = calculateTotals();
+    const numValue = parseFloat(value) || 0;
+
+    let newDeposit = field === 'deposit' ? value : paymentInfo.amountDeposit;
+    let newMilestone = field === 'milestone' ? value : paymentInfo.amountMilestone;
+    let newBalance = field === 'balance' ? value : paymentInfo.amountBalance;
+
+    // 잔금이 아닌 필드를 수정한 경우, 잔금 자동 계산
+    if (field !== 'balance') {
+      const depositVal = parseFloat(newDeposit) || 0;
+      const milestoneVal = parseFloat(newMilestone) || 0;
+      const calculatedBalance = total - depositVal - milestoneVal;
+      newBalance = calculatedBalance > 0 ? calculatedBalance.toString() : '0';
+    }
+
+    setPaymentInfo({
+      ...paymentInfo,
+      amountDeposit: newDeposit,
+      amountMilestone: newMilestone,
+      amountBalance: newBalance
+    });
+  };
+
+  // 결제 비율 자동 계산 (비율 모드)
+  const handlePercentChange = (field: 'deposit' | 'milestone' | 'balance', value: string) => {
+    const numValue = parseFloat(value) || 0;
+
+    let newDeposit = field === 'deposit' ? value : paymentInfo.percentDeposit;
+    let newMilestone = field === 'milestone' ? value : paymentInfo.percentMilestone;
+    let newBalance = field === 'balance' ? value : paymentInfo.percentBalance;
+
+    // 잔금이 아닌 필드를 수정한 경우, 잔금 자동 계산
+    if (field !== 'balance') {
+      const depositVal = parseFloat(newDeposit) || 0;
+      const milestoneVal = parseFloat(newMilestone) || 0;
+      const calculatedBalance = 100 - depositVal - milestoneVal;
+      // 소수점 2자리로 반올림
+      newBalance = calculatedBalance > 0 ? calculatedBalance.toFixed(2) : '0';
+    }
+
+    setPaymentInfo({
+      ...paymentInfo,
+      percentDeposit: newDeposit,
+      percentMilestone: newMilestone,
+      percentBalance: newBalance
+    });
+  };
+
+  // 결제 합계 검증 (금액 모드)
+  const validateAmountSum = (): boolean => {
+    if (paymentInfo.paymentCondition !== 'custom') return true;
+
+    const { total } = calculateTotals();
+    const deposit = parseFloat(paymentInfo.amountDeposit) || 0;
+    const milestone = parseFloat(paymentInfo.amountMilestone) || 0;
+    const balance = parseFloat(paymentInfo.amountBalance) || 0;
+    const sum = deposit + milestone + balance;
+
+    // 합계가 있고 총 금액과 다른 경우
+    if (sum > 0 && Math.abs(sum - total) > 0.01) {
+      return false;
+    }
+    return true;
+  };
+
+  // 결제 합계 검증 (비율 모드)
+  const validatePercentSum = (): boolean => {
+    if (paymentInfo.paymentCondition !== 'custom') return true;
+
+    const deposit = parseFloat(paymentInfo.percentDeposit) || 0;
+    const milestone = parseFloat(paymentInfo.percentMilestone) || 0;
+    const balance = parseFloat(paymentInfo.percentBalance) || 0;
+    const sum = deposit + milestone + balance;
+
+    // 합계가 있고 100%가 아닌 경우
+    if (sum > 0 && Math.abs(sum - 100) > 0.01) {
+      return false;
+    }
+    return true;
+  };
+
+  // 입력 단위 전환 핸들러
+  const handleInputUnitChange = (newUnit: 'amount' | 'percent') => {
+    if (newUnit === paymentInfo.inputUnit) return;
+
+    // 기존 값이 있는 경우 경고
+    const hasValues = paymentInfo.inputUnit === 'amount'
+      ? (paymentInfo.amountDeposit || paymentInfo.amountMilestone || paymentInfo.amountBalance)
+      : (paymentInfo.percentDeposit || paymentInfo.percentMilestone || paymentInfo.percentBalance);
+
+    if (hasValues) {
+      const confirmed = window.confirm('입력 단위 변경 시 기존 값이 초기화됩니다. 계속하시겠습니까?');
+      if (!confirmed) return;
+    }
+
+    // 값 초기화하고 단위 변경
+    setPaymentInfo({
+      ...paymentInfo,
+      inputUnit: newUnit,
+      amountDeposit: '',
+      amountMilestone: '',
+      amountBalance: '',
+      percentDeposit: '',
+      percentMilestone: '',
+      percentBalance: ''
+    });
+  };
+
   const handleCustomerSelect = (customer: any) => {
     setClientInfo({
       name: customer.company_name || '',
@@ -564,7 +808,10 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       phone: customer.phone || '',
       email: customer.email || '',
       businessNumber: customer.business_registration_number || '',
-      address: customer.address || ''
+      fax: customer.fax || '',
+      address: customer.address || '',
+      businessType: customer.business_type || '',
+      businessCategory: customer.business_category || ''
     });
   };
 
@@ -616,7 +863,10 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       phone: quote.client_phone || '',
       email: quote.client_email || '',
       businessNumber: quote.client_business_number || '',
-      address: quote.client_address || ''
+      fax: quote.client_fax || '',
+      address: quote.client_address || '',
+      businessType: quote.client_business_type || '',
+      businessCategory: quote.client_business_category || ''
     });
 
     // 계약서 제목을 견적서 제목으로 설정
@@ -735,9 +985,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       project_description: projectInfo.description,
       items: contractItems,
       terms: contractTerms.filter(term => term.trim()),
-      payment_terms: paymentInfo.paymentTerms === 'custom' ? paymentInfo.customPaymentTerms : paymentInfo.paymentTerms,
       payment_method: paymentInfo.paymentMethod,
-      additional_terms: paymentInfo.additionalTerms,
       ...calculateTotals(),
       status: 'draft', // 먼저 draft로 저장
       ...(initialData?.quoteId && { quote_id: initialData.quoteId })
@@ -813,7 +1061,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         setInitialFormData({
           contractBasicInfo, clientInfo, supplierInfo, projectInfo,
           contractItems, contractTerms, paymentInfo, legalInfo,
-          detailedPaymentInfo, deliveryInfo, legalClauses, additionalClauses
+          deliveryInfo, legalClauses, additionalClauses
         });
         setHasUnsavedChanges(false);
       }
@@ -853,9 +1101,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         project_description: projectInfo.description,
         items: contractItems,
         terms: contractTerms.filter(term => term.trim()),
-        payment_terms: paymentInfo.paymentTerms === 'custom' ? paymentInfo.customPaymentTerms : paymentInfo.paymentTerms,
-        payment_method: paymentInfo.paymentMethod,
-        additional_terms: paymentInfo.additionalTerms,
         ...calculateTotals(),
         status: 'draft',
         ...(initialData?.quoteId && { quote_id: initialData.quoteId }),
@@ -867,16 +1112,21 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         party_a_representative: legalInfo.partyARepresentative || null,
         party_b_representative: legalInfo.partyBRepresentative || null,
 
-        // 상세 결제 정보
-        down_payment_ratio: detailedPaymentInfo.downPaymentRatio || null,
-        interim_payment_ratio: detailedPaymentInfo.interimPaymentRatio || null,
-        final_payment_ratio: detailedPaymentInfo.finalPaymentRatio || null,
-        down_payment_date: detailedPaymentInfo.downPaymentDate || null,
-        interim_payment_date: detailedPaymentInfo.interimPaymentDate || null,
-        final_payment_date: detailedPaymentInfo.finalPaymentDate || null,
-        bank_name: detailedPaymentInfo.bankName || null,
-        bank_account_number: detailedPaymentInfo.bankAccountNumber || null,
-        bank_account_holder: detailedPaymentInfo.bankAccountHolder || null,
+        // 통합 결제 정보
+        payment_condition: paymentInfo.paymentCondition || null,
+        payment_input_unit: paymentInfo.inputUnit || null,
+        amount_deposit: paymentInfo.amountDeposit || null,
+        amount_milestone: paymentInfo.amountMilestone || null,
+        amount_balance: paymentInfo.amountBalance || null,
+        percent_deposit: paymentInfo.percentDeposit || null,
+        percent_milestone: paymentInfo.percentMilestone || null,
+        percent_balance: paymentInfo.percentBalance || null,
+        due_deposit: paymentInfo.dueDeposit || null,
+        due_milestone: paymentInfo.dueMilestone || null,
+        due_balance: paymentInfo.dueBalance || null,
+        bank_name: paymentInfo.bankName || null,
+        bank_account_number: paymentInfo.bankAccountNumber || null,
+        bank_account_holder: paymentInfo.bankAccountHolder || null,
 
         // 계약 이행 조건
         delivery_conditions: deliveryInfo.deliveryConditions || null,
@@ -932,7 +1182,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         setInitialFormData({
           contractBasicInfo, clientInfo, supplierInfo, projectInfo,
           contractItems, contractTerms, paymentInfo, legalInfo,
-          detailedPaymentInfo, deliveryInfo, legalClauses, additionalClauses
+          deliveryInfo, legalClauses, additionalClauses
         });
         setHasUnsavedChanges(false);
       }
@@ -1059,214 +1309,41 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
           {/* 2. 수신자 정보 */}
           <Card className="p-4 md:p-6 bg-card border-border">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-              <h3 className="font-medium text-foreground">수신자 정보</h3>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-primary" />
+                <h3 className="font-medium text-foreground">발주처 정보</h3>
+              </div>
+              <div className="flex items-center gap-2">
                 <CustomerSelector onCustomerSelect={handleCustomerSelect} />
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => setIsEditingClient(!isEditingClient)}
-                  className="border-border w-fit"
+                  className="p-2"
                 >
-                  <Edit3 className="w-4 h-4 mr-2" />
-                  {isEditingClient ? '저장' : '수정'}
+                  <Edit3 className="w-4 h-4" />
                 </Button>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-              <div className="space-y-2">
-                <Label className="text-foreground">회사명 *</Label>
-                <div className="relative">
-                  <Input
-                    ref={clientNameRef}
-                    value={clientInfo.name}
-                    onChange={(e) => {
-                      setClientInfo({...clientInfo, name: e.target.value});
-                      if (e.target.value.trim() && fieldTooltips.clientName) {
-                        hideFieldTooltip('clientName');
-                      }
-                    }}
-                    className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                    disabled={!isEditingClient}
-                  />
-                  {fieldTooltips.clientName && (
-                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
-                      {fieldTooltips.clientName}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">대표자명 *</Label>
-                <div className="relative">
-                  <Input
-                    value={clientInfo.company}
-                    onChange={(e) => setClientInfo({...clientInfo, company: e.target.value})}
-                    className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                    disabled={!isEditingClient}
-                  />
-                  {fieldTooltips.clientCompany && (
-                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap">
-                      {fieldTooltips.clientCompany}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">이메일 *</Label>
-                <div className="relative">
-                  <Input
-                    ref={clientEmailRef}
-                    type="email"
-                    value={clientInfo.email} 
-                    onChange={(e) => {
-                      setClientInfo({...clientInfo, email: e.target.value});
-                      if (e.target.value.trim() && isValidEmail(e.target.value) && fieldTooltips.clientEmail) {
-                        hideFieldTooltip('clientEmail');
-                      }
-                    }}
-                    className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                    disabled={!isEditingClient}
-                  />
-                  {fieldTooltips.clientEmail && (
-                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
-                      {fieldTooltips.clientEmail}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">전화번호 *</Label>
-                <div className="relative">
-                  <Input 
-                    value={clientInfo.phone} 
-                    onChange={(e) => setClientInfo({...clientInfo, phone: e.target.value})}
-                    className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                    disabled={!isEditingClient}
-                  />
-                  {fieldTooltips.clientPhone && (
-                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap">
-                      {fieldTooltips.clientPhone}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">사업자등록번호</Label>
-                <Input 
-                  value={clientInfo.businessNumber} 
-                  onChange={(e) => setClientInfo({...clientInfo, businessNumber: e.target.value})}
-                  className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingClient}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">주소</Label>
-                <Input 
-                  value={clientInfo.address} 
-                  onChange={(e) => setClientInfo({...clientInfo, address: e.target.value})}
-                  className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingClient}
-                />
-              </div>
-            </div>
+
+            <ClientInfoForm
+              clientInfo={clientInfo}
+              isEditing={isEditingClient}
+              onClientInfoChange={setClientInfo}
+              onEditToggle={() => setIsEditingClient(!isEditingClient)}
+              hideWrapper={true}
+            />
           </Card>
 
           {/* 3. 공급자 정보 */}
-          <Card className="p-4 md:p-6 bg-card border-border">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-              <h3 className="font-medium text-foreground">공급자 정보</h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditingSupplier(!isEditingSupplier)}
-                className="border-border w-fit"
-              >
-                <Edit3 className="w-4 h-4 mr-2" />
-                {isEditingSupplier ? '저장' : '수정'}
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-              <div className="space-y-2">
-                <Label className="text-foreground">대표자명 *</Label>
-                <div className="relative">
-                  <Input 
-                    value={supplierInfo.name} 
-                    onChange={(e) => setSupplierInfo({...supplierInfo, name: e.target.value})}
-                    className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                    disabled={!isEditingSupplier}
-                  />
-                  {fieldTooltips.supplierName && (
-                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap">
-                      {fieldTooltips.supplierName}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">회사명</Label>
-                <Input 
-                  value={supplierInfo.companyName || supplierInfo.businessName} 
-                  onChange={(e) => setSupplierInfo({...supplierInfo, companyName: e.target.value})}
-                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingSupplier}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">이메일 *</Label>
-                <div className="relative">
-                  <Input 
-                    value={supplierInfo.email} 
-                    onChange={(e) => setSupplierInfo({...supplierInfo, email: e.target.value})}
-                    className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                    disabled={!isEditingSupplier}
-                  />
-                  {fieldTooltips.supplierEmail && (
-                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap">
-                      {fieldTooltips.supplierEmail}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">전화번호 *</Label>
-                <div className="relative">
-                  <Input 
-                    value={supplierInfo.phone} 
-                    onChange={(e) => setSupplierInfo({...supplierInfo, phone: e.target.value})}
-                    className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                    disabled={!isEditingSupplier}
-                  />
-                  {fieldTooltips.supplierPhone && (
-                    <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap">
-                      {fieldTooltips.supplierPhone}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">사업자등록번호</Label>
-                <Input 
-                  value={supplierInfo.businessRegistrationNumber} 
-                  onChange={(e) => setSupplierInfo({...supplierInfo, businessRegistrationNumber: e.target.value})}
-                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingSupplier}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">사업장 주소</Label>
-                <Input 
-                  value={supplierInfo.businessAddress} 
-                  onChange={(e) => setSupplierInfo({...supplierInfo, businessAddress: e.target.value})}
-                  className={isEditingSupplier ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
-                  disabled={!isEditingSupplier}
-                />
-              </div>
-            </div>
-          </Card>
+          <SupplierInfoForm
+            supplierInfo={supplierInfo}
+            isEditing={isEditingSupplier}
+            onSupplierInfoChange={setSupplierInfo}
+            onEditToggle={() => setIsEditingSupplier(!isEditingSupplier)}
+          />
 
           {/* 4. 프로젝트 정보 */}
           <Card className="p-4 md:p-6 bg-card border-border">
@@ -1607,198 +1684,401 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
             </div>
           </Card>
 
-          {/* 7. 결제 정보 */}
+          {/* 7. 결제 정보 (통합) */}
           <Card className="p-4 md:p-6 bg-card border-border">
             <h3 className="font-medium mb-4 text-foreground">결제 정보</h3>
+
+            {/* 인라인 배너 - 필수 입력 누락 안내 */}
+            {paymentInfo.paymentCondition === 'custom' && paymentInfo.paymentMethod === 'bank' &&
+             (!paymentInfo.bankName.trim() || !paymentInfo.bankAccountNumber.trim() || !paymentInfo.bankAccountHolder.trim()) && (
+              <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-amber-800 dark:text-amber-200">
+                  <p className="font-medium">필수 입력 항목이 누락되었습니다</p>
+                  <p className="mt-1">은행명/계좌번호/예금주는 필수 입력입니다.</p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
+              {/* 결제 조건 */}
               <div className="space-y-2">
-                <Label htmlFor="paymentTerms" className="text-foreground">결제 조건 *</Label>
+                <Label className="text-foreground">결제 조건 *</Label>
                 <div className="relative">
-                  <Select value={paymentInfo.paymentTerms} onValueChange={(value) => {
-                    setPaymentInfo({...paymentInfo, paymentTerms: value, customPaymentTerms: value === 'custom' ? paymentInfo.customPaymentTerms : ''});
-                    if (value && fieldTooltips.paymentTerms) {
-                      hideFieldTooltip('paymentTerms');
-                    }
-                  }}>
-                    <SelectTrigger ref={paymentTermsRef} className="bg-input-background border-border">
+                  <Select
+                    value={paymentInfo.paymentCondition}
+                    onValueChange={(value: 'immediate' | 'custom') => {
+                      setPaymentInfo({...paymentInfo, paymentCondition: value});
+                      if (value && fieldTooltips.paymentCondition) {
+                        hideFieldTooltip('paymentCondition');
+                      }
+                    }}
+                  >
+                    <SelectTrigger ref={paymentConditionRef} className="bg-input-background border-border">
                       <SelectValue placeholder="결제 조건을 선택하세요" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="immediate">계약 체결 즉시</SelectItem>
-                      <SelectItem value="50-50">착수금 50% / 완료 후 50%</SelectItem>
-                      <SelectItem value="30-70">착수금 30% / 완료 후 70%</SelectItem>
                       <SelectItem value="custom">직접 입력</SelectItem>
                     </SelectContent>
                   </Select>
-                  {fieldTooltips.paymentTerms && (
+                  {fieldTooltips.paymentCondition && (
                     <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
-                      {fieldTooltips.paymentTerms}
+                      {fieldTooltips.paymentCondition}
                     </div>
                   )}
                 </div>
-                
-                {/* 직접 입력 옵션 선택시 나타나는 입력 필드 */}
-                {paymentInfo.paymentTerms === 'custom' && (
-                  <div className="mt-2 relative">
-                    <Input
-                      ref={customPaymentTermsRef}
-                      placeholder="결제 조건을 직접 입력하세요"
-                      value={paymentInfo.customPaymentTerms}
-                      onChange={(e) => {
-                        setPaymentInfo({...paymentInfo, customPaymentTerms: e.target.value});
-                        if (e.target.value.trim() && fieldTooltips.customPaymentTerms) {
-                          hideFieldTooltip('customPaymentTerms');
-                        }
+              </div>
+
+              {/* 직접 입력 선택 시 하위 폼 */}
+              {paymentInfo.paymentCondition === 'custom' && (
+                <div className="space-y-4 pt-2 border-t border-border">
+                  {/* 입력 단위 토글 */}
+                  <div className="space-y-2">
+                    <Label className="text-foreground">입력 단위</Label>
+                    <ToggleGroup
+                      type="single"
+                      value={paymentInfo.inputUnit}
+                      onValueChange={(value: 'amount' | 'percent') => {
+                        if (value) handleInputUnitChange(value);
                       }}
-                      className="bg-input-background border-border"
-                    />
-                    {fieldTooltips.customPaymentTerms && (
-                      <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
-                        {fieldTooltips.customPaymentTerms}
-                      </div>
-                    )}
+                      className="justify-start"
+                    >
+                      <ToggleGroupItem value="amount" aria-label="금액 단위" className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                        금액(원)
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="percent" aria-label="비율 단위" className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                        비율(%)
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                   </div>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="paymentMethod" className="text-foreground">결제 방법</Label>
-                <Select value={paymentInfo.paymentMethod} onValueChange={(value) => setPaymentInfo({...paymentInfo, paymentMethod: value})}>
-                  <SelectTrigger className="bg-input-background border-border">
-                    <SelectValue placeholder="결제 방법을 선택하세요" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="bank-transfer">계좌이체</SelectItem>
-                    <SelectItem value="card">카드결제</SelectItem>
-                    <SelectItem value="cash">현금결제</SelectItem>
-                    <SelectItem value="check">수표결제</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="additionalTerms" className="text-foreground">추가 결제 조건</Label>
-                <Textarea
-                  id="additionalTerms"
-                  value={paymentInfo.additionalTerms}
-                  onChange={(e) => setPaymentInfo({...paymentInfo, additionalTerms: e.target.value})}
-                  placeholder="결제와 관련된 추가 조건이 있다면 입력하세요"
-                  rows={3}
-                  className="bg-input-background border-border"
-                />
-              </div>
-            </div>
-          </Card>
+                  {/* 선금/중도금/잔금 필드 세트 */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* 선금 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="deposit" className="text-foreground">선금</Label>
+                      <Input
+                        id="deposit"
+                        type="number"
+                        min="0"
+                        max={paymentInfo.inputUnit === 'percent' ? '100' : undefined}
+                        step={paymentInfo.inputUnit === 'percent' ? '0.01' : '1'}
+                        value={paymentInfo.inputUnit === 'amount' ? paymentInfo.amountDeposit : paymentInfo.percentDeposit}
+                        onChange={(e) => {
+                          if (paymentInfo.inputUnit === 'amount') {
+                            handleAmountChange('deposit', e.target.value);
+                          } else {
+                            handlePercentChange('deposit', e.target.value);
+                          }
+                        }}
+                        placeholder={paymentInfo.inputUnit === 'amount' ? '예: 1000000' : '예: 30'}
+                        className="bg-input-background border-border"
+                      />
+                    </div>
 
-          {/* 8. 상세 결제 정보 */}
-          <Card className="p-4 md:p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">상세 결제 정보 (선택사항)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="downPaymentRatio" className="text-foreground">선금 비율 (%)</Label>
-                <Input
-                  id="downPaymentRatio"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={detailedPaymentInfo.downPaymentRatio}
-                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, downPaymentRatio: Number(e.target.value)})}
-                  placeholder="예: 30"
-                  className="bg-input-background border-border"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="interimPaymentRatio" className="text-foreground">중도금 비율 (%)</Label>
-                <Input
-                  id="interimPaymentRatio"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={detailedPaymentInfo.interimPaymentRatio}
-                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, interimPaymentRatio: Number(e.target.value)})}
-                  placeholder="예: 40"
-                  className="bg-input-background border-border"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="finalPaymentRatio" className="text-foreground">잔금 비율 (%)</Label>
-                <Input
-                  id="finalPaymentRatio"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={detailedPaymentInfo.finalPaymentRatio}
-                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, finalPaymentRatio: Number(e.target.value)})}
-                  placeholder="예: 30"
-                  className="bg-input-background border-border"
-                />
-              </div>
-            </div>
+                    {/* 중도금 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="milestone" className="text-foreground">중도금</Label>
+                      <Input
+                        id="milestone"
+                        type="number"
+                        min="0"
+                        max={paymentInfo.inputUnit === 'percent' ? '100' : undefined}
+                        step={paymentInfo.inputUnit === 'percent' ? '0.01' : '1'}
+                        value={paymentInfo.inputUnit === 'amount' ? paymentInfo.amountMilestone : paymentInfo.percentMilestone}
+                        onChange={(e) => {
+                          if (paymentInfo.inputUnit === 'amount') {
+                            handleAmountChange('milestone', e.target.value);
+                          } else {
+                            handlePercentChange('milestone', e.target.value);
+                          }
+                        }}
+                        placeholder={paymentInfo.inputUnit === 'amount' ? '예: 1500000' : '예: 40'}
+                        className="bg-input-background border-border"
+                      />
+                    </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="downPaymentDate" className="text-foreground">선금 지급일</Label>
-                <Input
-                  id="downPaymentDate"
-                  value={detailedPaymentInfo.downPaymentDate}
-                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, downPaymentDate: e.target.value})}
-                  placeholder="예: 계약 체결 후 7일 이내"
-                  className="bg-input-background border-border"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="interimPaymentDate" className="text-foreground">중도금 지급일</Label>
-                <Input
-                  id="interimPaymentDate"
-                  value={detailedPaymentInfo.interimPaymentDate}
-                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, interimPaymentDate: e.target.value})}
-                  placeholder="예: 중간 검수 후 7일 이내"
-                  className="bg-input-background border-border"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="finalPaymentDate" className="text-foreground">잔금 지급일</Label>
-                <Input
-                  id="finalPaymentDate"
-                  value={detailedPaymentInfo.finalPaymentDate}
-                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, finalPaymentDate: e.target.value})}
-                  placeholder="예: 최종 인도 후 7일 이내"
-                  className="bg-input-background border-border"
-                />
-              </div>
-            </div>
+                    {/* 잔금 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="balance" className="text-foreground">잔금</Label>
+                      <div className="relative">
+                        <Input
+                          id="balance"
+                          type="number"
+                          min="0"
+                          max={paymentInfo.inputUnit === 'percent' ? '100' : undefined}
+                          step={paymentInfo.inputUnit === 'percent' ? '0.01' : '1'}
+                          value={paymentInfo.inputUnit === 'amount' ? paymentInfo.amountBalance : paymentInfo.percentBalance}
+                          onChange={(e) => {
+                            if (paymentInfo.inputUnit === 'amount') {
+                              handleAmountChange('balance', e.target.value);
+                            } else {
+                              handlePercentChange('balance', e.target.value);
+                            }
+                          }}
+                          placeholder={paymentInfo.inputUnit === 'amount' ? '예: 1500000' : '예: 30'}
+                          className={`bg-input-background border-border ${
+                            (paymentInfo.inputUnit === 'amount' && fieldTooltips.amountBalance) ||
+                            (paymentInfo.inputUnit === 'percent' && fieldTooltips.percentBalance)
+                              ? 'border-red-500'
+                              : ''
+                          }`}
+                        />
+                        {paymentInfo.inputUnit === 'amount' && fieldTooltips.amountBalance && (
+                          <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                            {fieldTooltips.amountBalance}
+                          </div>
+                        )}
+                        {paymentInfo.inputUnit === 'percent' && fieldTooltips.percentBalance && (
+                          <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                            {fieldTooltips.percentBalance}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="bankName" className="text-foreground">은행명</Label>
-                <Input
-                  id="bankName"
-                  value={detailedPaymentInfo.bankName}
-                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, bankName: e.target.value})}
-                  placeholder="예: 국민은행"
-                  className="bg-input-background border-border"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bankAccountNumber" className="text-foreground">계좌번호</Label>
-                <Input
-                  id="bankAccountNumber"
-                  value={detailedPaymentInfo.bankAccountNumber}
-                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, bankAccountNumber: e.target.value})}
-                  placeholder="예: 123-456-789012"
-                  className="bg-input-background border-border"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bankAccountHolder" className="text-foreground">예금주</Label>
-                <Input
-                  id="bankAccountHolder"
-                  value={detailedPaymentInfo.bankAccountHolder}
-                  onChange={(e) => setDetailedPaymentInfo({...detailedPaymentInfo, bankAccountHolder: e.target.value})}
-                  placeholder="예: (주)회사명"
-                  className="bg-input-background border-border"
-                />
-              </div>
+                  {/* 합계 표시 */}
+                  {(paymentInfo.amountDeposit || paymentInfo.amountMilestone || paymentInfo.amountBalance ||
+                    paymentInfo.percentDeposit || paymentInfo.percentMilestone || paymentInfo.percentBalance) && (
+                    <div className="p-3 bg-muted/30 rounded-lg">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">
+                          {paymentInfo.inputUnit === 'amount' ? '합계' : '합계 비율'}
+                        </span>
+                        <span className={`font-medium ${
+                          (paymentInfo.inputUnit === 'amount' && !validateAmountSum()) ||
+                          (paymentInfo.inputUnit === 'percent' && !validatePercentSum())
+                            ? 'text-red-500'
+                            : 'text-foreground'
+                        }`}>
+                          {paymentInfo.inputUnit === 'amount' ? (
+                            <>
+                              {new Intl.NumberFormat('ko-KR').format(
+                                (parseFloat(paymentInfo.amountDeposit) || 0) +
+                                (parseFloat(paymentInfo.amountMilestone) || 0) +
+                                (parseFloat(paymentInfo.amountBalance) || 0)
+                              )}원
+                              {' / '}
+                              {new Intl.NumberFormat('ko-KR').format(calculateTotals().total)}원
+                            </>
+                          ) : (
+                            <>
+                              {(
+                                (parseFloat(paymentInfo.percentDeposit) || 0) +
+                                (parseFloat(paymentInfo.percentMilestone) || 0) +
+                                (parseFloat(paymentInfo.percentBalance) || 0)
+                              ).toFixed(2)}%
+                              {' / 100%'}
+                            </>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 지급일 */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="dueDeposit" className="text-foreground">
+                        선금 지급일
+                        {paymentInfo.inputUnit === 'amount' && paymentInfo.amountDeposit && parseFloat(paymentInfo.amountDeposit) > 0 && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                        {paymentInfo.inputUnit === 'percent' && paymentInfo.percentDeposit && parseFloat(paymentInfo.percentDeposit) > 0 && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="dueDeposit"
+                          value={paymentInfo.dueDeposit}
+                          onChange={(e) => {
+                            setPaymentInfo({...paymentInfo, dueDeposit: e.target.value});
+                            if (e.target.value.trim() && fieldTooltips.dueDeposit) {
+                              hideFieldTooltip('dueDeposit');
+                            }
+                          }}
+                          placeholder="예: 계약 체결 후 7일 이내"
+                          className="bg-input-background border-border"
+                        />
+                        {fieldTooltips.dueDeposit && (
+                          <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                            {fieldTooltips.dueDeposit}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="dueMilestone" className="text-foreground">
+                        중도금 지급일
+                        {paymentInfo.inputUnit === 'amount' && paymentInfo.amountMilestone && parseFloat(paymentInfo.amountMilestone) > 0 && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                        {paymentInfo.inputUnit === 'percent' && paymentInfo.percentMilestone && parseFloat(paymentInfo.percentMilestone) > 0 && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="dueMilestone"
+                          value={paymentInfo.dueMilestone}
+                          onChange={(e) => {
+                            setPaymentInfo({...paymentInfo, dueMilestone: e.target.value});
+                            if (e.target.value.trim() && fieldTooltips.dueMilestone) {
+                              hideFieldTooltip('dueMilestone');
+                            }
+                          }}
+                          placeholder="예: 중간 검수 후 7일 이내"
+                          className="bg-input-background border-border"
+                        />
+                        {fieldTooltips.dueMilestone && (
+                          <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                            {fieldTooltips.dueMilestone}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="dueBalance" className="text-foreground">
+                        잔금 지급일
+                        {paymentInfo.inputUnit === 'amount' && paymentInfo.amountBalance && parseFloat(paymentInfo.amountBalance) > 0 && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                        {paymentInfo.inputUnit === 'percent' && paymentInfo.percentBalance && parseFloat(paymentInfo.percentBalance) > 0 && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="dueBalance"
+                          value={paymentInfo.dueBalance}
+                          onChange={(e) => {
+                            setPaymentInfo({...paymentInfo, dueBalance: e.target.value});
+                            if (e.target.value.trim() && fieldTooltips.dueBalance) {
+                              hideFieldTooltip('dueBalance');
+                            }
+                          }}
+                          placeholder="예: 최종 인도 후 7일 이내"
+                          className="bg-input-background border-border"
+                        />
+                        {fieldTooltips.dueBalance && (
+                          <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                            {fieldTooltips.dueBalance}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 결제 방법 */}
+                  <div className="space-y-2">
+                    <Label className="text-foreground">결제 방법 *</Label>
+                    <div className="relative" ref={paymentMethodRef}>
+                      <RadioGroup
+                        value={paymentInfo.paymentMethod}
+                        onValueChange={(value: 'bank' | 'card') => {
+                          setPaymentInfo({...paymentInfo, paymentMethod: value});
+                          if (value && fieldTooltips.paymentMethod) {
+                            hideFieldTooltip('paymentMethod');
+                          }
+                        }}
+                        className="flex gap-4"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="bank" id="bank" />
+                          <Label htmlFor="bank" className="cursor-pointer">계좌이체</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="card" id="card" />
+                          <Label htmlFor="card" className="cursor-pointer">카드결제</Label>
+                        </div>
+                      </RadioGroup>
+                      {fieldTooltips.paymentMethod && (
+                        <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                          {fieldTooltips.paymentMethod}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 계좌이체 선택 시 은행 정보 */}
+                  {paymentInfo.paymentMethod === 'bank' && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-border">
+                      <div className="space-y-2">
+                        <Label htmlFor="bankName" className="text-foreground">은행명 *</Label>
+                        <div className="relative">
+                          <Input
+                            ref={bankNameRef}
+                            id="bankName"
+                            value={paymentInfo.bankName}
+                            onChange={(e) => {
+                              setPaymentInfo({...paymentInfo, bankName: e.target.value});
+                              if (e.target.value.trim() && fieldTooltips.bankName) {
+                                hideFieldTooltip('bankName');
+                              }
+                            }}
+                            placeholder="예: 국민은행"
+                            className="bg-input-background border-border"
+                          />
+                          {fieldTooltips.bankName && (
+                            <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                              {fieldTooltips.bankName}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bankAccountNumber" className="text-foreground">계좌번호 *</Label>
+                        <div className="relative">
+                          <Input
+                            ref={bankAccountNumberRef}
+                            id="bankAccountNumber"
+                            value={paymentInfo.bankAccountNumber}
+                            onChange={(e) => {
+                              setPaymentInfo({...paymentInfo, bankAccountNumber: e.target.value});
+                              if (e.target.value.trim() && fieldTooltips.bankAccountNumber) {
+                                hideFieldTooltip('bankAccountNumber');
+                              }
+                            }}
+                            placeholder="예: 123-456-789012"
+                            className="bg-input-background border-border"
+                          />
+                          {fieldTooltips.bankAccountNumber && (
+                            <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                              {fieldTooltips.bankAccountNumber}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bankAccountHolder" className="text-foreground">예금주 *</Label>
+                        <div className="relative">
+                          <Input
+                            ref={bankAccountHolderRef}
+                            id="bankAccountHolder"
+                            value={paymentInfo.bankAccountHolder}
+                            onChange={(e) => {
+                              setPaymentInfo({...paymentInfo, bankAccountHolder: e.target.value});
+                              if (e.target.value.trim() && fieldTooltips.bankAccountHolder) {
+                                hideFieldTooltip('bankAccountHolder');
+                              }
+                            }}
+                            placeholder="예: (주)회사명"
+                            className="bg-input-background border-border"
+                          />
+                          {fieldTooltips.bankAccountHolder && (
+                            <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
+                              {fieldTooltips.bankAccountHolder}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </Card>
 
