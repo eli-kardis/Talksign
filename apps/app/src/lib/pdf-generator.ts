@@ -1,5 +1,6 @@
 import { type Quote, type Contract, type SupplierInfo } from '@/lib/types'
-import puppeteer from 'puppeteer'
+import puppeteer from 'puppeteer-core'
+import chromium from '@sparticuz/chromium'
 
 // 견적서 HTML 템플릿 생성
 function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
@@ -1061,9 +1062,13 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
 export async function generateQuotePDF(quote: Quote, supplierInfo: SupplierInfo): Promise<Buffer> {
   const html = generateQuoteHTML(quote, supplierInfo);
 
+  // Vercel 환경에서는 @sparticuz/chromium 사용, 로컬에서는 일반 puppeteer 사용
+  const isVercel = process.env.VERCEL === '1';
+
   const browser = await puppeteer.launch({
+    args: isVercel ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
+    executablePath: isVercel ? await chromium.executablePath() : undefined,
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 
   try {
@@ -1090,9 +1095,13 @@ export async function generateQuotePDF(quote: Quote, supplierInfo: SupplierInfo)
 export async function generateContractPDF(contract: Contract, supplierInfo: SupplierInfo): Promise<Buffer> {
   const html = generateContractHTML(contract, supplierInfo);
 
+  // Vercel 환경에서는 @sparticuz/chromium 사용, 로컬에서는 일반 puppeteer 사용
+  const isVercel = process.env.VERCEL === '1';
+
   const browser = await puppeteer.launch({
+    args: isVercel ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
+    executablePath: isVercel ? await chromium.executablePath() : undefined,
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 
   try {
