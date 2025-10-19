@@ -282,11 +282,11 @@ export function Signup({ onNavigate, onSignupSuccess }: SignupProps) {
                 />
               </div>
 
-              {/* 회사명 (사업자등록번호 입력시에만 표시) - 슬라이드 애니메이션 */}
+              {/* 회사명 및 사업장 주소 (사업자등록번호 입력시에만 표시) - 슬라이드 애니메이션 */}
               <div
                 className="transition-all duration-500 ease-out overflow-hidden"
                 style={{
-                  maxHeight: showCompanyField ? '200px' : '0px',
+                  maxHeight: showCompanyField ? '400px' : '0px',
                   opacity: showCompanyField ? 1 : 0,
                   transform: `translateY(${showCompanyField ? '0px' : '-20px'})`,
                   marginBottom: showCompanyField ? '16px' : '0px',
@@ -294,36 +294,67 @@ export function Signup({ onNavigate, onSignupSuccess }: SignupProps) {
                 }}
               >
                 <div
-                  className="space-y-2"
+                  className="space-y-3"
                   style={{
                     transform: `translateY(${showCompanyField ? '0px' : '-10px'})`,
                     transition: 'transform 0.5s ease-out 0.1s'
                   }}
                 >
-                  <Label
-                    htmlFor="companyName"
-                    className="text-foreground block"
-                    style={{
-                      opacity: showCompanyField ? 1 : 0,
-                      transition: 'opacity 0.4s ease-out 0.2s'
-                    }}
-                  >
-                    회사명 *
-                  </Label>
-                  <Input
-                    id="companyName"
-                    type="text"
-                    placeholder="(주)회사명 또는 개인사업자명"
-                    value={formData.companyName}
-                    onChange={(e) => handleInputChange('companyName', e.target.value)}
-                    className="bg-input-background border-border text-foreground placeholder:text-muted-foreground"
-                    style={{
-                      opacity: showCompanyField ? 1 : 0,
-                      transform: `translateY(${showCompanyField ? '0px' : '-5px'})`,
-                      transition: 'opacity 0.4s ease-out 0.3s, transform 0.4s ease-out 0.3s'
-                    }}
-                    tabIndex={showCompanyField ? 0 : -1}
-                  />
+                  {/* 회사명 */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="companyName"
+                      className="text-foreground block"
+                      style={{
+                        opacity: showCompanyField ? 1 : 0,
+                        transition: 'opacity 0.4s ease-out 0.2s'
+                      }}
+                    >
+                      회사명 *
+                    </Label>
+                    <Input
+                      id="companyName"
+                      type="text"
+                      placeholder="(주)회사명 또는 개인사업자명"
+                      value={formData.companyName}
+                      onChange={(e) => handleInputChange('companyName', e.target.value)}
+                      className="bg-input-background border-border text-foreground placeholder:text-muted-foreground"
+                      style={{
+                        opacity: showCompanyField ? 1 : 0,
+                        transform: `translateY(${showCompanyField ? '0px' : '-5px'})`,
+                        transition: 'opacity 0.4s ease-out 0.3s, transform 0.4s ease-out 0.3s'
+                      }}
+                      tabIndex={showCompanyField ? 0 : -1}
+                    />
+                  </div>
+
+                  {/* 사업장 주소 */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="businessAddress"
+                      className="text-foreground block"
+                      style={{
+                        opacity: showCompanyField ? 1 : 0,
+                        transition: 'opacity 0.4s ease-out 0.3s'
+                      }}
+                    >
+                      사업장 주소 (선택)
+                    </Label>
+                    <Input
+                      id="businessAddress"
+                      type="text"
+                      placeholder="서울특별시 강남구 테헤란로 123"
+                      value={formData.businessAddress || ''}
+                      onChange={(e) => handleInputChange('businessAddress', e.target.value)}
+                      className="bg-input-background border-border text-foreground placeholder:text-muted-foreground"
+                      style={{
+                        opacity: showCompanyField ? 1 : 0,
+                        transform: `translateY(${showCompanyField ? '0px' : '-5px'})`,
+                        transition: 'opacity 0.4s ease-out 0.4s, transform 0.4s ease-out 0.4s'
+                      }}
+                      tabIndex={showCompanyField ? 0 : -1}
+                    />
+                  </div>
                 </div>
               </div>
 

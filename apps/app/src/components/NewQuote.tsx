@@ -316,7 +316,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
       return false
     }
 
-    // 고객 정보 필수 필드
+    // 수신자 정보 필수 필드
     if (!clientInfo.name.trim() || !clientInfo.email.trim()) {
       return false
     }
@@ -359,14 +359,14 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         return
       }
 
-      // 고객 정보 필수 필드 검증
+      // 수신자 정보 필수 필드 검증
       if (!clientInfo.name.trim()) {
-        alert('고객명을 입력해주세요.')
+        alert('수신자명을 입력해주세요.')
         return
       }
 
       if (!clientInfo.email.trim()) {
-        alert('고객 이메일을 입력해주세요.')
+        alert('수신자 이메일을 입력해주세요.')
         return
       }
 
@@ -583,12 +583,12 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
             onEditToggle={() => setIsEditingSupplier(!isEditingSupplier)}
           />
 
-          {/* 고객 정보 */}
+          {/* 수신자 정보 */}
           <Card className="p-4 md:p-6 bg-card border-border">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <User className="w-5 h-5 text-primary" />
-                <h3 className="font-medium text-foreground">고객 정보</h3>
+                <h3 className="font-medium text-foreground">수신자 정보</h3>
               </div>
               <CustomerSelector onCustomerSelect={handleCustomerSelect} />
             </div>

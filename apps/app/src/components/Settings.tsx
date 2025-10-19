@@ -19,6 +19,9 @@ interface UserProfile {
   businessRegistrationNumber: string
   companyName: string
   businessAddress: string
+  fax: string
+  businessType: string
+  businessCategory: string
 }
 
 interface SettingsProps {
@@ -34,7 +37,10 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
     email: '',
     businessRegistrationNumber: '',
     companyName: '',
-    businessAddress: ''
+    businessAddress: '',
+    fax: '',
+    businessType: '',
+    businessCategory: ''
   })
   const [originalData, setOriginalData] = useState<UserProfile>({
     name: '',
@@ -42,7 +48,10 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
     email: '',
     businessRegistrationNumber: '',
     companyName: '',
-    businessAddress: ''
+    businessAddress: '',
+    fax: '',
+    businessType: '',
+    businessCategory: ''
   })
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -60,6 +69,7 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [showCompanyField, setShowCompanyField] = useState(false)
+  const [showIncompleteProfileAlert, setShowIncompleteProfileAlert] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -71,7 +81,7 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('name, phone, email, business_registration_number, company_name, business_address')
+        .select('name, phone, email, business_registration_number, company_name, business_address, fax, business_type, business_category')
         .eq('id', user?.id)
         .single()
 
@@ -87,12 +97,19 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
         email: data.email || '',
         businessRegistrationNumber: data.business_registration_number || '',
         companyName: data.company_name || '',
-        businessAddress: data.business_address || ''
+        businessAddress: data.business_address || '',
+        fax: data.fax || '',
+        businessType: data.business_type || '',
+        businessCategory: data.business_category || ''
       }
 
       setFormData(profileData)
       setOriginalData(profileData)
       setShowCompanyField(!!data.business_registration_number)
+
+      // 필수 항목이 비어있는지 확인 (소셜 로그인 유저의 경우)
+      const isProfileIncomplete = !data.name || !data.phone
+      setShowIncompleteProfileAlert(isProfileIncomplete)
     } catch (error) {
       console.error('공급자 정보 로딩 중 오류:', error)
       setError('공급자 정보를 불러오는데 실패했습니다.')
@@ -129,14 +146,30 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
+    // 필수 항목 검사
     if (!formData.name || !formData.phone || !formData.email) {
-      setError('필수 정보를 모두 입력해주세요.')
+      setError('필수 정보를 모두 입력해주세요. (대표자명, 연락처, 이메일)')
       return
     }
 
+    // 사업자등록번호 입력 시 회사명 필수
     if (showCompanyField && !formData.companyName) {
       setError('사업자등록번호를 입력했으면 회사명도 입력해주세요.')
+      return
+    }
+
+    // 이메일 형식 검사
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      setError('올바른 이메일 형식이 아닙니다.')
+      return
+    }
+
+    // 전화번호 검사 (최소 길이)
+    const phoneDigits = formData.phone.replace(/\D/g, '')
+    if (phoneDigits.length < 10) {
+      setError('올바른 전화번호를 입력해주세요.')
       return
     }
 
@@ -151,12 +184,18 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
         email: formData.email,
         businessRegistrationNumber: formData.businessRegistrationNumber,
         companyName: formData.companyName,
-        businessAddress: formData.businessAddress
+        businessAddress: formData.businessAddress,
+        fax: formData.fax,
+        businessType: formData.businessType,
+        businessCategory: formData.businessCategory
       })
 
       if (result.success) {
         setMessage('공급자 정보가 성공적으로 업데이트되었습니다.')
         setOriginalData(formData)
+        // 필수 항목이 모두 채워졌는지 확인하고 알림 제거
+        const isStillIncomplete = !formData.name || !formData.phone
+        setShowIncompleteProfileAlert(isStillIncomplete)
       } else {
         setError(result.error || '공급자 정보 업데이트에 실패했습니다.')
       }
@@ -217,8 +256,32 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
 
   const hasChanges = JSON.stringify(formData) !== JSON.stringify(originalData)
 
+  // 저장 버튼 활성화 조건
+  const isFormValid = () => {
+    // 필수 항목 확인
+    if (!formData.name || !formData.phone || !formData.email) {
+      return false
+    }
+    // 사업자등록번호 입력 시 회사명 필수
+    if (showCompanyField && !formData.companyName) {
+      return false
+    }
+    // 변경사항이 있어야 함
+    return hasChanges
+  }
+
+  // 다이얼로그가 닫힐 때 메시지 초기화
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      // 창이 닫힐 때 메시지와 에러 초기화
+      setMessage('')
+      setError('')
+    }
+    onOpenChange(newOpen)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <DialogHeader>
           <div className="flex items-center justify-center mb-4">
@@ -255,6 +318,16 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
                 <AlertCircle className="h-4 w-4 text-destructive" />
                 <AlertDescription className="text-destructive">
                   {error}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* 공급자 정보 미입력 경고 */}
+            {showIncompleteProfileAlert && (
+              <Alert className="border-yellow-200 bg-yellow-50">
+                <AlertCircle className="h-4 w-4 text-yellow-600" />
+                <AlertDescription className="text-yellow-800">
+                  공급자 정보가 완성되지 않았습니다. 견적서 및 계약서 작성을 위해 필수 정보를 모두 입력해주세요.
                 </AlertDescription>
               </Alert>
             )}
@@ -318,46 +391,93 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
                 />
               </div>
 
-              {/* 회사명 */}
+              {/* 회사명, 사업장 주소, 팩스, 업태, 업종 */}
               <div
                 className="transition-all duration-500 ease-out overflow-hidden"
                 style={{
-                  maxHeight: showCompanyField ? '120px' : '0px',
+                  maxHeight: showCompanyField ? '500px' : '0px',
                   opacity: showCompanyField ? 1 : 0,
                   transform: `translateY(${showCompanyField ? '0px' : '-20px'})`,
                   marginBottom: showCompanyField ? '16px' : '0px'
                 }}
               >
-                <div className="space-y-2">
-                  <Label htmlFor="companyName" className="text-foreground">회사명 *</Label>
-                  <Input
-                    id="companyName"
-                    type="text"
-                    placeholder="(주)회사명 또는 개인사업자명"
-                    value={formData.companyName}
-                    onChange={(e) => handleInputChange('companyName', e.target.value)}
-                    className="bg-input-background border-border text-foreground"
-                  />
-                </div>
-              </div>
+                <div className="space-y-4">
+                  {/* 회사명 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="companyName" className="text-foreground">회사명 *</Label>
+                    <Input
+                      id="companyName"
+                      type="text"
+                      placeholder="(주)회사명 또는 개인사업자명"
+                      value={formData.companyName}
+                      onChange={(e) => handleInputChange('companyName', e.target.value)}
+                      className="bg-input-background border-border text-foreground"
+                      tabIndex={showCompanyField ? 0 : -1}
+                    />
+                  </div>
 
-              {/* 사업장 주소 */}
-              <div className="space-y-2">
-                <Label htmlFor="businessAddress" className="text-foreground">사업장 주소</Label>
-                <Input
-                  id="businessAddress"
-                  type="text"
-                  placeholder="서울시 강남구 테헤란로 123"
-                  value={formData.businessAddress}
-                  onChange={(e) => handleInputChange('businessAddress', e.target.value)}
-                  className="bg-input-background border-border text-foreground"
-                />
+                  {/* 사업장 주소 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="businessAddress" className="text-foreground">사업장 주소 (선택)</Label>
+                    <Input
+                      id="businessAddress"
+                      type="text"
+                      placeholder="서울특별시 강남구 테헤란로 123"
+                      value={formData.businessAddress}
+                      onChange={(e) => handleInputChange('businessAddress', e.target.value)}
+                      className="bg-input-background border-border text-foreground"
+                      tabIndex={showCompanyField ? 0 : -1}
+                    />
+                  </div>
+
+                  {/* 팩스 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="fax" className="text-foreground">팩스 (선택)</Label>
+                    <Input
+                      id="fax"
+                      type="tel"
+                      placeholder="02-1234-5678"
+                      value={formData.fax}
+                      onChange={(e) => handleInputChange('fax', e.target.value)}
+                      className="bg-input-background border-border text-foreground"
+                      tabIndex={showCompanyField ? 0 : -1}
+                    />
+                  </div>
+
+                  {/* 업태 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="businessType" className="text-foreground">업태 (선택)</Label>
+                    <Input
+                      id="businessType"
+                      type="text"
+                      placeholder="예: 제조업, 도소매업, 서비스업"
+                      value={formData.businessType}
+                      onChange={(e) => handleInputChange('businessType', e.target.value)}
+                      className="bg-input-background border-border text-foreground"
+                      tabIndex={showCompanyField ? 0 : -1}
+                    />
+                  </div>
+
+                  {/* 업종 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="businessCategory" className="text-foreground">업종 (선택)</Label>
+                    <Input
+                      id="businessCategory"
+                      type="text"
+                      placeholder="예: IT 컨설팅, 웹개발"
+                      value={formData.businessCategory}
+                      onChange={(e) => handleInputChange('businessCategory', e.target.value)}
+                      className="bg-input-background border-border text-foreground"
+                      tabIndex={showCompanyField ? 0 : -1}
+                    />
+                  </div>
+                </div>
               </div>
 
               <Button
                 type="submit"
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                disabled={isSaving || !hasChanges}
+                disabled={isSaving || !isFormValid()}
               >
                 <Save className="w-4 h-4 mr-2" />
                 {isSaving ? "저장 중..." : "공급자 정보 저장"}

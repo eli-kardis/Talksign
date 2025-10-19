@@ -99,7 +99,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     description: initialData?.project.description || ''
   });
 
-  // 2. 발주처 정보 (클라이언트)
+  // 2. 수신자 정보 (클라이언트)
   const [clientInfo, setClientInfo] = useState({
     name: initialData?.client.name || '',
     company: initialData?.client.company || '',
@@ -109,7 +109,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     address: initialData?.client.address || ''
   });
 
-  // 3. 수급업체 정보 (공급자)
+  // 3. 공급자 정보
   const [supplierInfo, setSupplierInfo] = useState({
     name: '',
     email: '',
@@ -156,7 +156,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       "프로젝트 수행 기간은 계약서 체결 후 협의하여 결정합니다.",
       "계약금 50% 선입금, 완료 후 50% 잔금 지급",
       "프로젝트 요구사항 변경 시 추가 비용이 발생할 수 있습니다.",
-      "저작권은 완전한 대금 지급 후 발주처로 이전됩니다.",
+      "저작권은 완전한 대금 지급 후 수신자로 이전됩니다.",
       "계약 위반 시 위약금이 부과될 수 있습니다."
     ]
   );
@@ -171,11 +171,11 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
   // 8. 법적 필수 요소
   const [legalInfo, setLegalInfo] = useState({
-    partyARole: '발주자', // 갑의 역할
-    partyBRole: '수급업체', // 을의 역할
+    partyARole: '수신자', // 갑의 역할
+    partyBRole: '공급자', // 을의 역할
     contractCopies: 2,
-    partyARepresentative: '', // 발주자 대표자
-    partyBRepresentative: '' // 수급업체 대표자
+    partyARepresentative: '', // 수신자 대표자
+    partyBRepresentative: '' // 공급자 대표자
   });
 
   // 9. 상세 결제 정보
@@ -320,7 +320,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   // initialData가 나중에 로드되는 경우를 위한 useEffect
   useEffect(() => {
     if (initialData && !isEdit) {
-      // 발주처 정보 업데이트
+      // 수신자 정보 업데이트
       if (initialData.client) {
         setClientInfo({
           name: initialData.client.name || '',
@@ -559,8 +559,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
   const handleCustomerSelect = (customer: any) => {
     setClientInfo({
-      name: customer.representative_name || '',
-      company: customer.company_name || '',
+      name: customer.company_name || '',
+      company: customer.representative_name || '',
       phone: customer.phone || '',
       email: customer.email || '',
       businessNumber: customer.business_registration_number || '',
@@ -577,10 +577,22 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         throw new Error('견적서를 불러오는데 실패했습니다.');
       }
       const data = await response.json();
-      setQuotes(data);
+      console.log('Fetched quotes data:', data);
+
+      // data가 배열인지 확인하고, 배열이 아니면 빈 배열로 설정
+      if (Array.isArray(data)) {
+        setQuotes(data);
+      } else if (data && Array.isArray(data.data)) {
+        // API가 { data: [...] } 형식으로 반환하는 경우
+        setQuotes(data.data);
+      } else {
+        console.warn('Quotes data is not an array:', data);
+        setQuotes([]);
+      }
     } catch (error) {
       console.error('Error fetching quotes:', error);
       alert('견적서를 불러오는데 실패했습니다.');
+      setQuotes([]);
     } finally {
       setLoadingQuotes(false);
     }
@@ -596,8 +608,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   const handleQuoteSelect = (quote: any) => {
     console.log('Selected quote:', quote);
     console.log('Quote items:', quote.items);
-    
-    // 발주처 정보 설정
+
+    // 수신자 정보 설정
     setClientInfo({
       name: quote.client_name || '',
       company: quote.client_company || '',
@@ -615,8 +627,21 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     }));
 
     // 계약 항목들 설정
-    if (quote.items && Array.isArray(quote.items)) {
-      const items = quote.items.map((item: any, index: number) => {
+    let quoteItems = quote.items;
+
+    // items가 문자열인 경우 파싱 시도
+    if (typeof quoteItems === 'string') {
+      try {
+        quoteItems = JSON.parse(quoteItems);
+      } catch (e) {
+        console.error('Failed to parse quote items:', e);
+        quoteItems = [];
+      }
+    }
+
+    // 배열 확인 및 매핑
+    if (quoteItems && Array.isArray(quoteItems) && quoteItems.length > 0) {
+      const items = quoteItems.map((item: any, index: number) => {
         console.log(`Item ${index}:`, item);
         console.log(`Item unit:`, item.unit);
         return {
@@ -631,6 +656,9 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       });
       console.log('Mapped items:', items);
       setContractItems(items);
+    } else {
+      console.warn('No valid items found in quote');
+      setContractItems([]);
     }
 
     setShowQuoteDialog(false);
@@ -1029,10 +1057,10 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
             </div>
           </Card>
 
-          {/* 2. 발주처 정보 */}
+          {/* 2. 수신자 정보 */}
           <Card className="p-4 md:p-6 bg-card border-border">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-              <h3 className="font-medium text-foreground">발주처 정보 (고객)</h3>
+              <h3 className="font-medium text-foreground">수신자 정보</h3>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
                 <CustomerSelector onCustomerSelect={handleCustomerSelect} />
                 <Button
@@ -1049,11 +1077,11 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <div className="space-y-2">
-                <Label className="text-foreground">고객명 *</Label>
+                <Label className="text-foreground">회사명 *</Label>
                 <div className="relative">
                   <Input
                     ref={clientNameRef}
-                    value={clientInfo.name} 
+                    value={clientInfo.name}
                     onChange={(e) => {
                       setClientInfo({...clientInfo, name: e.target.value});
                       if (e.target.value.trim() && fieldTooltips.clientName) {
@@ -1071,10 +1099,10 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-foreground">회사명 *</Label>
+                <Label className="text-foreground">대표자명 *</Label>
                 <div className="relative">
-                  <Input 
-                    value={clientInfo.company} 
+                  <Input
+                    value={clientInfo.company}
                     onChange={(e) => setClientInfo({...clientInfo, company: e.target.value})}
                     className={isEditingClient ? "bg-input-background border-border" : "bg-muted text-muted-foreground"}
                     disabled={!isEditingClient}
@@ -1146,10 +1174,10 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
             </div>
           </Card>
 
-          {/* 3. 수급업체 정보 */}
+          {/* 3. 공급자 정보 */}
           <Card className="p-4 md:p-6 bg-card border-border">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-              <h3 className="font-medium text-foreground">수급업체 정보 (공급자)</h3>
+              <h3 className="font-medium text-foreground">공급자 정보</h3>
               <Button
                 type="button"
                 variant="outline"
@@ -1797,7 +1825,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                     id="deliveryLocation"
                     value={deliveryInfo.deliveryLocation}
                     onChange={(e) => setDeliveryInfo({...deliveryInfo, deliveryLocation: e.target.value})}
-                    placeholder="예: 발주처 지정 장소"
+                    placeholder="예: 수신자 지정 장소"
                     className="bg-input-background border-border"
                   />
                 </div>
@@ -1976,16 +2004,16 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
             <Card className="p-4 md:p-6 bg-card border-border shadow-lg">
               <div className="flex items-center gap-2 mb-4">
                 <User className="w-5 h-5 text-primary" />
-                <h3 className="font-medium text-foreground">고객 정보</h3>
+                <h3 className="font-medium text-foreground">수신자 정보</h3>
               </div>
-              
+
               <div className="space-y-3 text-sm">
                 <div>
-                  <p className="text-muted-foreground">고객명</p>
+                  <p className="text-muted-foreground">회사명</p>
                   <p className="text-foreground font-medium">{clientInfo.name || '미입력'}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">회사명</p>
+                  <p className="text-muted-foreground">대표자명</p>
                   <p className="text-foreground">{clientInfo.company || '미입력'}</p>
                 </div>
                 <div>
@@ -2079,7 +2107,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           <DialogHeader>
             <DialogTitle>견적서 불러오기</DialogTitle>
             <DialogDescription>
-              계약서에 적용할 견적서를 선택하세요. 발주처 정보와 계약 항목이 자동으로 입력됩니다.
+              계약서에 적용할 견적서를 선택하세요. 수신자 정보와 계약 항목이 자동으로 입력됩니다.
             </DialogDescription>
           </DialogHeader>
           
