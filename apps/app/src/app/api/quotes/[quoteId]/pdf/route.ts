@@ -12,8 +12,10 @@ export async function GET(
   { params }: { params: Promise<{ quoteId: string }> }
 ) {
   const { quoteId } = await params
+  let userId: string | null = null
+
   try {
-    const userId = await getUserFromRequest(request)
+    userId = await getUserFromRequest(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
