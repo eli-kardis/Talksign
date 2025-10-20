@@ -128,6 +128,9 @@ export const customerCreateSchema = z.object({
   company: z.string().max(200).optional().or(z.literal('')),
   businessRegistrationNumber: businessNumberSchema,
   address: z.string().max(500).optional().or(z.literal('')),
+  fax: z.string().max(50).optional().or(z.literal('')),
+  businessType: z.string().max(100).optional().or(z.literal('')),
+  businessCategory: z.string().max(100).optional().or(z.literal('')),
   notes: z.string().max(2000).optional().or(z.literal('')),
 })
 

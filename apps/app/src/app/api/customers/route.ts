@@ -140,6 +140,9 @@ export async function POST(request: NextRequest) {
           company: validatedData.company || null,
           business_registration_number: validatedData.businessRegistrationNumber || null,
           address: validatedData.address || null,
+          fax: validatedData.fax || null,
+          business_type: validatedData.businessType || null,
+          business_category: validatedData.businessCategory || null,
           notes: validatedData.notes || null
         } as any
       ])

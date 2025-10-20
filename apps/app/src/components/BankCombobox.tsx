@@ -67,10 +67,10 @@ export function BankCombobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
-        <Command>
-          <CommandInput placeholder="은행 검색..." />
-          <CommandList>
+      <PopoverContent className="w-full p-0 bg-popover border-border" align="start">
+        <Command className="bg-popover">
+          <CommandInput placeholder="은행 검색..." className="bg-popover" />
+          <CommandList className="bg-popover">
             <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>
 
             {/* 은행 그룹 */}

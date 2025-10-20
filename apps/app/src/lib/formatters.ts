@@ -71,38 +71,32 @@ export const formatFaxNumber = (value: string): string => {
 
   // 02로 시작하는 경우
   if (numbers.startsWith('02')) {
-    if (numbers.length <= 2) {
-      return numbers
-    } else if (numbers.length <= 5) {
-      return `${numbers.slice(0, 2)}-${numbers.slice(2)}`
-    } else if (numbers.length <= 9) {
-      // 뒷자리가 7자리면 3-4, 8자리면 4-4
-      const remaining = numbers.slice(2)
-      if (remaining.length === 7) {
-        return `${numbers.slice(0, 2)}-${numbers.slice(2, 5)}-${numbers.slice(5, 9)}`
-      } else {
-        return `${numbers.slice(0, 2)}-${numbers.slice(2, 6)}-${numbers.slice(6, 10)}`
-      }
+    // 최대 10자리까지만 허용
+    const truncated = numbers.slice(0, 10)
+
+    if (truncated.length <= 2) {
+      return truncated
+    } else if (truncated.length <= 5) {
+      return `${truncated.slice(0, 2)}-${truncated.slice(2)}`
+    } else if (truncated.length <= 9) {
+      return `${truncated.slice(0, 2)}-${truncated.slice(2, 5)}-${truncated.slice(5)}`
     } else {
-      return `${numbers.slice(0, 2)}-${numbers.slice(2, 6)}-${numbers.slice(6, 10)}`
+      return `${truncated.slice(0, 2)}-${truncated.slice(2, 6)}-${truncated.slice(6)}`
     }
   }
   // 그 외 (031, 051 등)
   else {
-    if (numbers.length <= 3) {
-      return numbers
-    } else if (numbers.length <= 6) {
-      return `${numbers.slice(0, 3)}-${numbers.slice(3)}`
-    } else if (numbers.length <= 10) {
-      // 뒷자리가 7자리면 3-4, 8자리면 4-4
-      const remaining = numbers.slice(3)
-      if (remaining.length === 7) {
-        return `${numbers.slice(0, 3)}-${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`
-      } else {
-        return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`
-      }
+    // 최대 11자리까지만 허용
+    const truncated = numbers.slice(0, 11)
+
+    if (truncated.length <= 3) {
+      return truncated
+    } else if (truncated.length <= 6) {
+      return `${truncated.slice(0, 3)}-${truncated.slice(3)}`
+    } else if (truncated.length <= 10) {
+      return `${truncated.slice(0, 3)}-${truncated.slice(3, 6)}-${truncated.slice(6)}`
     } else {
-      return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`
+      return `${truncated.slice(0, 3)}-${truncated.slice(3, 7)}-${truncated.slice(7)}`
     }
   }
 }

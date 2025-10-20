@@ -1838,7 +1838,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                     })()}
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="depositDueDate" className="text-foreground">선금 지급일</Label>
                     <Input
@@ -1936,8 +1936,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
             {paymentInfo.paymentMethod === '계좌이체' && (
               <div className="mt-4 pt-4 border-t border-border">
                 <h4 className="font-medium mb-3 text-foreground">입금 계좌 정보</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div className="space-y-2 md:col-span-4">
                     <Label htmlFor="bankName" className="text-foreground">은행명 *</Label>
                     <BankCombobox
                       value={paymentInfo.bankName}
@@ -1948,7 +1948,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                       placeholder="은행을 선택하세요"
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 md:col-span-5">
                     <Label htmlFor="bankAccountNumber" className="text-foreground">계좌번호 *</Label>
                     <Input
                       id="bankAccountNumber"
@@ -1961,7 +1961,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
                       className="bg-input-background border-border"
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 md:col-span-3">
                     <Label htmlFor="bankAccountHolder" className="text-foreground">예금주 *</Label>
                     <Input
                       id="bankAccountHolder"

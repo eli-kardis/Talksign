@@ -633,9 +633,9 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 w-full max-w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 w-full max-w-full">
         {/* Main Form */}
-        <div className="lg:col-span-2 space-y-4 md:space-y-6">
+        <div className="lg:col-span-3 space-y-4 md:space-y-6">
           {/* 견적서 제목 */}
           <Card className="p-4 md:p-6 bg-card border-border">
             <h3 className="font-medium mb-4 text-foreground">견적서 제목</h3>
@@ -1015,7 +1015,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                     })()}
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="depositDueDate" className="text-foreground">선금 지급일</Label>
                     <Input
@@ -1113,8 +1113,8 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
             {paymentInfo.paymentMethod === '계좌이체' && (
               <div className="mt-4 pt-4 border-t border-border">
                 <h4 className="font-medium mb-3 text-foreground">입금 계좌 정보</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div className="space-y-2 md:col-span-4">
                     <Label htmlFor="bankName" className="text-foreground">은행명 *</Label>
                     <BankCombobox
                       value={paymentInfo.bankName}
@@ -1122,7 +1122,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                       placeholder="은행을 선택하세요"
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 md:col-span-5">
                     <Label htmlFor="bankAccountNumber" className="text-foreground">계좌번호 *</Label>
                     <Input
                       id="bankAccountNumber"
@@ -1132,7 +1132,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                       className="bg-input-background border-border"
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 md:col-span-3">
                     <Label htmlFor="bankAccountHolder" className="text-foreground">예금주 *</Label>
                     <Input
                       id="bankAccountHolder"

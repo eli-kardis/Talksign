@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,6 +16,8 @@ export default function HeaderClient() {
   const { user, signOut } = useAuth();
   const { theme } = useTheme();
   const isMobile = useIsMobile();
+  const router = useRouter();
+  const pathname = usePathname();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Context를 통해 사이드바 토글 함수를 전달받는 대신 이벤트를 사용
@@ -36,6 +39,13 @@ export default function HeaderClient() {
     }
   };
 
+  const handleLogoClick = () => {
+    const username = pathname?.split('/')[1];
+    if (username) {
+      router.push(`/${username}/dashboard`);
+    }
+  };
+
   return (
     <header className="bg-background border-b border-border px-4 sm:px-6 py-2 sm:py-4">
       <div className={`w-full ${isMobile ? 'grid grid-cols-3 items-center' : 'flex items-center justify-between'}`}>
@@ -53,14 +63,24 @@ export default function HeaderClient() {
             </Button>
           )}
           {!isMobile && (
-            <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-foreground">TalkSign</h1>
+            <h1
+              className="text-lg sm:text-xl md:text-2xl font-medium text-foreground cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={handleLogoClick}
+            >
+              TalkSign
+            </h1>
           )}
         </div>
 
         {/* 중앙 영역 (모바일에서만 로고 표시) */}
         {isMobile && (
           <div className="flex justify-center">
-            <h1 className="text-lg font-medium text-foreground">TalkSign</h1>
+            <h1
+              className="text-lg font-medium text-foreground cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={handleLogoClick}
+            >
+              TalkSign
+            </h1>
           </div>
         )}
 
