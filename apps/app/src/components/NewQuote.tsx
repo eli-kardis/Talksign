@@ -13,6 +13,7 @@ import { ArrowLeft, MessageSquare, Save, AlertTriangle, User, ChevronDown, Mail 
 import { QuoteItemsTable } from './QuoteItemsTable'
 import { CustomerSelector } from './CustomerSelector'
 import { ClientInfoForm, SupplierInfoForm } from './contracts'
+import { BankCombobox } from './BankCombobox'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatPhoneNumber, formatBusinessNumber, formatNumber } from '@/lib/formatters'
 import { AuthenticatedApiClient } from '@/lib/api-client'
@@ -118,9 +119,9 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
 
   // 분할 결제 정보
   const [installmentInfo, setInstallmentInfo] = useState({
-    depositRatio: 30,
-    interimRatio: 40,
-    finalRatio: 30,
+    depositRatio: 0,
+    interimRatio: 0,
+    finalRatio: 0,
     depositAmount: 0,
     interimAmount: 0,
     finalAmount: 0,
@@ -748,6 +749,14 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
             </Card>
           </Collapsible>
 
+          {/* 견적 항목 테이블 */}
+          <QuoteItemsTable
+            items={items}
+            onItemsChange={setItems}
+            validUntil={validUntil}
+            onValidUntilChange={setValidUntil}
+          />
+
           {/* 결제 정보 */}
           <Card className="p-4 md:p-6 bg-card border-border">
             <h3 className="font-medium mb-4 text-foreground">결제 정보 (선택사항)</h3>
@@ -988,7 +997,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                         if (installmentInfo.finalRatio !== expectedRatio) {
                           return (
                             <p className="text-xs text-red-600 dark:text-red-400">
-                              올바른 비율: {expectedRatio}% (선금 {installmentInfo.depositRatio}% + 중도금 {installmentInfo.interimRatio}% + 잔금 {expectedRatio}% = 100%)
+                              올바른 비율: {expectedRatio}%
                             </p>
                           )
                         }
@@ -997,7 +1006,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                         if (installmentInfo.finalAmount !== expectedAmount) {
                           return (
                             <p className="text-xs text-red-600 dark:text-red-400">
-                              올바른 금액: {formatCurrency(expectedAmount)}원 (총 {formatCurrency(finalAmount)}원 - 선금 {formatCurrency(installmentInfo.depositAmount)}원 - 중도금 {formatCurrency(installmentInfo.interimAmount)}원)
+                              올바른 금액: {formatCurrency(expectedAmount)}원
                             </p>
                           )
                         }
@@ -1006,30 +1015,6 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                     })()}
                   </div>
                 </div>
-                {(() => {
-                  const totalRatio = installmentInfo.depositRatio + installmentInfo.interimRatio + installmentInfo.finalRatio
-                  const totalAmount = installmentInfo.depositAmount + installmentInfo.interimAmount + installmentInfo.finalAmount
-                  const isInvalidRatio = totalRatio !== 100
-                  const isInvalidAmount = totalAmount !== finalAmount
-
-                  if (installmentInputMode === 'ratio' && isInvalidRatio) {
-                    return (
-                      <div className="mb-4 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-sm text-yellow-800 dark:text-yellow-200">
-                        ⚠️ 비율 합계가 100%가 아닙니다. 현재: {totalRatio}%
-                      </div>
-                    )
-                  }
-
-                  if (installmentInputMode === 'amount' && isInvalidAmount) {
-                    return (
-                      <div className="mb-4 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-sm text-yellow-800 dark:text-yellow-200">
-                        ⚠️ 금액 합계가 총 견적 금액과 다릅니다. 현재: {formatCurrency(totalAmount)}원 / 총 견적: {formatCurrency(finalAmount)}원
-                      </div>
-                    )
-                  }
-
-                  return null
-                })()}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="depositDueDate" className="text-foreground">선금 지급일</Label>
@@ -1041,8 +1026,25 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                         setInstallmentInfo({ ...installmentInfo, depositDueDate: e.target.value })
                         setHasUnsavedChanges(true)
                       }}
-                      className="bg-input-background border-border"
+                      className={`bg-input-background border-border ${
+                        (() => {
+                          if (!installmentInfo.depositDueDate) return ''
+                          if (installmentInfo.interimDueDate && installmentInfo.depositDueDate > installmentInfo.interimDueDate) return 'border-red-500'
+                          if (installmentInfo.finalDueDate && installmentInfo.depositDueDate > installmentInfo.finalDueDate) return 'border-red-500'
+                          return ''
+                        })()
+                      }`}
                     />
+                    {(() => {
+                      if (!installmentInfo.depositDueDate) return null
+                      if (installmentInfo.interimDueDate && installmentInfo.depositDueDate > installmentInfo.interimDueDate) {
+                        return <p className="text-xs text-red-600 dark:text-red-400">선금 지급일은 중도금 지급일보다 빠르거나 같아야 합니다</p>
+                      }
+                      if (installmentInfo.finalDueDate && installmentInfo.depositDueDate > installmentInfo.finalDueDate) {
+                        return <p className="text-xs text-red-600 dark:text-red-400">선금 지급일은 잔금 지급일보다 빠르거나 같아야 합니다</p>
+                      }
+                      return null
+                    })()}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="interimDueDate" className="text-foreground">중도금 지급일</Label>
@@ -1054,8 +1056,25 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                         setInstallmentInfo({ ...installmentInfo, interimDueDate: e.target.value })
                         setHasUnsavedChanges(true)
                       }}
-                      className="bg-input-background border-border"
+                      className={`bg-input-background border-border ${
+                        (() => {
+                          if (!installmentInfo.interimDueDate) return ''
+                          if (installmentInfo.depositDueDate && installmentInfo.interimDueDate < installmentInfo.depositDueDate) return 'border-red-500'
+                          if (installmentInfo.finalDueDate && installmentInfo.interimDueDate > installmentInfo.finalDueDate) return 'border-red-500'
+                          return ''
+                        })()
+                      }`}
                     />
+                    {(() => {
+                      if (!installmentInfo.interimDueDate) return null
+                      if (installmentInfo.depositDueDate && installmentInfo.interimDueDate < installmentInfo.depositDueDate) {
+                        return <p className="text-xs text-red-600 dark:text-red-400">중도금 지급일은 선금 지급일보다 늦거나 같아야 합니다</p>
+                      }
+                      if (installmentInfo.finalDueDate && installmentInfo.interimDueDate > installmentInfo.finalDueDate) {
+                        return <p className="text-xs text-red-600 dark:text-red-400">중도금 지급일은 잔금 지급일보다 빠르거나 같아야 합니다</p>
+                      }
+                      return null
+                    })()}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="finalDueDate" className="text-foreground">잔금 지급일</Label>
@@ -1067,8 +1086,25 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                         setInstallmentInfo({ ...installmentInfo, finalDueDate: e.target.value })
                         setHasUnsavedChanges(true)
                       }}
-                      className="bg-input-background border-border"
+                      className={`bg-input-background border-border ${
+                        (() => {
+                          if (!installmentInfo.finalDueDate) return ''
+                          if (installmentInfo.depositDueDate && installmentInfo.finalDueDate < installmentInfo.depositDueDate) return 'border-red-500'
+                          if (installmentInfo.interimDueDate && installmentInfo.finalDueDate < installmentInfo.interimDueDate) return 'border-red-500'
+                          return ''
+                        })()
+                      }`}
                     />
+                    {(() => {
+                      if (!installmentInfo.finalDueDate) return null
+                      if (installmentInfo.depositDueDate && installmentInfo.finalDueDate < installmentInfo.depositDueDate) {
+                        return <p className="text-xs text-red-600 dark:text-red-400">잔금 지급일은 선금 지급일보다 늦거나 같아야 합니다</p>
+                      }
+                      if (installmentInfo.interimDueDate && installmentInfo.finalDueDate < installmentInfo.interimDueDate) {
+                        return <p className="text-xs text-red-600 dark:text-red-400">잔금 지급일은 중도금 지급일보다 늦거나 같아야 합니다</p>
+                      }
+                      return null
+                    })()}
                   </div>
                 </div>
               </div>
@@ -1080,12 +1116,10 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="bankName" className="text-foreground">은행명 *</Label>
-                    <Input
-                      id="bankName"
+                    <BankCombobox
                       value={paymentInfo.bankName}
-                      onChange={(e) => setPaymentInfo({ ...paymentInfo, bankName: e.target.value })}
-                      placeholder="예: 국민은행"
-                      className="bg-input-background border-border"
+                      onChange={(value) => setPaymentInfo({ ...paymentInfo, bankName: value })}
+                      placeholder="은행을 선택하세요"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1113,14 +1147,6 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
             )}
           </Card>
 
-          {/* 견적 항목 테이블 */}
-          <QuoteItemsTable
-            items={items}
-            onItemsChange={setItems}
-            validUntil={validUntil}
-            onValidUntilChange={setValidUntil}
-          />
-
           {/* 최종 견적 */}
           <Card className="p-4 md:p-6 bg-card border-border">
             <h3 className="font-medium mb-4 text-foreground">최종 견적</h3>
@@ -1138,11 +1164,16 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
                     type="number"
                     id="finalDiscountRate"
                     value={discountInfo.discountRate || ''}
-                    onChange={(e) => setDiscountInfo({ ...discountInfo, discountRate: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || 0
+                      const rounded = Math.round(value * 10) / 10
+                      setDiscountInfo({ ...discountInfo, discountRate: rounded })
+                    }}
+                    onWheel={(e) => e.currentTarget.blur()}
                     placeholder="0"
                     min="0"
                     max="100"
-                    step="0.01"
+                    step="1"
                     className="bg-input-background border-border w-24 h-8 text-right text-sm"
                   />
                   <span className="text-muted-foreground">%</span>

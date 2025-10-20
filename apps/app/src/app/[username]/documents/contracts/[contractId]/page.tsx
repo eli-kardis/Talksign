@@ -565,7 +565,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ contr
           )}
 
           {/* 7. 계약 이행 조건 */}
-          {(contract.delivery_conditions || contract.warranty_period) && (
+          {(contract.delivery_conditions || contract.delivery_location || contract.delivery_deadline || contract.warranty_period || contract.warranty_scope) && (
             <div>
               <h3 className="text-lg font-semibold text-black mb-4">
                 계약 이행 조건
@@ -608,7 +608,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ contr
           )}
 
           {/* 8. 법적 보호 조항 */}
-          {(contract.nda_clause || contract.termination_conditions || contract.force_majeure_clause) && (
+          {(contract.nda_clause || contract.termination_conditions || contract.dispute_resolution || contract.jurisdiction_court || contract.force_majeure_clause) && (
             <div>
               <h3 className="text-lg font-semibold text-black mb-4">
                 법적 보호 조항
@@ -658,7 +658,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ contr
           )}
 
           {/* 9. 추가 조항 */}
-          {(contract.renewal_conditions || contract.amendment_procedure || contract.special_terms || contract.penalty_clause) && (
+          {(contract.renewal_conditions || contract.amendment_procedure || contract.assignment_prohibition || contract.special_terms || contract.penalty_clause) && (
             <div>
               <h3 className="text-lg font-semibold text-black mb-4">
                 추가 조항

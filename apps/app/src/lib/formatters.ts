@@ -60,6 +60,54 @@ export const formatNumber = (value: string): string => {
 }
 
 /**
+ * 팩스 번호 자동 포맷팅
+ * - 02: 02-1234-5678 (02-4자리-4자리) 또는 02-123-4567 (02-3자리-4자리)
+ * - 기타: 031-1234-5678 (3자리-4자리-4자리) 또는 031-123-4567 (3자리-3자리-4자리)
+ */
+export const formatFaxNumber = (value: string): string => {
+  const numbers = value.replace(/\D/g, '')
+
+  if (numbers.length === 0) return ''
+
+  // 02로 시작하는 경우
+  if (numbers.startsWith('02')) {
+    if (numbers.length <= 2) {
+      return numbers
+    } else if (numbers.length <= 5) {
+      return `${numbers.slice(0, 2)}-${numbers.slice(2)}`
+    } else if (numbers.length <= 9) {
+      // 뒷자리가 7자리면 3-4, 8자리면 4-4
+      const remaining = numbers.slice(2)
+      if (remaining.length === 7) {
+        return `${numbers.slice(0, 2)}-${numbers.slice(2, 5)}-${numbers.slice(5, 9)}`
+      } else {
+        return `${numbers.slice(0, 2)}-${numbers.slice(2, 6)}-${numbers.slice(6, 10)}`
+      }
+    } else {
+      return `${numbers.slice(0, 2)}-${numbers.slice(2, 6)}-${numbers.slice(6, 10)}`
+    }
+  }
+  // 그 외 (031, 051 등)
+  else {
+    if (numbers.length <= 3) {
+      return numbers
+    } else if (numbers.length <= 6) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3)}`
+    } else if (numbers.length <= 10) {
+      // 뒷자리가 7자리면 3-4, 8자리면 4-4
+      const remaining = numbers.slice(3)
+      if (remaining.length === 7) {
+        return `${numbers.slice(0, 3)}-${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`
+      } else {
+        return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`
+      }
+    } else {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`
+    }
+  }
+}
+
+/**
  * 금액 포맷팅 (1,000,000원)
  */
 export const formatCurrency = (amount: number | string): string => {

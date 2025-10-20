@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Building2, User, Mail, Phone, MapPin, Search, Trash2, AlertTriangle, ChevronDown, ChevronRight, Calendar } from 'lucide-react';
-import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters';
+import { formatPhoneNumber, formatBusinessNumber, formatFaxNumber } from '@/lib/formatters';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api-client';
 
@@ -627,7 +627,10 @@ export default function CustomersPage() {
                   id="fax"
                   type="tel"
                   value={formData.fax}
-                  onChange={(e) => handleInputChange('fax', e.target.value)}
+                  onChange={(e) => {
+                    const formatted = formatFaxNumber(e.target.value);
+                    handleInputChange('fax', formatted);
+                  }}
                   placeholder="02-1234-5678"
                 />
               </div>
@@ -773,7 +776,10 @@ export default function CustomersPage() {
                 id="edit_fax"
                 type="tel"
                 value={editFormData.fax}
-                onChange={(e) => handleEditInputChange('fax', e.target.value)}
+                onChange={(e) => {
+                  const formatted = formatFaxNumber(e.target.value);
+                  handleEditInputChange('fax', formatted);
+                }}
                 placeholder="02-1234-5678"
               />
             </div>

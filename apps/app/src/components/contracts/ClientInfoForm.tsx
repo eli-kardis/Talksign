@@ -4,7 +4,7 @@ import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Button } from '../ui/button'
 import { User, Edit3 } from 'lucide-react'
-import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters'
+import { formatPhoneNumber, formatBusinessNumber, formatFaxNumber } from '@/lib/formatters'
 
 interface ClientInfoFormProps {
   clientInfo: {
@@ -169,12 +169,13 @@ export function ClientInfoForm({
           <Input
             id="clientFax"
             value={clientInfo.fax || ''}
-            onChange={(e) =>
+            onChange={(e) => {
+              const formatted = formatFaxNumber(e.target.value);
               onClientInfoChange({
                 ...clientInfo,
-                fax: e.target.value,
-              })
-            }
+                fax: formatted,
+              });
+            }}
             placeholder={isEditing ? '02-1234-5678' : ''}
             className={
               isEditing

@@ -311,6 +311,7 @@ export type Database = {
           user_id: string
           warranty_period: string | null
           warranty_scope: string | null
+          discount_rate: number | null
         }
         Insert: {
           amendment_procedure?: string | null
@@ -376,6 +377,7 @@ export type Database = {
           user_id: string
           warranty_period?: string | null
           warranty_scope?: string | null
+          discount_rate?: number | null
         }
         Update: {
           amendment_procedure?: string | null
@@ -441,6 +443,7 @@ export type Database = {
           user_id?: string
           warranty_period?: string | null
           warranty_scope?: string | null
+          discount_rate?: number | null
         }
         Relationships: [
           {
@@ -470,9 +473,12 @@ export type Database = {
         Row: {
           address: string | null
           business_registration_number: string | null
+          business_type: string | null
+          business_category: string | null
           company: string | null
           created_at: string | null
           email: string | null
+          fax: string | null
           id: string
           name: string
           notes: string | null
@@ -483,9 +489,12 @@ export type Database = {
         Insert: {
           address?: string | null
           business_registration_number?: string | null
+          business_type?: string | null
+          business_category?: string | null
           company?: string | null
           created_at?: string | null
           email?: string | null
+          fax?: string | null
           id?: string
           name: string
           notes?: string | null
@@ -496,9 +505,12 @@ export type Database = {
         Update: {
           address?: string | null
           business_registration_number?: string | null
+          business_type?: string | null
+          business_category?: string | null
           company?: string | null
           created_at?: string | null
           email?: string | null
+          fax?: string | null
           id?: string
           name?: string
           notes?: string | null

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { FileText, Save, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters'
+import { formatPhoneNumber, formatBusinessNumber, formatFaxNumber } from '@/lib/formatters'
 
 interface UserProfile {
   name: string
@@ -437,7 +437,10 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
                       id="fax"
                       type="tel"
                       value={formData.fax}
-                      onChange={(e) => handleInputChange('fax', e.target.value)}
+                      onChange={(e) => {
+                        const formatted = formatFaxNumber(e.target.value);
+                        handleInputChange('fax', formatted);
+                      }}
                       className="bg-input-background border-border text-foreground"
                       tabIndex={showCompanyField ? 0 : -1}
                     />

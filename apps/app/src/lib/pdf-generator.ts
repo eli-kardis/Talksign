@@ -752,7 +752,7 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
             </div>
 
             <div class="party-box">
-              <h3>을 (발주처)</h3>
+              <h3>을 (수신사)</h3>
               ${contract.client_company ? `
                 <div class="info-row">
                   <span class="info-label">회사명:</span>
@@ -800,9 +800,56 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
           </div>
         </div>
 
+        <!-- Contract Terms -->
+        ${contract.terms ? `
+          <div class="terms-box">
+            <div class="terms-title">계약 조건</div>
+            <div class="terms-content">${escapeHtml(contract.terms)}</div>
+          </div>
+        ` : ''}
+
+        <!-- Delivery Conditions -->
+        ${contract.delivery_conditions || contract.delivery_location || contract.delivery_deadline || contract.warranty_period || contract.warranty_scope ? `
+          <div class="section">
+            <div class="section-title">계약 이행 조건</div>
+            <div class="info-box">
+              ${contract.delivery_conditions ? `
+                <div class="info-row">
+                  <span class="info-label">인도/납품 조건:</span>
+                  <span class="info-value" style="flex: 1;">${escapeHtml(contract.delivery_conditions)}</span>
+                </div>
+              ` : ''}
+              ${contract.delivery_location ? `
+                <div class="info-row">
+                  <span class="info-label">납품 장소:</span>
+                  <span class="info-value">${escapeHtml(contract.delivery_location)}</span>
+                </div>
+              ` : ''}
+              ${contract.delivery_deadline ? `
+                <div class="info-row">
+                  <span class="info-label">납품 기한:</span>
+                  <span class="info-value">${escapeHtml(contract.delivery_deadline)}</span>
+                </div>
+              ` : ''}
+              ${contract.warranty_period ? `
+                <div class="info-row">
+                  <span class="info-label">하자보증 기간:</span>
+                  <span class="info-value">${escapeHtml(contract.warranty_period)}</span>
+                </div>
+              ` : ''}
+              ${contract.warranty_scope ? `
+                <div class="info-row">
+                  <span class="info-label">하자보증 범위:</span>
+                  <span class="info-value" style="flex: 1;">${escapeHtml(contract.warranty_scope)}</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        ` : ''}
+
         <!-- Contract Amount -->
         <div class="section">
-          <div class="section-title">계약 금액</div>
+          <div class="section-title">계약 내역</div>
           ${itemsHTML ? `
             <table>
               <thead>
@@ -834,10 +881,10 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
           </div>
         </div>
 
-        <!-- Payment Terms -->
-        ${contract.payment_terms || contract.payment_method ? `
+        <!-- Payment Information -->
+        ${contract.payment_terms || contract.payment_method || contract.down_payment_ratio || contract.bank_name ? `
           <div class="section">
-            <div class="section-title">결제 조건</div>
+            <div class="section-title">결제 정보</div>
             <div class="info-box">
               ${contract.payment_method ? `
                 <div class="info-row">
@@ -851,23 +898,6 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
                   <span class="info-value" style="flex: 1;">${escapeHtml(contract.payment_terms)}</span>
                 </div>
               ` : ''}
-            </div>
-          </div>
-        ` : ''}
-
-        <!-- Contract Terms -->
-        ${contract.terms ? `
-          <div class="terms-box">
-            <div class="terms-title">계약 조건</div>
-            <div class="terms-content">${escapeHtml(contract.terms)}</div>
-          </div>
-        ` : ''}
-
-        <!-- Detailed Payment Information -->
-        ${contract.down_payment_ratio || contract.bank_name ? `
-          <div class="section">
-            <div class="section-title">상세 결제 정보</div>
-            <div class="info-box">
               ${contract.down_payment_ratio || contract.interim_payment_ratio || contract.final_payment_ratio ? `
                 <div style="margin-bottom: 16px;">
                   <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">대금 지급 비율</div>
@@ -941,47 +971,8 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
           </div>
         ` : ''}
 
-        <!-- Delivery Conditions -->
-        ${contract.delivery_conditions || contract.warranty_period ? `
-          <div class="section">
-            <div class="section-title">계약 이행 조건</div>
-            <div class="info-box">
-              ${contract.delivery_conditions ? `
-                <div class="info-row">
-                  <span class="info-label">인도/납품 조건:</span>
-                  <span class="info-value" style="flex: 1;">${escapeHtml(contract.delivery_conditions)}</span>
-                </div>
-              ` : ''}
-              ${contract.delivery_location ? `
-                <div class="info-row">
-                  <span class="info-label">납품 장소:</span>
-                  <span class="info-value">${escapeHtml(contract.delivery_location)}</span>
-                </div>
-              ` : ''}
-              ${contract.delivery_deadline ? `
-                <div class="info-row">
-                  <span class="info-label">납품 기한:</span>
-                  <span class="info-value">${escapeHtml(contract.delivery_deadline)}</span>
-                </div>
-              ` : ''}
-              ${contract.warranty_period ? `
-                <div class="info-row">
-                  <span class="info-label">하자보증 기간:</span>
-                  <span class="info-value">${escapeHtml(contract.warranty_period)}</span>
-                </div>
-              ` : ''}
-              ${contract.warranty_scope ? `
-                <div class="info-row">
-                  <span class="info-label">하자보증 범위:</span>
-                  <span class="info-value" style="flex: 1;">${escapeHtml(contract.warranty_scope)}</span>
-                </div>
-              ` : ''}
-            </div>
-          </div>
-        ` : ''}
-
         <!-- Legal Clauses -->
-        ${contract.nda_clause || contract.termination_conditions || contract.force_majeure_clause ? `
+        ${contract.nda_clause || contract.termination_conditions || contract.dispute_resolution || contract.jurisdiction_court || contract.force_majeure_clause ? `
           <div class="section">
             <div class="section-title">법적 보호 조항</div>
             <div class="info-box">
@@ -1025,7 +1016,7 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
         ` : ''}
 
         <!-- Additional Clauses -->
-        ${contract.renewal_conditions || contract.amendment_procedure || contract.special_terms || contract.penalty_clause ? `
+        ${contract.renewal_conditions || contract.amendment_procedure || contract.assignment_prohibition || contract.special_terms || contract.penalty_clause ? `
           <div class="section">
             <div class="section-title">추가 조항</div>
             <div class="info-box">
@@ -1059,6 +1050,45 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
                   <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${escapeHtml(contract.penalty_clause)}</div>
                 </div>
               ` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Final Quote -->
+        ${contract.discount_rate || contract.discount_rate === 0 ? `
+          <div class="section">
+            <div class="section-title">최종 견적</div>
+            <div class="amount-summary">
+              <div class="amount-row">
+                <span>총 합계</span>
+                <span>${(contract.subtotal || 0).toLocaleString('ko-KR')}원</span>
+              </div>
+              ${contract.discount_rate > 0 ? `
+                <div class="amount-row">
+                  <span>할인율</span>
+                  <span>${contract.discount_rate}%</span>
+                </div>
+                <div class="amount-row" style="color: #dc2626;">
+                  <span>할인 금액</span>
+                  <span>-${Math.floor((contract.subtotal || 0) * (contract.discount_rate / 100)).toLocaleString('ko-KR')}원</span>
+                </div>
+                <div class="amount-row">
+                  <span>할인 후 금액</span>
+                  <span>${((contract.subtotal || 0) - Math.floor((contract.subtotal || 0) * (contract.discount_rate / 100))).toLocaleString('ko-KR')}원</span>
+                </div>
+              ` : ''}
+              <div class="amount-row">
+                <span>부가세 (10%)</span>
+                <span>${Math.floor(((contract.subtotal || 0) - Math.floor((contract.subtotal || 0) * (contract.discount_rate / 100))) * 0.1).toLocaleString('ko-KR')}원</span>
+              </div>
+              <div class="amount-row total">
+                <span>최종 견적</span>
+                <span>${(
+                  (contract.subtotal || 0) -
+                  Math.floor((contract.subtotal || 0) * (contract.discount_rate / 100)) +
+                  Math.floor(((contract.subtotal || 0) - Math.floor((contract.subtotal || 0) * (contract.discount_rate / 100))) * 0.1)
+                ).toLocaleString('ko-KR')}원</span>
+              </div>
             </div>
           </div>
         ` : ''}
