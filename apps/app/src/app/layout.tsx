@@ -1,12 +1,20 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
+import { Noto_Sans_KR } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { QueryProvider } from "@/lib/react-query/QueryProvider";
 import ClientLayout from "@/components/ClientLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
+
+const notoSansKr = Noto_Sans_KR({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-noto-sans-kr",
+});
 
 export const metadata: Metadata = {
   title: "TalkSign - 견적·계약·결제",
@@ -19,15 +27,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko" suppressHydrationWarning>
       <body
-        className="
-          antialiased 
-          bg-background 
+        className={`
+          antialiased
+          bg-background
           text-foreground
           min-h-screen
-          font-sans
           selection:bg-primary/20
           selection:text-foreground
-        "
+          ${notoSansKr.variable}
+        `}
         style={{
           // 방어 로직: CSS 변수가 로드되지 않았을 때 기본 색상
           backgroundColor: 'var(--background, #ffffff)',

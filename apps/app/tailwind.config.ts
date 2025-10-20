@@ -66,9 +66,9 @@ const config: Config = {
           ring: "var(--sidebar-ring)",
         },
       },
-      // 기본 시스템 폰트 사용
+      // Noto Sans KR을 기본 폰트로 사용
       fontFamily: {
-        sans: ["system-ui", "sans-serif"],
+        sans: ["var(--font-noto-sans-kr)", "Noto Sans KR", "system-ui", "sans-serif"],
         mono: ["ui-monospace", "monospace"],
       },
       // 추가 스페이싱

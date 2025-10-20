@@ -157,9 +157,14 @@
 
 /* ✅ base: @apply 대신 직접 변수 참조 (빌드 오류 회피용) */
 @layer base {
+  * {
+    font-family: var(--font-noto-sans-kr), 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  }
+
   body {
     background-color: var(--background);
     color: var(--foreground);
+    font-family: var(--font-noto-sans-kr), 'Noto Sans KR', system-ui, -apple-system, sans-serif;
   }
 }
 
