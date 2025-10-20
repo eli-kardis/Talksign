@@ -2,6 +2,21 @@ import { type Quote, type Contract, type SupplierInfo } from '@/lib/types'
 import puppeteer from 'puppeteer-core'
 import chromium from '@sparticuz/chromium'
 
+// 최대 PDF 파일 크기 (10MB)
+const MAX_PDF_SIZE = 10 * 1024 * 1024;
+
+// HTML 이스케이핑 함수 (XSS 방지)
+function escapeHtml(text: string | number | null | undefined): string {
+  if (text === null || text === undefined) return ''
+  const str = String(text)
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 // 견적서 HTML 템플릿 생성
 function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
   const createdDate = quote.created_at
@@ -13,15 +28,15 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
 
   const itemsHTML = quote.items.map(item => `
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.name}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${escapeHtml(item.name)}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${escapeHtml(item.quantity)}</td>
       <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">${item.unit_price.toLocaleString('ko-KR')}원</td>
       <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600;">${item.amount.toLocaleString('ko-KR')}원</td>
     </tr>
     ${item.description ? `
     <tr>
       <td colspan="4" style="padding: 8px 12px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb; font-size: 13px; color: #6b7280;">
-        ${item.description}
+        ${escapeHtml(item.description)}
       </td>
     </tr>
     ` : ''}
@@ -33,7 +48,10 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>견적서 - ${quote.title}</title>
+      <title>견적서 - ${escapeHtml(quote.title)}</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
       <style>
         * {
           margin: 0;
@@ -41,7 +59,7 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
           box-sizing: border-box;
         }
         body {
-          font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif;
+          font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           padding: 40px;
           color: #1f2937;
           background: white;
@@ -197,49 +215,49 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
             ${supplierInfo?.company_name || supplierInfo?.name ? `
               <div class="info-row">
                 <span class="info-label">회사명:</span>
-                <span class="info-value">${supplierInfo.company_name || supplierInfo.name}</span>
+                <span class="info-value">${escapeHtml(supplierInfo.company_name || supplierInfo.name)}</span>
               </div>
             ` : ''}
             ${supplierInfo?.name ? `
               <div class="info-row">
                 <span class="info-label">대표자:</span>
-                <span class="info-value">${supplierInfo.name}</span>
+                <span class="info-value">${escapeHtml(supplierInfo.name)}</span>
               </div>
             ` : ''}
             ${supplierInfo?.business_registration_number ? `
               <div class="info-row">
                 <span class="info-label">사업자등록번호:</span>
-                <span class="info-value">${supplierInfo.business_registration_number}</span>
+                <span class="info-value">${escapeHtml(supplierInfo.business_registration_number)}</span>
               </div>
             ` : ''}
             ${supplierInfo?.business_type ? `
               <div class="info-row">
                 <span class="info-label">업태:</span>
-                <span class="info-value">${supplierInfo.business_type}</span>
+                <span class="info-value">${escapeHtml(supplierInfo.business_type)}</span>
               </div>
             ` : ''}
             ${supplierInfo?.business_category ? `
               <div class="info-row">
                 <span class="info-label">업종:</span>
-                <span class="info-value">${supplierInfo.business_category}</span>
+                <span class="info-value">${escapeHtml(supplierInfo.business_category)}</span>
               </div>
             ` : ''}
             ${supplierInfo?.phone ? `
               <div class="info-row">
                 <span class="info-label">연락처:</span>
-                <span class="info-value">${supplierInfo.phone}</span>
+                <span class="info-value">${escapeHtml(supplierInfo.phone)}</span>
               </div>
             ` : ''}
             ${supplierInfo?.fax ? `
               <div class="info-row">
                 <span class="info-label">팩스:</span>
-                <span class="info-value">${supplierInfo.fax}</span>
+                <span class="info-value">${escapeHtml(supplierInfo.fax)}</span>
               </div>
             ` : ''}
             ${supplierInfo?.business_address ? `
               <div class="info-row">
                 <span class="info-label">주소:</span>
-                <span class="info-value">${supplierInfo.business_address}</span>
+                <span class="info-value">${escapeHtml(supplierInfo.business_address)}</span>
               </div>
             ` : ''}
           </div>
@@ -248,22 +266,22 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
             <h3>수신자 정보</h3>
             <div class="info-row">
               <span class="info-label">대표자명:</span>
-              <span class="info-value">${quote.client_name}</span>
+              <span class="info-value">${escapeHtml(quote.client_name)}</span>
             </div>
             <div class="info-row">
               <span class="info-label">이메일:</span>
-              <span class="info-value">${quote.client_email}</span>
+              <span class="info-value">${escapeHtml(quote.client_email)}</span>
             </div>
             ${quote.client_phone ? `
               <div class="info-row">
                 <span class="info-label">연락처:</span>
-                <span class="info-value">${quote.client_phone}</span>
+                <span class="info-value">${escapeHtml(quote.client_phone)}</span>
               </div>
             ` : ''}
             ${quote.client_company ? `
               <div class="info-row">
                 <span class="info-label">회사명:</span>
-                <span class="info-value">${quote.client_company}</span>
+                <span class="info-value">${escapeHtml(quote.client_company)}</span>
               </div>
             ` : ''}
           </div>
@@ -275,12 +293,12 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
           <div class="info-box">
             <div class="info-row">
               <span class="info-label">제목:</span>
-              <span class="info-value">${quote.title}</span>
+              <span class="info-value">${escapeHtml(quote.title)}</span>
             </div>
             ${quote.notes ? `
               <div class="info-row" style="margin-top: 12px;">
                 <span class="info-label">설명:</span>
-                <span class="info-value" style="flex: 1;">${quote.notes}</span>
+                <span class="info-value" style="flex: 1;">${escapeHtml(quote.notes)}</span>
               </div>
             ` : ''}
           </div>
@@ -339,13 +357,13 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
             ${quote.payment_condition ? `
               <div class="info-row">
                 <span class="info-label">결제 조건:</span>
-                <span class="info-value">${quote.payment_condition}</span>
+                <span class="info-value">${escapeHtml(quote.payment_condition)}</span>
               </div>
             ` : ''}
             ${quote.payment_method ? `
               <div class="info-row">
                 <span class="info-label">결제 방법:</span>
-                <span class="info-value">${quote.payment_method}</span>
+                <span class="info-value">${escapeHtml(quote.payment_method)}</span>
               </div>
             ` : ''}
             ${quote.payment_due_date ? `
@@ -359,18 +377,18 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
                 <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">입금 계좌</div>
                 <div class="info-row">
                   <span class="info-label">은행명:</span>
-                  <span class="info-value">${quote.bank_name}</span>
+                  <span class="info-value">${escapeHtml(quote.bank_name)}</span>
                 </div>
                 ${quote.bank_account_number ? `
                   <div class="info-row">
                     <span class="info-label">계좌번호:</span>
-                    <span class="info-value">${quote.bank_account_number}</span>
+                    <span class="info-value">${escapeHtml(quote.bank_account_number)}</span>
                   </div>
                 ` : ''}
                 ${quote.bank_account_holder ? `
                   <div class="info-row">
                     <span class="info-label">예금주:</span>
-                    <span class="info-value">${quote.bank_account_holder}</span>
+                    <span class="info-value">${escapeHtml(quote.bank_account_holder)}</span>
                   </div>
                 ` : ''}
               </div>
@@ -393,25 +411,25 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
             ${quote.warranty_period ? `
               <div class="info-row">
                 <span class="info-label">하자보증 기간:</span>
-                <span class="info-value">${quote.warranty_period}</span>
+                <span class="info-value">${escapeHtml(quote.warranty_period)}</span>
               </div>
             ` : ''}
             ${quote.as_conditions ? `
               <div style="margin-top: 12px;">
                 <div style="font-weight: 600; margin-bottom: 4px; color: #374151;">A/S 조건</div>
-                <div style="color: #4b5563; white-space: pre-wrap; line-height: 1.6;">${quote.as_conditions}</div>
+                <div style="color: #4b5563; white-space: pre-wrap; line-height: 1.6;">${escapeHtml(quote.as_conditions)}</div>
               </div>
             ` : ''}
             ${quote.special_notes ? `
               <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
                 <div style="font-weight: 600; margin-bottom: 4px; color: #374151;">특기사항</div>
-                <div style="color: #4b5563; white-space: pre-wrap; line-height: 1.6;">${quote.special_notes}</div>
+                <div style="color: #4b5563; white-space: pre-wrap; line-height: 1.6;">${escapeHtml(quote.special_notes)}</div>
               </div>
             ` : ''}
             ${quote.disclaimer ? `
               <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
                 <div style="font-weight: 600; margin-bottom: 4px; color: #374151;">면책사항</div>
-                <div style="color: #4b5563; white-space: pre-wrap; line-height: 1.6;">${quote.disclaimer}</div>
+                <div style="color: #4b5563; white-space: pre-wrap; line-height: 1.6;">${escapeHtml(quote.disclaimer)}</div>
               </div>
             ` : ''}
           </div>
@@ -438,13 +456,13 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
             ${quote.promotion_code ? `
               <div class="info-row">
                 <span class="info-label">프로모션 코드:</span>
-                <span class="info-value">${quote.promotion_code}</span>
+                <span class="info-value">${escapeHtml(quote.promotion_code)}</span>
               </div>
             ` : ''}
             ${quote.promotion_name ? `
               <div class="info-row">
                 <span class="info-label">프로모션명:</span>
-                <span class="info-value">${quote.promotion_name}</span>
+                <span class="info-value">${escapeHtml(quote.promotion_name)}</span>
               </div>
             ` : ''}
           </div>
@@ -473,15 +491,15 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
 
   const itemsHTML = contract.items && contract.items.length > 0 ? contract.items.map(item => `
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.name}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${escapeHtml(item.name)}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${escapeHtml(item.quantity)}</td>
       <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">${item.unit_price.toLocaleString('ko-KR')}원</td>
       <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600;">${item.amount.toLocaleString('ko-KR')}원</td>
     </tr>
     ${item.description ? `
     <tr>
       <td colspan="4" style="padding: 8px 12px; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb; font-size: 13px; color: #6b7280;">
-        ${item.description}
+        ${escapeHtml(item.description)}
       </td>
     </tr>
     ` : ''}
@@ -493,7 +511,10 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>계약서 - ${contract.title}</title>
+      <title>계약서 - ${escapeHtml(contract.title)}</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
       <style>
         * {
           margin: 0;
@@ -501,7 +522,7 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
           box-sizing: border-box;
         }
         body {
-          font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif;
+          font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           padding: 40px;
           color: #1f2937;
           background: white;
@@ -707,25 +728,25 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
               ${supplierInfo?.company_name || supplierInfo?.name ? `
                 <div class="info-row">
                   <span class="info-label">회사명:</span>
-                  <span class="info-value">${supplierInfo.company_name || supplierInfo.name}</span>
+                  <span class="info-value">${escapeHtml(supplierInfo.company_name || supplierInfo.name)}</span>
                 </div>
               ` : ''}
               ${supplierInfo?.name ? `
                 <div class="info-row">
                   <span class="info-label">대표자명:</span>
-                  <span class="info-value">${supplierInfo.name}</span>
+                  <span class="info-value">${escapeHtml(supplierInfo.name)}</span>
                 </div>
               ` : ''}
               ${supplierInfo?.business_registration_number ? `
                 <div class="info-row">
                   <span class="info-label">사업자등록번호:</span>
-                  <span class="info-value">${supplierInfo.business_registration_number}</span>
+                  <span class="info-value">${escapeHtml(supplierInfo.business_registration_number)}</span>
                 </div>
               ` : ''}
               ${supplierInfo?.phone ? `
                 <div class="info-row">
                   <span class="info-label">연락처:</span>
-                  <span class="info-value">${supplierInfo.phone}</span>
+                  <span class="info-value">${escapeHtml(supplierInfo.phone)}</span>
                 </div>
               ` : ''}
             </div>
@@ -735,21 +756,21 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
               ${contract.client_company ? `
                 <div class="info-row">
                   <span class="info-label">회사명:</span>
-                  <span class="info-value">${contract.client_company}</span>
+                  <span class="info-value">${escapeHtml(contract.client_company)}</span>
                 </div>
               ` : ''}
               <div class="info-row">
                 <span class="info-label">대표자명:</span>
-                <span class="info-value">${contract.client_name}</span>
+                <span class="info-value">${escapeHtml(contract.client_name)}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">이메일:</span>
-                <span class="info-value">${contract.client_email}</span>
+                <span class="info-value">${escapeHtml(contract.client_email)}</span>
               </div>
               ${contract.client_phone ? `
                 <div class="info-row">
                   <span class="info-label">연락처:</span>
-                  <span class="info-value">${contract.client_phone}</span>
+                  <span class="info-value">${escapeHtml(contract.client_phone)}</span>
                 </div>
               ` : ''}
             </div>
@@ -762,12 +783,12 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
           <div class="info-box">
             <div class="info-row">
               <span class="info-label">프로젝트명:</span>
-              <span class="info-value">${contract.title}</span>
+              <span class="info-value">${escapeHtml(contract.title)}</span>
             </div>
             ${contract.project_description ? `
               <div class="info-row" style="margin-top: 12px;">
                 <span class="info-label">프로젝트 설명:</span>
-                <span class="info-value" style="flex: 1;">${contract.project_description}</span>
+                <span class="info-value" style="flex: 1;">${escapeHtml(contract.project_description)}</span>
               </div>
             ` : ''}
             ${startDate || endDate ? `
@@ -821,13 +842,13 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
               ${contract.payment_method ? `
                 <div class="info-row">
                   <span class="info-label">결제 방법:</span>
-                  <span class="info-value">${contract.payment_method}</span>
+                  <span class="info-value">${escapeHtml(contract.payment_method)}</span>
                 </div>
               ` : ''}
               ${contract.payment_terms ? `
                 <div class="info-row" style="margin-top: 12px;">
                   <span class="info-label">결제 조건:</span>
-                  <span class="info-value" style="flex: 1;">${contract.payment_terms}</span>
+                  <span class="info-value" style="flex: 1;">${escapeHtml(contract.payment_terms)}</span>
                 </div>
               ` : ''}
             </div>
@@ -838,7 +859,7 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
         ${contract.terms ? `
           <div class="terms-box">
             <div class="terms-title">계약 조건</div>
-            <div class="terms-content">${contract.terms}</div>
+            <div class="terms-content">${escapeHtml(contract.terms)}</div>
           </div>
         ` : ''}
 
@@ -900,18 +921,18 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
                   <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">입금 계좌</div>
                   <div class="info-row">
                     <span class="info-label">은행:</span>
-                    <span class="info-value">${contract.bank_name}</span>
+                    <span class="info-value">${escapeHtml(contract.bank_name)}</span>
                   </div>
                   ${contract.bank_account_number ? `
                     <div class="info-row">
                       <span class="info-label">계좌번호:</span>
-                      <span class="info-value">${contract.bank_account_number}</span>
+                      <span class="info-value">${escapeHtml(contract.bank_account_number)}</span>
                     </div>
                   ` : ''}
                   ${contract.bank_account_holder ? `
                     <div class="info-row">
                       <span class="info-label">예금주:</span>
-                      <span class="info-value">${contract.bank_account_holder}</span>
+                      <span class="info-value">${escapeHtml(contract.bank_account_holder)}</span>
                     </div>
                   ` : ''}
                 </div>
@@ -928,31 +949,31 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
               ${contract.delivery_conditions ? `
                 <div class="info-row">
                   <span class="info-label">인도/납품 조건:</span>
-                  <span class="info-value" style="flex: 1;">${contract.delivery_conditions}</span>
+                  <span class="info-value" style="flex: 1;">${escapeHtml(contract.delivery_conditions)}</span>
                 </div>
               ` : ''}
               ${contract.delivery_location ? `
                 <div class="info-row">
                   <span class="info-label">납품 장소:</span>
-                  <span class="info-value">${contract.delivery_location}</span>
+                  <span class="info-value">${escapeHtml(contract.delivery_location)}</span>
                 </div>
               ` : ''}
               ${contract.delivery_deadline ? `
                 <div class="info-row">
                   <span class="info-label">납품 기한:</span>
-                  <span class="info-value">${contract.delivery_deadline}</span>
+                  <span class="info-value">${escapeHtml(contract.delivery_deadline)}</span>
                 </div>
               ` : ''}
               ${contract.warranty_period ? `
                 <div class="info-row">
                   <span class="info-label">하자보증 기간:</span>
-                  <span class="info-value">${contract.warranty_period}</span>
+                  <span class="info-value">${escapeHtml(contract.warranty_period)}</span>
                 </div>
               ` : ''}
               ${contract.warranty_scope ? `
                 <div class="info-row">
                   <span class="info-label">하자보증 범위:</span>
-                  <span class="info-value" style="flex: 1;">${contract.warranty_scope}</span>
+                  <span class="info-value" style="flex: 1;">${escapeHtml(contract.warranty_scope)}</span>
                 </div>
               ` : ''}
             </div>
@@ -967,13 +988,13 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
               ${contract.nda_clause ? `
                 <div style="margin-bottom: 16px;">
                   <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">비밀유지 조항 (NDA)</div>
-                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${contract.nda_clause}</div>
+                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${escapeHtml(contract.nda_clause)}</div>
                 </div>
               ` : ''}
               ${contract.termination_conditions ? `
                 <div style="margin-bottom: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
                   <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">계약 해지 조건</div>
-                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${contract.termination_conditions}</div>
+                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${escapeHtml(contract.termination_conditions)}</div>
                 </div>
               ` : ''}
               ${contract.dispute_resolution || contract.jurisdiction_court ? `
@@ -982,13 +1003,13 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
                   ${contract.dispute_resolution ? `
                     <div class="info-row">
                       <span class="info-label">해결 방법:</span>
-                      <span class="info-value">${contract.dispute_resolution}</span>
+                      <span class="info-value">${escapeHtml(contract.dispute_resolution)}</span>
                     </div>
                   ` : ''}
                   ${contract.jurisdiction_court ? `
                     <div class="info-row">
                       <span class="info-label">관할 법원:</span>
-                      <span class="info-value">${contract.jurisdiction_court}</span>
+                      <span class="info-value">${escapeHtml(contract.jurisdiction_court)}</span>
                     </div>
                   ` : ''}
                 </div>
@@ -996,7 +1017,7 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
               ${contract.force_majeure_clause ? `
                 <div style="padding-top: 16px; border-top: 1px solid #e5e7eb;">
                   <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">불가항력 조항</div>
-                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${contract.force_majeure_clause}</div>
+                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${escapeHtml(contract.force_majeure_clause)}</div>
                 </div>
               ` : ''}
             </div>
@@ -1011,31 +1032,31 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
               ${contract.renewal_conditions ? `
                 <div style="margin-bottom: 16px;">
                   <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">계약 갱신 조건</div>
-                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${contract.renewal_conditions}</div>
+                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${escapeHtml(contract.renewal_conditions)}</div>
                 </div>
               ` : ''}
               ${contract.amendment_procedure ? `
                 <div style="margin-bottom: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
                   <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">계약 변경/수정 절차</div>
-                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${contract.amendment_procedure}</div>
+                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${escapeHtml(contract.amendment_procedure)}</div>
                 </div>
               ` : ''}
               ${contract.assignment_prohibition ? `
                 <div style="margin-bottom: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
                   <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">권리/의무 양도 금지</div>
-                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${contract.assignment_prohibition}</div>
+                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${escapeHtml(contract.assignment_prohibition)}</div>
                 </div>
               ` : ''}
               ${contract.special_terms ? `
                 <div style="margin-bottom: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
                   <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">특약 사항</div>
-                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${contract.special_terms}</div>
+                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${escapeHtml(contract.special_terms)}</div>
                 </div>
               ` : ''}
               ${contract.penalty_clause ? `
                 <div style="padding-top: 16px; border-top: 1px solid #e5e7eb;">
                   <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">위약금 조항</div>
-                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${contract.penalty_clause}</div>
+                  <div style="font-size: 14px; color: #4b5563; line-height: 1.8; white-space: pre-wrap;">${escapeHtml(contract.penalty_clause)}</div>
                 </div>
               ` : ''}
             </div>
@@ -1055,13 +1076,13 @@ function generateContractHTML(contract: Contract, supplierInfo: SupplierInfo): s
             <div class="signature-box">
               <h4>갑 (공급자)</h4>
               <div class="signature-line"></div>
-              <div class="signature-name">서명: ${supplierInfo?.name || '_______________'}</div>
+              <div class="signature-name">서명: ${escapeHtml(supplierInfo?.name) || '_______________'}</div>
               ${signedDate ? `<div class="signature-name" style="margin-top: 8px;">서명일: ${signedDate}</div>` : ''}
             </div>
             <div class="signature-box">
               <h4>을 (고객)</h4>
               <div class="signature-line"></div>
-              <div class="signature-name">서명: ${contract.client_name || '_______________'}</div>
+              <div class="signature-name">서명: ${escapeHtml(contract.client_name) || '_______________'}</div>
               ${signedDate ? `<div class="signature-name" style="margin-top: 8px;">서명일: ${signedDate}</div>` : ''}
             </div>
           </div>
@@ -1087,7 +1108,12 @@ export async function generateQuotePDF(quote: Quote, supplierInfo: SupplierInfo)
 
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+
+    // 타임아웃 설정 (30초)
+    page.setDefaultTimeout(30000);
+
+    // networkidle2로 설정하여 폰트 로딩 대기 (2개 이하의 네트워크 연결만 허용)
+    await page.setContent(html, { waitUntil: 'networkidle2', timeout: 30000 });
 
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -1097,8 +1123,14 @@ export async function generateQuotePDF(quote: Quote, supplierInfo: SupplierInfo)
         right: '15mm',
         bottom: '20mm',
         left: '15mm'
-      }
+      },
+      timeout: 30000
     });
+
+    // 파일 크기 검증
+    if (pdfBuffer.length > MAX_PDF_SIZE) {
+      throw new Error(`PDF file size (${(pdfBuffer.length / 1024 / 1024).toFixed(2)}MB) exceeds maximum allowed size (${MAX_PDF_SIZE / 1024 / 1024}MB)`);
+    }
 
     return Buffer.from(pdfBuffer);
   } finally {
@@ -1120,7 +1152,12 @@ export async function generateContractPDF(contract: Contract, supplierInfo: Supp
 
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+
+    // 타임아웃 설정 (30초)
+    page.setDefaultTimeout(30000);
+
+    // networkidle2로 설정하여 폰트 로딩 대기 (2개 이하의 네트워크 연결만 허용)
+    await page.setContent(html, { waitUntil: 'networkidle2', timeout: 30000 });
 
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -1130,8 +1167,14 @@ export async function generateContractPDF(contract: Contract, supplierInfo: Supp
         right: '15mm',
         bottom: '20mm',
         left: '15mm'
-      }
+      },
+      timeout: 30000
     });
+
+    // 파일 크기 검증
+    if (pdfBuffer.length > MAX_PDF_SIZE) {
+      throw new Error(`PDF file size (${(pdfBuffer.length / 1024 / 1024).toFixed(2)}MB) exceeds maximum allowed size (${MAX_PDF_SIZE / 1024 / 1024}MB)`);
+    }
 
     return Buffer.from(pdfBuffer);
   } finally {

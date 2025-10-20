@@ -59,17 +59,50 @@ export async function GET(
     const date = new Date().toISOString().split('T')[0] // YYYY-MM-DD 형식
     const fileName = `${supplierName}_${title}_계약서_${date}.pdf`
 
-    // PDF 응답 반환
+    // PDF 응답 반환 with caching headers
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`,
         'Content-Length': pdfBuffer.length.toString(),
+        // 캐싱 헤더 추가 (5분간 브라우저 캐시)
+        'Cache-Control': 'private, max-age=300',
+        // ETag 추가 (contract ID + updated_at 기반)
+        'ETag': `"${contractId}-${contract.updated_at || contract.created_at}"`,
       },
     })
   } catch (error) {
-    console.error('Error generating contract PDF:', error)
-    return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 })
+    console.error('[Contract PDF Error]', {
+      contractId,
+      userId,
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      } : String(error),
+      timestamp: new Date().toISOString()
+    })
+
+    // 특정 에러 타입에 따른 상세 응답
+    if (error instanceof Error) {
+      if (error.message.includes('timeout')) {
+        return NextResponse.json({
+          error: 'PDF generation timeout',
+          message: 'PDF 생성 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.'
+        }, { status: 504 })
+      }
+      if (error.message.includes('file size')) {
+        return NextResponse.json({
+          error: 'PDF file too large',
+          message: error.message
+        }, { status: 413 })
+      }
+    }
+
+    return NextResponse.json({
+      error: 'Failed to generate PDF',
+      message: 'PDF 생성에 실패했습니다. 잠시 후 다시 시도해주세요.'
+    }, { status: 500 })
   }
 }
