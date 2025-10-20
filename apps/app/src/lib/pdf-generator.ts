@@ -304,51 +304,6 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
           </div>
         </div>
 
-        <!-- Items Table -->
-        <div class="section">
-          <div class="section-title">견적 항목</div>
-          <table>
-            <thead>
-              <tr>
-                <th>항목명</th>
-                <th style="text-align: center;">수량</th>
-                <th style="text-align: center;">단가</th>
-                <th style="text-align: center;">금액</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHTML}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Total -->
-        <div class="total-section">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px;">
-            <span>소계</span>
-            <span>${(quote.subtotal || 0).toLocaleString('ko-KR')}원</span>
-          </div>
-          ${quote.discount_amount && quote.discount_amount > 0 ? `
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px; color: #dc2626;">
-              <span>할인</span>
-              <span>-${quote.discount_amount.toLocaleString('ko-KR')}원</span>
-            </div>
-          ` : ''}
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px;">
-            <span>공급가액</span>
-            <span>${((quote.subtotal || 0) - (quote.discount_amount || 0)).toLocaleString('ko-KR')}원</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px;">
-            <span>부가세 (10%)</span>
-            <span>${(Math.floor(((quote.subtotal || 0) - (quote.discount_amount || 0)) * 0.1)).toLocaleString('ko-KR')}원</span>
-          </div>
-          <div style="border-top: 2px solid #3b82f6; padding-top: 8px; margin-top: 8px;"></div>
-          <div class="total-row">
-            <span>최종 견적</span>
-            <span>${(((quote.subtotal || 0) - (quote.discount_amount || 0)) + Math.floor(((quote.subtotal || 0) - (quote.discount_amount || 0)) * 0.1)).toLocaleString('ko-KR')}원</span>
-          </div>
-        </div>
-
         <!-- Payment Information -->
         ${quote.payment_condition || quote.payment_method || quote.bank_name ? `
         <div class="section">
@@ -396,6 +351,51 @@ function generateQuoteHTML(quote: Quote, supplierInfo: SupplierInfo): string {
           </div>
         </div>
         ` : ''}
+
+        <!-- Items Table -->
+        <div class="section">
+          <div class="section-title">견적 항목</div>
+          <table>
+            <thead>
+              <tr>
+                <th>항목명</th>
+                <th style="text-align: center;">수량</th>
+                <th style="text-align: center;">단가</th>
+                <th style="text-align: center;">금액</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHTML}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Total -->
+        <div class="total-section">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px;">
+            <span>소계</span>
+            <span>${(quote.subtotal || 0).toLocaleString('ko-KR')}원</span>
+          </div>
+          ${quote.discount_amount && quote.discount_amount > 0 ? `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px; color: #dc2626;">
+              <span>할인</span>
+              <span>-${quote.discount_amount.toLocaleString('ko-KR')}원</span>
+            </div>
+          ` : ''}
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px;">
+            <span>공급가액</span>
+            <span>${((quote.subtotal || 0) - (quote.discount_amount || 0)).toLocaleString('ko-KR')}원</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px;">
+            <span>부가세 (10%)</span>
+            <span>${(Math.floor(((quote.subtotal || 0) - (quote.discount_amount || 0)) * 0.1)).toLocaleString('ko-KR')}원</span>
+          </div>
+          <div style="border-top: 2px solid #3b82f6; padding-top: 8px; margin-top: 8px;"></div>
+          <div class="total-row">
+            <span>최종 견적</span>
+            <span>${(((quote.subtotal || 0) - (quote.discount_amount || 0)) + Math.floor(((quote.subtotal || 0) - (quote.discount_amount || 0)) * 0.1)).toLocaleString('ko-KR')}원</span>
+          </div>
+        </div>
 
         <!-- Quote Conditions -->
         ${quote.delivery_due_date || quote.warranty_period || quote.as_conditions || quote.special_notes || quote.disclaimer ? `

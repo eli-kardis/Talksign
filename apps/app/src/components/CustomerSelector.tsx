@@ -16,7 +16,10 @@ interface Customer {
   business_registration_number?: string;
   email: string;
   phone: string;
+  fax?: string;
   address?: string;
+  business_type?: string;
+  business_category?: string;
   notes?: string;
   created_at: string;
   updated_at?: string;

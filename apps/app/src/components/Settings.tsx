@@ -386,7 +386,6 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
                 <Input
                   id="businessRegistrationNumber"
                   type="text"
-                  placeholder="123-12-12345"
                   value={formData.businessRegistrationNumber}
                   onChange={(e) => handleInputChange('businessRegistrationNumber', e.target.value)}
                   className="bg-input-background border-border text-foreground"
@@ -410,7 +409,6 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
                     <Input
                       id="companyName"
                       type="text"
-                      placeholder="(주)회사명 또는 개인사업자명"
                       value={formData.companyName}
                       onChange={(e) => handleInputChange('companyName', e.target.value)}
                       className="bg-input-background border-border text-foreground"
@@ -438,7 +436,6 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
                     <Input
                       id="fax"
                       type="tel"
-                      placeholder="02-1234-5678"
                       value={formData.fax}
                       onChange={(e) => handleInputChange('fax', e.target.value)}
                       className="bg-input-background border-border text-foreground"
@@ -452,7 +449,6 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
                     <Input
                       id="businessType"
                       type="text"
-                      placeholder="예: 제조업, 도소매업, 서비스업"
                       value={formData.businessType}
                       onChange={(e) => handleInputChange('businessType', e.target.value)}
                       className="bg-input-background border-border text-foreground"
@@ -466,7 +462,6 @@ export function Settings({ open, onOpenChange }: SettingsProps) {
                     <Input
                       id="businessCategory"
                       type="text"
-                      placeholder="예: IT 컨설팅, 웹개발"
                       value={formData.businessCategory}
                       onChange={(e) => handleInputChange('businessCategory', e.target.value)}
                       className="bg-input-background border-border text-foreground"

@@ -387,9 +387,9 @@ export default function QuoteDetailPage({ params }: { params: Promise<{ username
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               견적 항목
             </h3>
-            <Card className="border-border overflow-hidden bg-card">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[800px]">
+            <Card className="border-border bg-card">
+              <div className="overflow-hidden">
+                <table className="w-full">
                   <thead className="bg-gray-100 border-b-2 border-gray-300">
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">항목</th>

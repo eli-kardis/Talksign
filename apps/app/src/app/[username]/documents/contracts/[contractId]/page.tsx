@@ -409,9 +409,9 @@ export default function ContractDetailPage({ params }: { params: Promise<{ contr
             <h3 className="text-lg font-semibold text-black mb-4">
               계약 내역
             </h3>
-            <Card className="border-gray-300 overflow-hidden bg-white">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[800px]">
+            <Card className="border-gray-300 bg-white">
+              <div className="overflow-hidden">
+                <table className="w-full">
                   <thead className="bg-gray-100 border-b border-gray-300">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">항목명</th>
