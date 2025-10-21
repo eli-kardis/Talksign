@@ -16,18 +16,22 @@ import { apiClient } from '@/lib/api-client';
 
 interface Customer {
   id: string;
-  company_name: string;
-  representative_name: string;
-  contact_person: string | null | undefined;
-  business_registration_number: string | null | undefined;
-  email: string;
-  phone: string;
-  address: string | null | undefined;
+  company_name?: string | null;  // Supabase: company
+  representative_name?: string | null;  // Supabase: name
+  contact_person?: string | null;
+  business_registration_number?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
   fax?: string | null;
   business_type?: string | null;
   business_category?: string | null;
   created_at: string;
-  updated_at?: string;
+  updated_at?: string | null;
+  // Supabase 필드명
+  company?: string | null;
+  name?: string | null;
+  notes?: string | null;
 }
 
 interface CustomerFormData {
@@ -102,13 +106,28 @@ export default function CustomersPage() {
         const response = await apiClient.get('/api/customers');
         if (response.ok) {
           const responseData = await response.json();
-          const serverCustomers = responseData.data || [];
+          const serverCustomers = (responseData.data || []).map((customer: any) => ({
+            id: customer.id,
+            company_name: customer.company || customer.company_name,
+            representative_name: customer.name || customer.representative_name,
+            contact_person: customer.notes || customer.contact_person,
+            business_registration_number: customer.business_registration_number,
+            email: customer.email,
+            phone: customer.phone,
+            address: customer.address,
+            fax: customer.fax,
+            business_type: customer.business_type,
+            business_category: customer.business_category,
+            created_at: customer.created_at,
+            updated_at: customer.updated_at
+          }));
 
           // localStorage와 서버 데이터 병합 (중복 제거)
           const allCustomers = [...localCustomers];
           serverCustomers.forEach((serverCustomer: Customer) => {
             const existsInLocal = localCustomers.some((local: Customer) =>
-              local.email === serverCustomer.email || local.id === serverCustomer.id
+              (local.email && serverCustomer.email && local.email === serverCustomer.email) ||
+              local.id === serverCustomer.id
             );
             if (!existsInLocal) {
               allCustomers.push(serverCustomer);
@@ -442,10 +461,10 @@ export default function CustomersPage() {
   };
 
   const filteredCustomers = customers.filter(customer =>
-    customer.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.representative_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone.includes(searchTerm)
+    (customer.company_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (customer.representative_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (customer.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (customer.phone || '').includes(searchTerm)
   );
 
   if (loading) {
