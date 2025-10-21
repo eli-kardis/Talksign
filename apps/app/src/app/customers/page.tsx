@@ -202,6 +202,9 @@ export default function CustomersPage() {
           company: formData.company_name.trim() || undefined,  // company_name → company
           businessRegistrationNumber: formData.business_registration_number.trim() || undefined,
           address: formData.address.trim() || undefined,
+          fax: formData.fax.trim() || undefined,
+          businessType: formData.business_type.trim() || undefined,
+          businessCategory: formData.business_category.trim() || undefined,
           notes: formData.contact_person.trim() || undefined  // contact_person을 notes에 저장
         };
 
@@ -275,27 +278,29 @@ export default function CustomersPage() {
     try {
       setIsDeleting(true);
 
-      // localStorage에서 삭제
+      // 먼저 서버에서 삭제 시도
+      const response = await apiClient.delete('/api/customers', { customerIds: selectedCustomers });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Server deletion failed:', errorData);
+        throw new Error(errorData.error || 'Failed to delete customers from server');
+      }
+
+      console.log('Customers deleted from server successfully');
+
+      // 서버 삭제 성공 후 localStorage에서도 삭제
       const existingCustomers = JSON.parse(localStorage.getItem('talksign_customers') || '[]');
       const updatedCustomers = existingCustomers.filter((customer: Customer) => !selectedCustomers.includes(customer.id));
       localStorage.setItem('talksign_customers', JSON.stringify(updatedCustomers));
 
-      // 즉시 UI에서 제거
+      // UI에서 제거
       setCustomers(prev => prev.filter(customer => !selectedCustomers.includes(customer.id)));
       setSelectedCustomers([]);
       setIsDeleteModalOpen(false);
-
-      // 백그라운드에서 서버에도 삭제 시도 (실패해도 무시)
-      try {
-        const response = await apiClient.delete('/api/customers', { customerIds: selectedCustomers });
-        if (response.ok) {
-          console.log('Customers also deleted from server');
-        }
-      } catch (serverError) {
-        console.log('Server deletion failed, but localStorage deletion succeeded:', serverError);
-      }
     } catch (error) {
       console.error('Error deleting customers:', error);
+      alert('고객 삭제에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsDeleting(false);
     }

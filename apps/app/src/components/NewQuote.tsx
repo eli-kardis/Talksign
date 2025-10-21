@@ -376,7 +376,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
     return true
   }
 
-  const saveQuote = async (status: 'draft' | 'saved' | 'sent' = 'draft') => {
+  const saveQuote = async (status: 'draft' | 'sent' = 'draft') => {
     // 분할 결제 유효성 검증 (모든 저장 시 수행)
     if (paymentInfo.paymentCondition === '분할') {
       const totalRatio = installmentInfo.depositRatio + installmentInfo.interimRatio + installmentInfo.finalRatio
@@ -442,7 +442,7 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
     // 저장 시 완성도에 따라 상태 자동 결정
     let finalStatus = status
     if (status === 'draft') {
-      finalStatus = isQuoteComplete() ? 'saved' : 'draft'
+      finalStatus = 'draft'  // 임시저장은 항상 draft
     }
 
     setIsLoading(true)
@@ -632,9 +632,9 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 w-full max-w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 md:gap-6 w-full max-w-full overflow-x-hidden">
         {/* Main Form */}
-        <div className="lg:col-span-3 space-y-4 md:space-y-6">
+        <div className="space-y-4 md:space-y-6 min-w-0">
           {/* 견적서 제목 */}
           <Card className="p-4 md:p-6 bg-card border-border">
             <h3 className="font-medium mb-4 text-foreground">견적서 제목</h3>
