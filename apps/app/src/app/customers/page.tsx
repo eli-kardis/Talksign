@@ -329,16 +329,16 @@ export default function CustomersPage() {
   const handleEditCustomer = (customer: Customer) => {
     setEditingCustomer(customer);
     setEditFormData({
-      company_name: customer.company_name,
-      representative_name: customer.representative_name,
+      company_name: customer.company_name || '',
+      representative_name: customer.representative_name || '',
       contact_person: customer.contact_person || '',
       business_registration_number: customer.business_registration_number || '',
-      email: customer.email,
-      phone: customer.phone,
+      email: customer.email || '',
+      phone: customer.phone || '',
       address: customer.address || '',
-      fax: (customer as any).fax || '',
-      business_type: (customer as any).business_type || '',
-      business_category: (customer as any).business_category || ''
+      fax: customer.fax || '',
+      business_type: customer.business_type || '',
+      business_category: customer.business_category || ''
     });
     setEditErrors({});
     setIsEditModalOpen(true);
@@ -921,13 +921,13 @@ export default function CustomersPage() {
                       </td>
                       <td className="p-3 md:p-4">
                         <span className="font-medium text-foreground">
-                          {customer.company_name}
+                          {customer.company_name || '-'}
                         </span>
                       </td>
                       <td className="p-3 md:p-4">
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-foreground">{customer.representative_name}</span>
+                          <span className="text-foreground">{customer.representative_name || '-'}</span>
                         </div>
                       </td>
                       <td className="p-3 md:p-4">
@@ -943,13 +943,13 @@ export default function CustomersPage() {
                       <td className="p-3 md:p-4">
                         <div className="flex items-center gap-2">
                           <Phone className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-foreground">{customer.phone}</span>
+                          <span className="text-foreground">{customer.phone || '-'}</span>
                         </div>
                       </td>
                       <td className="p-3 md:p-4">
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-foreground">{customer.email}</span>
+                          <span className="text-foreground">{customer.email || '-'}</span>
                         </div>
                       </td>
                       <td className="p-3 md:p-4">
@@ -1015,12 +1015,12 @@ export default function CustomersPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-foreground text-sm leading-tight">
-                          회사명: {customer.company_name}
+                          회사명: {customer.company_name || '-'}
                         </span>
                         <span className="text-muted-foreground text-sm">|</span>
                         <div className="flex items-center gap-1">
                           <Phone className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-sm text-foreground">{customer.phone}</span>
+                          <span className="text-sm text-foreground">{customer.phone || '-'}</span>
                         </div>
                       </div>
                     </div>
@@ -1043,9 +1043,9 @@ export default function CustomersPage() {
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         <span className="text-foreground font-medium">대표자:</span>
-                        <span className="text-foreground">{customer.representative_name}</span>
+                        <span className="text-foreground">{customer.representative_name || '-'}</span>
                       </div>
-                      
+
                       {/* 담당자 */}
                       {customer.contact_person && (
                         <div className="flex items-center gap-2">
@@ -1054,19 +1054,19 @@ export default function CustomersPage() {
                           <span className="text-foreground">{customer.contact_person}</span>
                         </div>
                       )}
-                      
+
                       {/* 이메일 */}
                       <div className="flex items-start gap-2">
                         <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                         <span className="text-foreground font-medium flex-shrink-0">이메일:</span>
-                        <span className="text-foreground break-all">{customer.email}</span>
+                        <span className="text-foreground break-all">{customer.email || '-'}</span>
                       </div>
-                      
+
                       {/* 연락처 (이미 위에 표시되었지만 상세 정보로 다시 표시) */}
                       <div className="flex items-center gap-2">
                         <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         <span className="text-foreground font-medium">연락처:</span>
-                        <span className="text-foreground">{customer.phone}</span>
+                        <span className="text-foreground">{customer.phone || '-'}</span>
                       </div>
                       
                       {/* 사업자번호 */}

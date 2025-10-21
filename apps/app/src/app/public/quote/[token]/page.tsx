@@ -149,7 +149,7 @@ export default function PublicQuotePage() {
           <div className="flex items-center gap-3 mb-4">
             <FileText className="h-8 w-8 text-blue-600" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{quote.title}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{quote.title || '제목 없음'}</h1>
               <p className="text-sm text-gray-500">견적서</p>
             </div>
           </div>
@@ -208,15 +208,15 @@ export default function PublicQuotePage() {
             </div>
             <div>
               <label className="text-sm text-gray-500">담당자</label>
-              <p className="font-medium">{quote.client_name}</p>
+              <p className="font-medium">{quote.client_name || '-'}</p>
             </div>
             <div>
               <label className="text-sm text-gray-500">이메일</label>
-              <p className="font-medium">{quote.client_email}</p>
+              <p className="font-medium">{quote.client_email || '-'}</p>
             </div>
             <div>
               <label className="text-sm text-gray-500">연락처</label>
-              <p className="font-medium">{quote.client_phone}</p>
+              <p className="font-medium">{quote.client_phone || '-'}</p>
             </div>
           </div>
         </Card>
@@ -250,7 +250,7 @@ export default function PublicQuotePage() {
                 <tr>
                   <td colSpan={4} className="px-4 py-3 text-right font-semibold">총 금액</td>
                   <td className="px-4 py-3 text-right text-lg font-bold text-blue-600">
-                    {quote.total_amount.toLocaleString()}원
+                    {(quote.total_amount || 0).toLocaleString()}원
                   </td>
                 </tr>
               </tfoot>

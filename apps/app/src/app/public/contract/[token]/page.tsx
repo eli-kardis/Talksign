@@ -212,7 +212,7 @@ export default function PublicContractPage() {
           <div className="flex items-center gap-3 mb-4">
             <FileText className="h-8 w-8 text-blue-600" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{contract.title}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{contract.title || '제목 없음'}</h1>
               <p className="text-sm text-gray-500">계약서</p>
             </div>
           </div>
@@ -263,7 +263,7 @@ export default function PublicContractPage() {
               </div>
               <div>
                 <label className="text-sm text-gray-500">담당자</label>
-                <p className="font-medium">{contract.client_name}</p>
+                <p className="font-medium">{contract.client_name || '-'}</p>
               </div>
             </div>
           </Card>
@@ -323,7 +323,7 @@ export default function PublicContractPage() {
                 <tr>
                   <td colSpan={3} className="px-4 py-3 text-right font-semibold">총 계약 금액</td>
                   <td className="px-4 py-3 text-right text-lg font-bold text-blue-600">
-                    {contract.total_amount.toLocaleString()}원
+                    {(contract.total_amount || 0).toLocaleString()}원
                   </td>
                 </tr>
               </tfoot>

@@ -11,18 +11,18 @@ import { AuthenticatedApiClient } from '@/lib/api-client';
 
 interface Customer {
   id: string;
-  company: string;
-  name: string;
-  business_registration_number?: string;
-  email: string;
-  phone: string;
-  fax?: string;
-  address?: string;
-  business_type?: string;
-  business_category?: string;
-  notes?: string;
+  company?: string | null;
+  name?: string | null;
+  business_registration_number?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  fax?: string | null;
+  address?: string | null;
+  business_type?: string | null;
+  business_category?: string | null;
+  notes?: string | null;
   created_at: string;
-  updated_at?: string;
+  updated_at?: string | null;
   user_id: string;
 }
 
@@ -123,7 +123,7 @@ export function CustomerSelector({
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-medium text-foreground">{customer.company}</h3>
+                      <h3 className="font-medium text-foreground">{customer.company || '-'}</h3>
                       <Badge variant="secondary" className="text-xs">
                         {new Date(customer.created_at).toLocaleDateString('ko-KR')}
                       </Badge>
@@ -132,15 +132,15 @@ export function CustomerSelector({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <User className="w-3 h-3" />
-                        <span><strong>대표자:</strong> {customer.name}</span>
+                        <span><strong>대표자:</strong> {customer.name || '-'}</span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Phone className="w-3 h-3" />
-                        <span><strong>연락처:</strong> {customer.phone}</span>
+                        <span><strong>연락처:</strong> {customer.phone || '-'}</span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground sm:col-span-2">
                         <Mail className="w-3 h-3" />
-                        <span><strong>이메일:</strong> {customer.email}</span>
+                        <span><strong>이메일:</strong> {customer.email || '-'}</span>
                       </div>
                       {customer.business_registration_number && (
                         <div className="flex items-center gap-2 text-muted-foreground sm:col-span-2">
