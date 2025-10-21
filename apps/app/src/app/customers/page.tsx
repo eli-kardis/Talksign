@@ -101,7 +101,8 @@ export default function CustomersPage() {
       try {
         const response = await apiClient.get('/api/customers');
         if (response.ok) {
-          const serverCustomers = await response.json();
+          const responseData = await response.json();
+          const serverCustomers = responseData.data || [];
 
           // localStorage와 서버 데이터 병합 (중복 제거)
           const allCustomers = [...localCustomers];
@@ -377,8 +378,31 @@ export default function CustomersPage() {
     try {
       setIsUpdating(true);
 
-      // localStorage에서 업데이트
-      const existingCustomers = JSON.parse(localStorage.getItem('talksign_customers') || '[]');
+      // 먼저 서버에서 수정 시도
+      const apiPayload = {
+        name: editFormData.representative_name.trim(),
+        email: editFormData.email.trim(),
+        phone: editFormData.phone.trim(),
+        company: editFormData.company_name.trim() || undefined,
+        businessRegistrationNumber: editFormData.business_registration_number.trim() || undefined,
+        address: editFormData.address.trim() || undefined,
+        fax: editFormData.fax.trim() || undefined,
+        businessType: editFormData.business_type.trim() || undefined,
+        businessCategory: editFormData.business_category.trim() || undefined,
+        notes: editFormData.contact_person.trim() || undefined
+      };
+
+      const response = await apiClient.put(`/api/customers/${editingCustomer.id}`, apiPayload);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Server update failed:', errorData);
+        throw new Error(errorData.error || 'Failed to update customer on server');
+      }
+
+      console.log('Customer updated on server successfully');
+
+      // 서버 수정 성공 후 localStorage와 UI 업데이트
       const updatedCustomer = {
         ...editingCustomer,
         company_name: editFormData.company_name.trim(),
@@ -394,12 +418,13 @@ export default function CustomersPage() {
         updated_at: new Date().toISOString()
       };
 
+      const existingCustomers = JSON.parse(localStorage.getItem('talksign_customers') || '[]');
       const updatedCustomers = existingCustomers.map((customer: Customer) =>
         customer.id === editingCustomer.id ? updatedCustomer : customer
       );
       localStorage.setItem('talksign_customers', JSON.stringify(updatedCustomers));
 
-      // 즉시 UI 업데이트
+      // UI 업데이트
       setCustomers(prev =>
         prev.map(customer =>
           customer.id === editingCustomer.id ? updatedCustomer : customer
@@ -408,18 +433,9 @@ export default function CustomersPage() {
 
       setIsEditModalOpen(false);
       setEditingCustomer(null);
-
-      // 백그라운드에서 서버에도 저장 시도 (실패해도 무시)
-      try {
-        const response = await apiClient.put(`/api/customers/${editingCustomer.id}`, editFormData);
-        if (response.ok) {
-          console.log('Customer also updated on server');
-        }
-      } catch (serverError) {
-        console.log('Server update failed, but localStorage update succeeded:', serverError);
-      }
     } catch (error) {
       console.error('Error updating customer:', error);
+      alert('고객 수정에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsUpdating(false);
     }
