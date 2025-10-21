@@ -555,8 +555,6 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
 
       if (finalStatus === 'sent') {
         alert(`${clientInfo.name}님께 카카오톡으로 견적서가 ${isEdit ? '수정되어' : ''} 발송되었습니다!`)
-      } else if (finalStatus === 'saved') {
-        alert(`견적서가 ${isEdit ? '수정되어' : ''} 저장되었습니다.`)
       } else {
         alert(`견적서가 ${isEdit ? '수정되어' : ''} 임시저장되었습니다.`)
       }
