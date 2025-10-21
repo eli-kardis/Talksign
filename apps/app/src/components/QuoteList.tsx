@@ -34,6 +34,7 @@ import {
   Trash2,
   Download,
   Mail,
+  Send,
 } from "lucide-react";
 import { EmailSendPanel } from "./EmailSendPanel";
 
@@ -297,6 +298,35 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
     if (dbQuote) {
       setSelectedQuoteForEmail(dbQuote);
       setEmailPanelOpen(true);
+    }
+  };
+
+  // 카카오톡 발송 핸들러
+  const handleSendKakao = async (quote: Quote, event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    if (!confirm(`${quote.client}님에게 견적서를 카카오톡으로 발송하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const response = await AuthenticatedApiClient.post(`/api/quotes/${quote.id}/send-kakao`, {});
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || '알림톡 발송에 실패했습니다.');
+      }
+
+      alert('견적서가 카카오톡으로 발송되었습니다!');
+
+      // 견적서 목록 새로고침
+      const quotesResponse = await AuthenticatedApiClient.get('/api/quotes');
+      if (quotesResponse.ok) {
+        const quotesData = await quotesResponse.json();
+        setDbQuotes(Array.isArray(quotesData) ? quotesData : quotesData.data || []);
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '알림톡 발송에 실패했습니다.');
     }
   };
 
@@ -801,6 +831,16 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                           <Mail className="w-3 h-3 mr-1" />
                           이메일
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => handleSendKakao(quote, e)}
+                          className="text-xs h-8 bg-yellow-50 hover:bg-yellow-100"
+                          title="카카오톡 발송"
+                        >
+                          <Send className="w-3 h-3 mr-1" />
+                          카톡
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -875,6 +915,15 @@ export function QuoteList({ onNewQuote, onViewQuote, onEditQuote }: QuoteListPro
                   title="이메일 발송"
                 >
                   <Mail className="w-3 h-3" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => handleSendKakao(quote, e)}
+                  className="text-xs h-8 px-2 bg-yellow-50 hover:bg-yellow-100"
+                  title="카카오톡 발송"
+                >
+                  <Send className="w-3 h-3" />
                 </Button>
               </div>
             </Card>

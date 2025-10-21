@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar as CalendarComponent } from './ui/calendar';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { PenTool, FileText, Clock, CheckCircle, AlertCircle, Search, MessageSquare, Eye, Edit, Calendar, User, Plus, ChevronUp, ChevronDown, Filter, Trash2, Download, Mail } from 'lucide-react';
+import { PenTool, FileText, Clock, CheckCircle, AlertCircle, Search, MessageSquare, Eye, Edit, Calendar, User, Plus, ChevronUp, ChevronDown, Filter, Trash2, Download, Mail, Send, DollarSign } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { AuthenticatedApiClient } from '@/lib/api-client';
@@ -201,6 +201,86 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
       }
     } catch (error) {
       console.error('Error fetching contract for email:', error);
+    }
+  };
+
+  // 카카오톡 발송 핸들러
+  const handleSendKakao = async (contract: any, event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    if (!confirm(`${contract.client_name}님에게 계약서를 카카오톡으로 발송하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const response = await AuthenticatedApiClient.post(`/api/contracts/${contract.id}/send-kakao`, {});
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || '알림톡 발송에 실패했습니다.');
+      }
+
+      alert('계약서가 카카오톡으로 발송되었습니다!');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '알림톡 발송에 실패했습니다.');
+    }
+  };
+
+  // 결제 요청 핸들러
+  const handleRequestPayment = async (contract: any, event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    const amount = prompt('결제 요청 금액을 입력하세요 (빈 칸 시 총 계약금액):', contract.amount?.toString() || '');
+    if (amount === null) return; // 취소
+
+    const paymentType = prompt('결제 종류를 입력하세요 (full/deposit/interim/final):', 'full');
+    if (!paymentType) return;
+
+    if (!confirm(`${contract.client_name}님에게 결제 요청을 발송하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const response = await AuthenticatedApiClient.post(`/api/contracts/${contract.id}/request-payment`, {
+        amount: amount ? parseInt(amount) : undefined,
+        paymentType,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || '결제 요청 발송에 실패했습니다.');
+      }
+
+      alert('결제 요청이 카카오톡으로 발송되었습니다!');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '결제 요청 발송에 실패했습니다.');
+    }
+  };
+
+  // 결제 확인 핸들러
+  const handleConfirmPayment = async (contract: any, event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    const amount = prompt('결제 확인 금액을 입력하세요 (빈 칸 시 총 계약금액):', contract.amount?.toString() || '');
+    if (amount === null) return; // 취소
+
+    if (!confirm(`${contract.client_name}님에게 결제 확인 알림을 발송하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const response = await AuthenticatedApiClient.post(`/api/contracts/${contract.id}/confirm-payment`, {
+        amount: amount ? parseInt(amount) : undefined,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || '결제 확인 알림 발송에 실패했습니다.');
+      }
+
+      alert('결제 확인 알림이 카카오톡으로 발송되었습니다!');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '결제 확인 알림 발송에 실패했습니다.');
     }
   };
 
@@ -786,6 +866,40 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                               <Mail className="w-3 h-3 mr-1" />
                               이메일
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => handleSendKakao(contract, e)}
+                              className="text-xs h-8 bg-yellow-50 hover:bg-yellow-100"
+                              title="카카오톡 발송"
+                            >
+                              <Send className="w-3 h-3 mr-1" />
+                              카톡
+                            </Button>
+                            {contract.status === 'completed' && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => handleRequestPayment(contract, e)}
+                                  className="text-xs h-8 bg-blue-50 hover:bg-blue-100"
+                                  title="결제 요청"
+                                >
+                                  <DollarSign className="w-3 h-3 mr-1" />
+                                  결제요청
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => handleConfirmPayment(contract, e)}
+                                  className="text-xs h-8 bg-green-50 hover:bg-green-100"
+                                  title="결제 확인"
+                                >
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  결제확인
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -840,7 +954,7 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                     </div>
                   </div>
                   
-                  <div className="flex gap-1 mt-3">
+                  <div className="flex gap-1 mt-3 flex-wrap">
                     {onEditContract && (
                       <Button
                         variant="outline"
@@ -870,6 +984,15 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                     >
                       <Mail className="w-3 h-3" />
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => handleSendKakao(contract, e)}
+                      className="text-xs h-8 px-2 bg-yellow-50 hover:bg-yellow-100"
+                      title="카카오톡 발송"
+                    >
+                      <Send className="w-3 h-3" />
+                    </Button>
                     {contract.status === 'sent' && (
                       <Button
                         variant="outline"
@@ -879,6 +1002,28 @@ export function ContractView({ onNewContract, onEditContract, onViewContract }: 
                       >
                         <MessageSquare className="w-3 h-3" />
                       </Button>
+                    )}
+                    {contract.status === 'completed' && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => handleRequestPayment(contract, e)}
+                          className="text-xs h-8 px-2 bg-blue-50 hover:bg-blue-100"
+                          title="결제 요청"
+                        >
+                          <DollarSign className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => handleConfirmPayment(contract, e)}
+                          className="text-xs h-8 px-2 bg-green-50 hover:bg-green-100"
+                          title="결제 확인"
+                        >
+                          <CheckCircle className="w-3 h-3" />
+                        </Button>
+                      </>
                     )}
                   </div>
                 </Card>

@@ -9,4 +9,7 @@
 export { ClientInfoForm } from './ClientInfoForm'
 export { SupplierInfoForm } from './SupplierInfoForm'
 export { ContractItemsFormTable } from './ContractItemsFormTable'
+export { ProjectInfoForm } from './ProjectInfoForm'
+export { ContractTermsForm } from './ContractTermsForm'
+export { PaymentInfoForm } from './PaymentInfoForm'
 export type { ContractItem } from './ContractItemsFormTable'

@@ -213,10 +213,10 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
         phone: initialData.client.phone,
         company: initialData.client.company,
         businessNumber: initialData.client.businessNumber || '',
-        fax: (initialData.client as any).fax || '',
-        address: (initialData.client as any).address || '',
-        businessType: (initialData.client as any).businessType || '',
-        businessCategory: (initialData.client as any).businessCategory || '',
+        fax: '',
+        address: '',
+        businessType: '',
+        businessCategory: '',
       })
 
       // 프로젝트 정보 설정
@@ -251,7 +251,6 @@ export function NewQuote({ onNavigate, isEdit = false, editQuoteId, initialData 
           phone: initialData.client.phone,
           company: initialData.client.company,
           businessNumber: initialData.client.businessNumber || '',
-          address: (initialData.client as any).address || '',
         },
         projectInfo: {
           title: initialData.project.title,

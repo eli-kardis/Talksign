@@ -4,29 +4,14 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { ArrowLeft, MessageSquare, Save, User, Building, AlertTriangle, Plus, X, Edit3, AlertCircle } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Save, User, AlertTriangle, Plus, X, Edit3 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { CustomerSelector } from './CustomerSelector';
 import { SupplierSignatureModal } from './SupplierSignatureModal';
-import { ClientInfoForm, SupplierInfoForm } from './contracts';
-import { BankCombobox } from './BankCombobox';
+import { ClientInfoForm, SupplierInfoForm, ProjectInfoForm, ContractTermsForm, PaymentInfoForm, ContractItem } from './contracts';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatPhoneNumber, formatBusinessNumber } from '@/lib/formatters';
 import { AuthenticatedApiClient } from '@/lib/api-client';
-
-interface ContractItem {
-  id: string;
-  name: string;
-  description: string;
-  quantity: number;
-  unit_price: number;
-  amount: number;
-  unit: string;
-}
 
 interface NewContractProps {
   onNavigate: (view: string) => void;
@@ -82,11 +67,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
   const clientEmailRef = useRef<HTMLInputElement>(null);
   const startDateRef = useRef<HTMLInputElement>(null);
   const endDateRef = useRef<HTMLInputElement>(null);
-  const paymentConditionRef = useRef<HTMLButtonElement>(null);
-  const paymentMethodRef = useRef<HTMLDivElement>(null);
-  const bankNameRef = useRef<HTMLInputElement>(null);
-  const bankAccountNumberRef = useRef<HTMLInputElement>(null);
-  const bankAccountHolderRef = useRef<HTMLInputElement>(null);
 
   // 툴팁 상태 관리
   const [fieldTooltips, setFieldTooltips] = useState<{[key: string]: string}>({});
@@ -263,7 +243,7 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           })
         }
       } catch (error) {
-        console.error('Failed to load user info:', error)
+        // Failed to load user info
       }
     }
 
@@ -300,7 +280,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       try {
         return JSON.stringify(obj1) === JSON.stringify(obj2);
       } catch (error) {
-        console.warn('Object comparison failed:', error);
         return true;
       }
     };
@@ -634,7 +613,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         throw new Error('견적서를 불러오는데 실패했습니다.');
       }
       const data = await response.json();
-      console.log('Fetched quotes data:', data);
 
       // data가 배열인지 확인하고, 배열이 아니면 빈 배열로 설정
       if (Array.isArray(data)) {
@@ -643,11 +621,9 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
         // API가 { data: [...] } 형식으로 반환하는 경우
         setQuotes(data.data);
       } else {
-        console.warn('Quotes data is not an array:', data);
         setQuotes([]);
       }
     } catch (error) {
-      console.error('Error fetching quotes:', error);
       alert('견적서를 불러오는데 실패했습니다.');
       setQuotes([]);
     } finally {
@@ -663,9 +639,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
   // 견적서 선택시 데이터 입력
   const handleQuoteSelect = (quote: any) => {
-    console.log('Selected quote:', quote);
-    console.log('Quote items:', quote.items);
-
     // 수신자 정보 설정
     setClientInfo({
       name: quote.client_name || '',
@@ -694,7 +667,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
       try {
         quoteItems = JSON.parse(quoteItems);
       } catch (e) {
-        console.error('Failed to parse quote items:', e);
         quoteItems = [];
       }
     }
@@ -702,8 +674,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
     // 배열 확인 및 매핑
     if (quoteItems && Array.isArray(quoteItems) && quoteItems.length > 0) {
       const items = quoteItems.map((item: any, index: number) => {
-        console.log(`Item ${index}:`, item);
-        console.log(`Item unit:`, item.unit);
         return {
           id: `item-${Date.now()}-${index}`,
           name: item.name || '',
@@ -714,10 +684,8 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           unit: item.unit
         };
       });
-      console.log('Mapped items:', items);
       setContractItems(items);
     } else {
-      console.warn('No valid items found in quote');
       setContractItems([]);
     }
 
@@ -878,7 +846,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
       onNavigate('contracts');
     } catch (error) {
-      console.error('Contract save error:', error);
       alert(error instanceof Error ? error.message : '계약서 저장에 실패했습니다.');
     } finally {
       setIsLoading(false);
@@ -998,7 +965,6 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
 
       onNavigate('contracts');
     } catch (error) {
-      console.error('Contract save error:', error);
       alert(error instanceof Error ? error.message : '계약서 임시저장에 실패했습니다.');
     } finally {
       setIsLoading(false);
@@ -1155,115 +1121,34 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           </Card>
 
           {/* 4. 프로젝트 정보 */}
-          <Card className="p-4 md:p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">프로젝트 정보</h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="startDate" className="text-foreground">프로젝트 시작일 *</Label>
-                  <div className="relative">
-                    <Input
-                      ref={startDateRef}
-                      id="startDate"
-                      type="date"
-                      value={projectInfo.startDate}
-                      onChange={(e) => {
-                        setProjectInfo({...projectInfo, startDate: e.target.value});
-                        if (e.target.value && fieldTooltips.startDate) {
-                          hideFieldTooltip('startDate');
-                        }
-                      }}
-                      className="bg-input-background border-border"
-                    />
-                    {fieldTooltips.startDate && (
-                      <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
-                        {fieldTooltips.startDate}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="endDate" className="text-foreground">프로젝트 완료일 *</Label>
-                  <div className="relative">
-                    <Input
-                      ref={endDateRef}
-                      id="endDate"
-                      type="date"
-                      value={projectInfo.endDate}
-                      onChange={(e) => {
-                        setProjectInfo({...projectInfo, endDate: e.target.value});
-                        if (e.target.value && fieldTooltips.endDate) {
-                          hideFieldTooltip('endDate');
-                        }
-                      }}
-                      className="bg-input-background border-border"
-                    />
-                    {fieldTooltips.endDate && (
-                      <div className="absolute z-50 px-2 py-1 text-xs text-white bg-red-500 rounded shadow-lg -top-8 left-0 whitespace-nowrap pointer-events-none">
-                        {fieldTooltips.endDate}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="projectDescription" className="text-foreground">프로젝트 상세 설명</Label>
-                <Textarea
-                  id="projectDescription"
-                  value={projectInfo.description}
-                  onChange={(e) => setProjectInfo({...projectInfo, description: e.target.value})}
-                  placeholder="프로젝트에 대한 상세한 설명을 입력하세요"
-                  rows={4}
-                  className="bg-input-background border-border"
-                />
-              </div>
-            </div>
-          </Card>
+          <ProjectInfoForm
+            projectInfo={projectInfo}
+            onProjectInfoChange={(info) => {
+              setProjectInfo(info);
+              setHasUnsavedChanges(true);
+            }}
+            fieldTooltips={fieldTooltips}
+            hideFieldTooltip={hideFieldTooltip}
+            startDateRef={startDateRef}
+            endDateRef={endDateRef}
+          />
 
           {/* 5. 계약 조건 */}
-          <Card className="p-4 md:p-6 bg-card border-border">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-              <h3 className="font-medium text-foreground">계약 조건</h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addTerm}
-                className="border-border w-fit"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                조건 추가
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {contractTerms.map((term, index) => (
-                <div key={index} className="flex items-start gap-2">
-                  <span className="text-sm text-muted-foreground mt-2 min-w-[20px]">{index + 1}.</span>
-                  <div className="flex-1">
-                    <Textarea
-                      value={term}
-                      onChange={(e) => updateTerm(index, e.target.value)}
-                      placeholder="계약 조건을 입력하세요"
-                      rows={2}
-                      className="bg-input-background border-border"
-                    />
-                  </div>
-                  {contractTerms.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeTerm(index)}
-                      className="text-destructive hover:text-destructive mt-1"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Card>
+          <ContractTermsForm
+            contractTerms={contractTerms}
+            onAddTerm={() => {
+              addTerm();
+              setHasUnsavedChanges(true);
+            }}
+            onUpdateTerm={(index, value) => {
+              updateTerm(index, value);
+              setHasUnsavedChanges(true);
+            }}
+            onRemoveTerm={(index) => {
+              removeTerm(index);
+              setHasUnsavedChanges(true);
+            }}
+          />
 
           {/* 6. 계약 이행 조건 */}
           <Accordion type="single" collapsible>
@@ -1564,420 +1449,22 @@ export function NewContract({ onNavigate, isEdit = false, editContractId, fromQu
           </Card>
 
           {/* 결제 정보 */}
-          <Card className="p-4 md:p-6 bg-card border-border">
-            <h3 className="font-medium mb-4 text-foreground">결제 정보 (선택사항)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="paymentCondition" className="text-foreground">결제 조건</Label>
-                <select
-                  id="paymentCondition"
-                  value={paymentInfo.paymentCondition}
-                  onChange={(e) => {
-                    setPaymentInfo({ ...paymentInfo, paymentCondition: e.target.value })
-                    setHasUnsavedChanges(true)
-                  }}
-                  className="w-full h-10 px-3 rounded-md border border-border bg-input-background"
-                >
-                  <option value="">선택하세요</option>
-                  <option value="선불">선불</option>
-                  <option value="후불">후불</option>
-                  <option value="분할">분할</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="paymentMethod" className="text-foreground">결제 방법</Label>
-                <select
-                  id="paymentMethod"
-                  value={paymentInfo.paymentMethod}
-                  onChange={(e) => {
-                    setPaymentInfo({ ...paymentInfo, paymentMethod: e.target.value })
-                    setHasUnsavedChanges(true)
-                  }}
-                  className="w-full h-10 px-3 rounded-md border border-border bg-input-background"
-                >
-                  <option value="">선택하세요</option>
-                  <option value="계좌이체">계좌이체</option>
-                  <option value="카드">카드</option>
-                  <option value="현금">현금</option>
-                </select>
-              </div>
-              {paymentInfo.paymentCondition !== '분할' && (
-                <div className="space-y-2">
-                  <Label htmlFor="paymentDueDate" className="text-foreground">결제 기한</Label>
-                  <Input
-                    type="date"
-                    id="paymentDueDate"
-                    value={paymentInfo.paymentDueDate}
-                    onChange={(e) => {
-                      setPaymentInfo({ ...paymentInfo, paymentDueDate: e.target.value })
-                      setHasUnsavedChanges(true)
-                    }}
-                    className="bg-input-background border-border"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* 분할 결제 상세 정보 */}
-            {paymentInfo.paymentCondition === '분할' && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium text-foreground">분할 결제 상세</h4>
-                  <div className="flex items-center gap-2 text-sm">
-                    <button
-                      type="button"
-                      onClick={() => setInstallmentInputMode('ratio')}
-                      className={`px-3 py-1 rounded ${
-                        installmentInputMode === 'ratio'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                      }`}
-                    >
-                      비율 (%)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setInstallmentInputMode('amount')}
-                      className={`px-3 py-1 rounded ${
-                        installmentInputMode === 'amount'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                      }`}
-                    >
-                      금액 (원)
-                    </button>
-                  </div>
-                </div>
-                <div className="mb-3 p-3 bg-muted rounded-md">
-                  <p className="text-sm text-muted-foreground">
-                    총 계약 금액: <span className="font-semibold text-foreground">{formatCurrency(calculateTotals().total)}</span>
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  {/* 선금 */}
-                  <div className="space-y-2">
-                    <Label htmlFor="depositInput" className="text-foreground">
-                      선금 {installmentInputMode === 'ratio' ? '(%)' : '(원)'}
-                    </Label>
-                    <Input
-                      type="text"
-                      id="depositInput"
-                      value={
-                        installmentInputMode === 'ratio'
-                          ? installmentInfo.depositRatio
-                          : new Intl.NumberFormat('ko-KR').format(installmentInfo.depositAmount)
-                      }
-                      onChange={(e) => {
-                        const rawValue = e.target.value.replace(/,/g, '')
-                        const numValue = Number(rawValue)
-                        if (isNaN(numValue)) return
-
-                        const total = calculateTotals().total
-
-                        if (installmentInputMode === 'ratio') {
-                          const value = Math.max(0, Math.min(100, numValue))
-                          const depositAmt = Math.floor(total * value / 100)
-                          const remainingRatio = 100 - value - installmentInfo.interimRatio
-                          const finalRatio = Math.max(0, remainingRatio)
-                          const finalAmt = Math.floor(total * finalRatio / 100)
-                          setInstallmentInfo({
-                            ...installmentInfo,
-                            depositRatio: value,
-                            depositAmount: depositAmt,
-                            finalRatio: finalRatio,
-                            finalAmount: finalAmt
-                          })
-                        } else {
-                          const amount = Math.max(0, Math.min(total, numValue))
-                          const ratio = total > 0 ? Math.round((amount / total) * 100) : 0
-                          const finalAmt = Math.max(0, total - amount - installmentInfo.interimAmount)
-                          const finalRatio = total > 0 ? Math.round((finalAmt / total) * 100) : 0
-                          setInstallmentInfo({
-                            ...installmentInfo,
-                            depositAmount: amount,
-                            depositRatio: ratio,
-                            finalAmount: finalAmt,
-                            finalRatio: finalRatio
-                          })
-                        }
-                        setHasUnsavedChanges(true)
-                      }}
-                      className="bg-input-background border-border"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {installmentInputMode === 'ratio'
-                        ? `금액: ${new Intl.NumberFormat('ko-KR').format(installmentInfo.depositAmount)}원`
-                        : `비율: ${installmentInfo.depositRatio}%`}
-                    </p>
-                  </div>
-                  {/* 중도금 */}
-                  <div className="space-y-2">
-                    <Label htmlFor="interimInput" className="text-foreground">
-                      중도금 {installmentInputMode === 'ratio' ? '(%)' : '(원)'}
-                    </Label>
-                    <Input
-                      type="text"
-                      id="interimInput"
-                      value={
-                        installmentInputMode === 'ratio'
-                          ? installmentInfo.interimRatio
-                          : new Intl.NumberFormat('ko-KR').format(installmentInfo.interimAmount)
-                      }
-                      onChange={(e) => {
-                        const rawValue = e.target.value.replace(/,/g, '')
-                        const numValue = Number(rawValue)
-                        if (isNaN(numValue)) return
-
-                        const total = calculateTotals().total
-
-                        if (installmentInputMode === 'ratio') {
-                          const value = Math.max(0, Math.min(100, numValue))
-                          const interimAmt = Math.floor(total * value / 100)
-                          const remainingRatio = 100 - installmentInfo.depositRatio - value
-                          const finalRatio = Math.max(0, remainingRatio)
-                          const finalAmt = Math.floor(total * finalRatio / 100)
-                          setInstallmentInfo({
-                            ...installmentInfo,
-                            interimRatio: value,
-                            interimAmount: interimAmt,
-                            finalRatio: finalRatio,
-                            finalAmount: finalAmt
-                          })
-                        } else {
-                          const amount = Math.max(0, Math.min(total, numValue))
-                          const ratio = total > 0 ? Math.round((amount / total) * 100) : 0
-                          const finalAmt = Math.max(0, total - installmentInfo.depositAmount - amount)
-                          const finalRatio = total > 0 ? Math.round((finalAmt / total) * 100) : 0
-                          setInstallmentInfo({
-                            ...installmentInfo,
-                            interimAmount: amount,
-                            interimRatio: ratio,
-                            finalAmount: finalAmt,
-                            finalRatio: finalRatio
-                          })
-                        }
-                        setHasUnsavedChanges(true)
-                      }}
-                      className="bg-input-background border-border"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {installmentInputMode === 'ratio'
-                        ? `금액: ${new Intl.NumberFormat('ko-KR').format(installmentInfo.interimAmount)}원`
-                        : `비율: ${installmentInfo.interimRatio}%`}
-                    </p>
-                  </div>
-                  {/* 잔금 */}
-                  <div className="space-y-2">
-                    <Label htmlFor="finalInput" className="text-foreground">
-                      잔금 {installmentInputMode === 'ratio' ? '(%)' : '(원)'}
-                    </Label>
-                    <Input
-                      type="text"
-                      id="finalInput"
-                      value={
-                        installmentInputMode === 'ratio'
-                          ? installmentInfo.finalRatio
-                          : new Intl.NumberFormat('ko-KR').format(installmentInfo.finalAmount)
-                      }
-                      onChange={(e) => {
-                        const rawValue = e.target.value.replace(/,/g, '')
-                        const numValue = Number(rawValue)
-                        if (isNaN(numValue)) return
-
-                        const total = calculateTotals().total
-
-                        if (installmentInputMode === 'ratio') {
-                          const value = Math.max(0, Math.min(100, numValue))
-                          const amount = Math.floor(total * value / 100)
-                          setInstallmentInfo({ ...installmentInfo, finalRatio: value, finalAmount: amount })
-                        } else {
-                          const amount = Math.max(0, Math.min(total, numValue))
-                          const ratio = total > 0 ? Math.round((amount / total) * 100) : 0
-                          setInstallmentInfo({ ...installmentInfo, finalAmount: amount, finalRatio: ratio })
-                        }
-                        setHasUnsavedChanges(true)
-                      }}
-                      className={`bg-input-background border-border ${
-                        (() => {
-                          const totalRatio = installmentInfo.depositRatio + installmentInfo.interimRatio + installmentInfo.finalRatio
-                          const totalAmount = installmentInfo.depositAmount + installmentInfo.interimAmount + installmentInfo.finalAmount
-                          const total = calculateTotals().total
-                          const isInvalidRatio = installmentInputMode === 'ratio' && totalRatio !== 100
-                          const isInvalidAmount = installmentInputMode === 'amount' && totalAmount !== total
-                          return (isInvalidRatio || isInvalidAmount) ? 'border-red-500' : ''
-                        })()
-                      }`}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {installmentInputMode === 'ratio'
-                        ? `금액: ${new Intl.NumberFormat('ko-KR').format(installmentInfo.finalAmount)}원`
-                        : `비율: ${installmentInfo.finalRatio}%`}
-                    </p>
-                    {(() => {
-                      const total = calculateTotals().total
-                      if (installmentInputMode === 'ratio') {
-                        const expectedRatio = 100 - installmentInfo.depositRatio - installmentInfo.interimRatio
-                        if (installmentInfo.finalRatio !== expectedRatio) {
-                          return (
-                            <p className="text-xs text-red-600 dark:text-red-400">
-                              올바른 비율: {expectedRatio}%
-                            </p>
-                          )
-                        }
-                      } else {
-                        const expectedAmount = total - installmentInfo.depositAmount - installmentInfo.interimAmount
-                        if (installmentInfo.finalAmount !== expectedAmount) {
-                          return (
-                            <p className="text-xs text-red-600 dark:text-red-400">
-                              올바른 금액: {new Intl.NumberFormat('ko-KR').format(expectedAmount)}원
-                            </p>
-                          )
-                        }
-                      }
-                      return null
-                    })()}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="depositDueDate" className="text-foreground">선금 지급일</Label>
-                    <Input
-                      type="date"
-                      id="depositDueDate"
-                      value={installmentInfo.depositDueDate}
-                      onChange={(e) => {
-                        setInstallmentInfo({ ...installmentInfo, depositDueDate: e.target.value })
-                        setHasUnsavedChanges(true)
-                      }}
-                      className={`bg-input-background border-border ${
-                        (() => {
-                          if (!installmentInfo.depositDueDate) return ''
-                          if (installmentInfo.interimDueDate && installmentInfo.depositDueDate > installmentInfo.interimDueDate) return 'border-red-500'
-                          if (installmentInfo.finalDueDate && installmentInfo.depositDueDate > installmentInfo.finalDueDate) return 'border-red-500'
-                          return ''
-                        })()
-                      }`}
-                    />
-                    {(() => {
-                      if (!installmentInfo.depositDueDate) return null
-                      if (installmentInfo.interimDueDate && installmentInfo.depositDueDate > installmentInfo.interimDueDate) {
-                        return <p className="text-xs text-red-600 dark:text-red-400">선금 지급일은 중도금 지급일보다 빠르거나 같아야 합니다</p>
-                      }
-                      if (installmentInfo.finalDueDate && installmentInfo.depositDueDate > installmentInfo.finalDueDate) {
-                        return <p className="text-xs text-red-600 dark:text-red-400">선금 지급일은 잔금 지급일보다 빠르거나 같아야 합니다</p>
-                      }
-                      return null
-                    })()}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="interimDueDate" className="text-foreground">중도금 지급일</Label>
-                    <Input
-                      type="date"
-                      id="interimDueDate"
-                      value={installmentInfo.interimDueDate}
-                      onChange={(e) => {
-                        setInstallmentInfo({ ...installmentInfo, interimDueDate: e.target.value })
-                        setHasUnsavedChanges(true)
-                      }}
-                      className={`bg-input-background border-border ${
-                        (() => {
-                          if (!installmentInfo.interimDueDate) return ''
-                          if (installmentInfo.depositDueDate && installmentInfo.interimDueDate < installmentInfo.depositDueDate) return 'border-red-500'
-                          if (installmentInfo.finalDueDate && installmentInfo.interimDueDate > installmentInfo.finalDueDate) return 'border-red-500'
-                          return ''
-                        })()
-                      }`}
-                    />
-                    {(() => {
-                      if (!installmentInfo.interimDueDate) return null
-                      if (installmentInfo.depositDueDate && installmentInfo.interimDueDate < installmentInfo.depositDueDate) {
-                        return <p className="text-xs text-red-600 dark:text-red-400">중도금 지급일은 선금 지급일보다 늦거나 같아야 합니다</p>
-                      }
-                      if (installmentInfo.finalDueDate && installmentInfo.interimDueDate > installmentInfo.finalDueDate) {
-                        return <p className="text-xs text-red-600 dark:text-red-400">중도금 지급일은 잔금 지급일보다 빠르거나 같아야 합니다</p>
-                      }
-                      return null
-                    })()}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="finalDueDate" className="text-foreground">잔금 지급일</Label>
-                    <Input
-                      type="date"
-                      id="finalDueDate"
-                      value={installmentInfo.finalDueDate}
-                      onChange={(e) => {
-                        setInstallmentInfo({ ...installmentInfo, finalDueDate: e.target.value })
-                        setHasUnsavedChanges(true)
-                      }}
-                      className={`bg-input-background border-border ${
-                        (() => {
-                          if (!installmentInfo.finalDueDate) return ''
-                          if (installmentInfo.depositDueDate && installmentInfo.finalDueDate < installmentInfo.depositDueDate) return 'border-red-500'
-                          if (installmentInfo.interimDueDate && installmentInfo.finalDueDate < installmentInfo.interimDueDate) return 'border-red-500'
-                          return ''
-                        })()
-                      }`}
-                    />
-                    {(() => {
-                      if (!installmentInfo.finalDueDate) return null
-                      if (installmentInfo.depositDueDate && installmentInfo.finalDueDate < installmentInfo.depositDueDate) {
-                        return <p className="text-xs text-red-600 dark:text-red-400">잔금 지급일은 선금 지급일보다 늦거나 같아야 합니다</p>
-                      }
-                      if (installmentInfo.interimDueDate && installmentInfo.finalDueDate < installmentInfo.interimDueDate) {
-                        return <p className="text-xs text-red-600 dark:text-red-400">잔금 지급일은 중도금 지급일보다 늦거나 같아야 합니다</p>
-                      }
-                      return null
-                    })()}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {paymentInfo.paymentMethod === '계좌이체' && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <h4 className="font-medium mb-3 text-foreground">입금 계좌 정보</h4>
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <div className="space-y-2 md:col-span-4">
-                    <Label htmlFor="bankName" className="text-foreground">은행명 *</Label>
-                    <BankCombobox
-                      value={paymentInfo.bankName}
-                      onChange={(value) => {
-                        setPaymentInfo({ ...paymentInfo, bankName: value })
-                        setHasUnsavedChanges(true)
-                      }}
-                      placeholder="은행을 선택하세요"
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-5">
-                    <Label htmlFor="bankAccountNumber" className="text-foreground">계좌번호 *</Label>
-                    <Input
-                      id="bankAccountNumber"
-                      value={paymentInfo.bankAccountNumber}
-                      onChange={(e) => {
-                        setPaymentInfo({ ...paymentInfo, bankAccountNumber: e.target.value })
-                        setHasUnsavedChanges(true)
-                      }}
-                      placeholder="계좌번호 입력"
-                      className="bg-input-background border-border"
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-3">
-                    <Label htmlFor="bankAccountHolder" className="text-foreground">예금주 *</Label>
-                    <Input
-                      id="bankAccountHolder"
-                      value={paymentInfo.bankAccountHolder}
-                      onChange={(e) => {
-                        setPaymentInfo({ ...paymentInfo, bankAccountHolder: e.target.value })
-                        setHasUnsavedChanges(true)
-                      }}
-                      placeholder="예금주명 입력"
-                      className="bg-input-background border-border"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </Card>
+          <PaymentInfoForm
+            paymentInfo={paymentInfo}
+            installmentInfo={installmentInfo}
+            installmentInputMode={installmentInputMode}
+            totalAmount={calculateTotals().total}
+            onPaymentInfoChange={(info) => {
+              setPaymentInfo(info);
+              setHasUnsavedChanges(true);
+            }}
+            onInstallmentInfoChange={(info) => {
+              setInstallmentInfo(info);
+              setHasUnsavedChanges(true);
+            }}
+            onInstallmentInputModeChange={setInstallmentInputMode}
+            formatCurrency={formatCurrency}
+          />
 
           {/* 9. 법적 보호 조항 */}
           <Accordion type="single" collapsible>
